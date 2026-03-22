@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/shipper-layout :: layout(pageTitle='Đơn hàng được phân công', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='shipper-orders'">
+    <h4 class="mb-3"><i class="fas fa-box me-2 text-info"></i>Đơn hàng được phân công</h4>
+    
+    <!-- Filter Form -->
+    <form class="row g-2 mb-3" method="get" th:action="@{/shipper/orders}">
+        <div class="col-md-3">
+            <select class="form-select" name="status">
+                <option value="" th:selected="${status == null}">Tất cả trạng thái</option>
+                <option value="ChoXuLy" th:selected="${status == 'ChoXuLy'}">Chờ xử lý</option>
+                <option value="DangPhaChe" th:selected="${status == 'DangPhaChe'}">Đang pha chế</option>
+                <option value="DangGiao" th:selected="${status == 'DangGiao'}">Đang giao</option>
+                <option value="DaGiao" th:selected="${status == 'DaGiao'}">Đã giao</option>
+                <option value="DaHuy" th:selected="${status == 'DaHuy'}">Đã hủy</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input class="form-control" name="kw" 
+                   placeholder="Tìm theo tên, SĐT, địa chỉ" 
+                   th:value="${kw}">
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" name="limit">
+                <option th:selected="${limit == 50}" value="50">Hiện 50</option>
+                <option th:selected="${limit == 100}" value="100">Hiện 100</option>
+                <option th:selected="${limit == 200}" value="200">Hiện 200</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-info w-100" type="submit">
+                <i class="fas fa-filter me-1"></i> Lọc
+            </button>
+        </div>
+    </form>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Người nhận</th>
+                        <th>Điện thoại</th>
+                        <th>Địa chỉ giao</th>
+                        <th>Thời gian đặt</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${orders}">
+                        <td>
+                            <span class="badge" 
+                                  th:classappend="${o.status=='ChoXuLy'?'bg-warning text-dark':(o.status=='DangPhaChe'?'bg-info':(o.status=='DangGiao'?'bg-primary':(o.status=='DaGiao'?'bg-success':(o.status=='DaHuy'?'bg-danger':'bg-secondary'))))}"
+                                  th:text="${o.id}">
+                                123
+                            </span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${o.receiverName}">Tên người nhận</div>
+                        </td>
+                        <td>
+                            <a th:href="'tel:' + ${o.receiverPhone}" class="text-decoration-none">
+                                <i class="fas fa-phone text-success me-1"></i>
+                                <span th:text="${o.receiverPhone}">0123456789</span>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 250px;">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                <span th:text="${o.shippingAddress}">Địa chỉ giao hàng</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:text="${#temporals.format(o.createdAt, 'HH:mm')}">10:30</div>
+                            <div class="small text-muted" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy')}">27/10/2025</div>
+                        </td>
+                        <td>
+                            <span class="badge" 
+                                  th:classappend="${o.status=='ChoXuLy'?'bg-warning text-dark':(o.status=='DangPhaChe'?'bg-info':(o.status=='DangGiao'?'bg-primary':(o.status=='DaGiao'?'bg-success':(o.status=='DaHuy'?'bg-danger':'bg-secondary'))))}"
+                                  th:text="${o.status}">
+                                Đang giao
+                            </span>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="badge" 
+                                      th:classappend="${o.paymentMethod=='ChuyenKhoan'?'bg-primary':'bg-warning'}"
+                                      th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'COD'}">
+                                    COD
+                                </span>
+                            </div>
+                            <div th:if="${o.paymentStatus=='DaThanhToan'}">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Đã thanh toán
+                                </span>
+                            </div>
+                            <div th:if="${o.paymentStatus!='DaThanhToan'}">
+                                <span class="badge bg-secondary">Chưa thanh toán</span>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="fw-bold text-danger" 
+                                 th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'">
+                                100.000 ₫
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                <a th:href="@{'/shipper/orders/' + ${o.id}}" 
+                                   class="btn btn-sm btn-outline-secondary"
+                                   title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                <!-- Nút chuyển bước (không hiển thị khi đã giao hoặc hủy) -->
+                                <form th:if="${o.status != 'DaGiao' && o.status != 'DaHuy'}"
+                                      th:action="@{'/shipper/orders/' + ${o.id} + '/advance'}" 
+                                      method="post" 
+                                      onsubmit="return confirm('Chuyển sang bước tiếp theo?');">
+                                    <input type="hidden" name="from" value="list">
+                                    <button class="btn btn-sm btn-primary" type="submit" 
+                                            title="Chuyển sang bước tiếp theo"
+                                            th:disabled="${o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan'}">
+                                        <i class="fas fa-arrow-right"></i> Chuyển bước
+                                    </button>
+                                </form>
+                                
+                                <!-- Nút xác nhận thu tiền COD (chỉ hiển thị khi chưa thanh toán và COD) -->
+                                <form th:if="${o.paymentStatus != 'DaThanhToan' && o.paymentMethod == 'TienMat'}"
+                                      th:action="@{'/shipper/orders/' + ${o.id} + '/confirm-payment'}" 
+                                      method="post" 
+                                      onsubmit="return confirm('Xác nhận đã thu tiền từ khách?');">
+                                    <input type="hidden" name="from" value="list">
+                                    <button class="btn btn-sm btn-warning" type="submit" title="Xác nhận thu tiền">
+                                        <i class="fas fa-money-bill"></i> Thu tiền
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <div>Không có đơn hàng nào được phân công.</div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary -->
+    <div class="mt-3 text-muted small">
+        <i class="fas fa-info-circle me-1"></i>
+        Tổng số: <span class="fw-bold" th:text="${#lists.size(orders)}">0</span> đơn hàng
+    </div>
+</div>
+</body>
+</html>

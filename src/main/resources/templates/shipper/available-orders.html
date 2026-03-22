@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/shipper-layout :: layout(pageTitle='Đơn hàng chờ nhận', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='shipper-available-orders'">
+    <h4 class="mb-3"><i class="fas fa-clock me-2 text-warning"></i>Đơn hàng chờ nhận</h4>
+    
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Đây là các đơn hàng đang ở trạng thái <strong>Chờ xử lý</strong> chưa có shipper nhận. 
+        Bạn có thể bấm <strong>Nhận đơn</strong> để nhận giao hàng.
+    </div>
+    
+    <!-- Filter Form -->
+    <form class="row g-2 mb-3" method="get" th:action="@{/shipper/available-orders}">
+        <div class="col-md-6">
+            <input class="form-control" name="kw" 
+                   placeholder="Tìm theo tên, SĐT, địa chỉ" 
+                   th:value="${kw}">
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" name="limit">
+                <option th:selected="${limit == 50}" value="50">Hiện 50</option>
+                <option th:selected="${limit == 100}" value="100">Hiện 100</option>
+                <option th:selected="${limit == 200}" value="200">Hiện 200</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-info w-100" type="submit">
+                <i class="fas fa-filter me-1"></i> Lọc
+            </button>
+        </div>
+    </form>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Người nhận</th>
+                        <th>Điện thoại</th>
+                        <th>Địa chỉ giao</th>
+                        <th>Thời gian đặt</th>
+                        <th>Thanh toán</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-center">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${orders}">
+                        <td>
+                            <span class="badge bg-warning text-dark" th:text="${o.id}">123</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${o.receiverName}">Tên người nhận</div>
+                        </td>
+                        <td>
+                            <a th:href="'tel:' + ${o.receiverPhone}" class="text-decoration-none">
+                                <i class="fas fa-phone text-success me-1"></i>
+                                <span th:text="${o.receiverPhone}">0123456789</span>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 250px;">
+                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                <span th:text="${o.shippingAddress}">Địa chỉ giao hàng</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div th:text="${#temporals.format(o.createdAt, 'HH:mm')}">10:30</div>
+                            <div class="small text-muted" th:text="${#temporals.format(o.createdAt, 'dd/MM/yyyy')}">27/10/2025</div>
+                        </td>
+                        <td>
+                            <div>
+                                <span class="badge" 
+                                      th:classappend="${o.paymentMethod=='ChuyenKhoan'?'bg-primary':'bg-warning'}"
+                                      th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'COD'}">
+                                    COD
+                                </span>
+                            </div>
+                            <div th:if="${o.paymentStatus=='DaThanhToan'}">
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Đã thanh toán
+                                </span>
+                            </div>
+                            <div th:if="${o.paymentStatus!='DaThanhToan'}">
+                                <span class="badge bg-secondary">Chưa thanh toán</span>
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <div class="fw-bold text-danger" 
+                                 th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'">
+                                100.000 ₫
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <a th:href="@{/shipper/orders/{id}(id=${o.id})}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="fas fa-hand-point-right"></i> Xem & Nhận
+                            </a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <div>Không có đơn hàng chờ nhận nào.</div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Summary -->
+    <div class="mt-3 text-muted small">
+        <i class="fas fa-info-circle me-1"></i>
+        Tổng số: <span class="fw-bold" th:text="${#lists.size(orders)}">0</span> đơn hàng chờ nhận
+    </div>
+</div>
+</body>
+</html>

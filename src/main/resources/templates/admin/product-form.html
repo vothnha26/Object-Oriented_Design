@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/admin-layout :: layout(pageTitle=${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}, pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}"></h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/admin/products/save}" th:object="${product}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:field="*{id}" />
+                <!-- Preserve current image when not uploading -->
+                <input type="hidden" th:field="*{imageUrl}" />
+
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input class="form-control" th:field="*{name}" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" name="categoryId" required>
+                                <option th:each="c : ${categories}" th:value="${c.id}"
+                                        th:selected="${product.category != null and product.category.id == c.id}"
+                                        th:text="${c.name}">DM</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" th:field="*{description}" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" th:field="*{status}">
+                                <option th:value="1">Đang bán</option>
+                                <option th:value="0">Ngừng bán</option>
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                            <a th:href="@{/admin/products}" class="btn btn-secondary">Hủy</a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Ảnh sản phẩm</label>
+                        <div class="mb-2">
+                            <img id="previewImg" th:src="${product.imageUrl != null ? product.imageUrl : '/images/placeholder.png'}" class="img-thumbnail" style="max-height: 180px; object-fit: cover;"/>
+                        </div>
+                        <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+                    </div>
+                </div>
+
+                <!-- New: Define variants directly when creating a product -->
+                <div class="card mt-4" th:if="${product.id == null}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Biến thể theo Size</h6>
+                        <button class="btn btn-sm btn-outline-primary" type="button" id="btnAddVariant">Thêm biến thể</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th style="width: 35%">Size</th>
+                                    <th style="width: 35%">Giá</th>
+                                    <th style="width: 20%">Trạng thái</th>
+                                    <th class="text-end" style="width: 10%">Xóa</th>
+                                </tr>
+                                </thead>
+                                <tbody id="variantRows">
+                                <!-- Initially empty: user clicks 'Thêm biến thể' to add -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-text mt-2">Bạn có thể thêm nhiều size. Nếu để trống sẽ không tạo biến thể.</div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Variants (sizes) for edit mode -->
+    <div class="card mt-4" th:if="${product.id != null}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Biến thể theo Size</h5>
+        </div>
+        <div class="card-body">
+            <form class="row g-2" th:action="@{'/admin/products/' + ${product.id} + '/variants'}" method="post">
+                <div class="col-3">
+                    <select class="form-select" name="sizeId" required>
+                        <option th:each="s : ${sizes}" th:value="${s.id}" th:text="${s.name}">S</option>
+                    </select>
+                </div>
+                <div class="col-3">
+                    <input type="number" class="form-control" name="price" step="1000" min="0" placeholder="Giá" required />
+                </div>
+                <div class="col-3">
+                    <select class="form-select" name="status">
+                        <option value="1">Đang bán</option>
+                        <option value="0">Ngừng bán</option>
+                    </select>
+                </div>
+                <div class="col-3">
+                    <button type="submit" class="btn btn-outline-primary w-100">Thêm biến thể</button>
+                </div>
+            </form>
+
+            <table class="table table-sm mt-3">
+                <thead>
+                <tr><th>Size</th><th>Giá</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${variants}">
+                    <td th:text="${v.size.name}">M</td>
+                    <td th:text="${#numbers.formatDecimal(v.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                    <td>
+                        <span class="badge" th:text="${v.status == 1 ? 'Đang bán' : 'Ngừng bán'}"
+                              th:classappend="${v.status == 1 ? 'bg-success' : 'bg-secondary'}"></span>
+                    </td>
+                    <td class="text-end">
+                        <a th:href="@{'/admin/products/' + ${product.id} + '/variants/' + ${v.id} + '/delete'}" class="btn btn-sm btn-danger" onclick="return confirm('Xóa biến thể?')">Xóa</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(variants)}">
+                    <td colspan="4" class="text-center">Chưa có biến thể nào.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const [file] = event.target.files;
+            if (file) {
+                const img = document.getElementById('previewImg');
+                img.src = URL.createObjectURL(file);
+            }
+        }
+    </script>
+
+    <!-- Inline JS to manage variant rows at creation time -->
+    <script th:inline="javascript">
+        (function(){
+            const sizes = /*[[${sizes}]]*/ [];
+            function optionHtml(){
+                if (!Array.isArray(sizes) || sizes.length === 0) return '<option value="" disabled>— Không có size —</option>';
+                return sizes.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            }
+            function addRow(){
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <select class="form-select" name="variantSizeId">${optionHtml()}</select>
+                    </td>
+                    <td>
+                        <input class="form-control" name="variantPrice" type="number" step="1000" min="0" placeholder="Giá" />
+                    </td>
+                    <td>
+                        <select class="form-select" name="variantStatus">
+                            <option value="1" selected>Đang bán</option>
+                            <option value="0">Ngừng bán</option>
+                        </select>
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">Xóa</button>
+                    </td>`;
+                document.getElementById('variantRows')?.appendChild(tr);
+            }
+            document.addEventListener('click', function(e){
+                if (e.target && e.target.id === 'btnAddVariant') { addRow(); }
+                if (e.target && e.target.classList.contains('btn-remove-row')) { e.target.closest('tr')?.remove(); }
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>

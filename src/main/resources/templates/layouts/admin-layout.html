@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+	th:fragment="layout(pageTitle, pageContent)">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title th:text="${pageTitle} + ' - AloTra Admin'"></title>
+
+<!-- Bootstrap & FontAwesome -->
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+<!-- Custom CSS -->
+<link rel="stylesheet" th:href="@{/css/admin-style.css}">
+<style>
+    .admin-theme #sidebar-wrapper {
+        background: linear-gradient(180deg, #00b4d8 0%, #0096c7 100%);
+    }
+    .admin-theme .sidebar-heading a {
+        color: white !important;
+    }
+    .admin-theme .list-group-item {
+        color: rgba(255,255,255,0.9);
+        background: transparent;
+        border: none;
+    }
+    .admin-theme .list-group-item:hover {
+        background: rgba(255,255,255,0.1);
+        color: white;
+    }
+    .admin-theme .list-group-item.active-custom {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-weight: 600;
+    }
+    .admin-theme .list-group-item.active-submenu {
+        background: rgba(255,255,255,0.15);
+        color: white;
+        font-weight: 500;
+    }
+</style>
+</head>
+<body class="admin-theme">
+	<div class="d-flex" id="wrapper">
+
+		<!-- Sidebar -->
+		<div class="bg-white border-end" id="sidebar-wrapper">
+			<div class="sidebar-heading border-bottom">
+				 <a th:href="@{/admin/dashboard}" class="d-flex align-items-center text-decoration-none">
+        <img th:src="@{/images/logo.jpg}" alt="AloTra Logo" style="height: 60px;">
+    </a>
+			</div>
+			<div class="list-group list-group-flush">
+				<a th:href="@{/admin/dashboard}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'dashboard'} ? 'active-custom' : ''">
+					<i class="fas fa-chart-pie me-2"></i> Tổng quan
+				</a> <a th:href="@{/admin/users}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'users'} ? 'active-custom' : ''">
+					<i class="fas fa-users me-2"></i> Người dùng
+				</a>
+				 <a href="#productSubMenu" data-bs-toggle="collapse"
+					class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+					th:classappend="${#lists.contains({'products', 'categories', 'sizes', 'toppings'}, currentPage)} ? 'active-custom' : ''">
+					<div>
+						<i class="fas fa-boxes me-2"></i> Sản phẩm
+					</div> <i class="fas fa-chevron-down small"></i>
+				</a>
+				<div class="collapse" id="productSubMenu"
+					th:classappend="${#lists.contains({'products', 'categories', 'sizes', 'toppings'}, currentPage)} ? 'show' : ''">
+					<div class="list-group list-group-flush ps-4">
+						<a th:href="@{/admin/products}"
+							class="list-group-item list-group-item-action"
+							th:classappend="${currentPage == 'products'} ? 'active-submenu' : ''">Sản
+							phẩm</a> <a th:href="@{/admin/categories}"
+							class="list-group-item list-group-item-action"
+							th:classappend="${currentPage == 'categories'} ? 'active-submenu' : ''">Danh
+							mục</a> <a th:href="@{/admin/toppings}"
+							class="list-group-item list-group-item-action"
+							th:classappend="${currentPage == 'toppings'} ? 'active-submenu' : ''">Topping</a>
+					</div>
+				</div>
+				 <a th:href="@{/admin/promotions}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'promotions'} ? 'active-custom' : ''">
+					<i class="fas fa-tags me-2"></i> Sự kiện khuyến mãi
+				</a>
+				 <a th:href="@{/admin/reviews}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'reviews'} ? 'active-custom' : ''">
+					<i class="fas fa-star me-2"></i> Đánh giá
+				</a>
+				 <a th:href="@{/admin/reports/shift}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'reports'} ? 'active-custom' : ''">
+					<i class="fas fa-file-alt me-2"></i> Báo cáo
+				</a>
+				 <a th:href="@{/admin/trash}"
+					class="list-group-item list-group-item-action"
+					th:classappend="${currentPage == 'trash'} ? 'active-custom' : ''">
+					<i class="fas fa-trash-alt me-2"></i> Thùng rác
+				</a>
+			</div>
+		</div>
+
+		<!-- Page Content -->
+		<div id="page-content-wrapper">
+			<nav
+				class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+				<div class="container-fluid">
+					<button class="btn btn-light" id="sidebarToggle">
+						<i class="fas fa-bars"></i>
+					</button>
+					<div class="d-flex align-items-center ms-auto">
+						<!-- Theme toggle -->
+						<button id="themeToggle" class="btn btn-light me-2" title="Chuyển chế độ sáng/tối" aria-label="Chuyển chế độ sáng/tối">
+							<i class="fa-solid fa-moon fs-5" id="themeIcon"></i>
+						</button>
+						 <a href="#"
+							class="btn btn-light me-3"><i class="fas fa-bell fs-5"></i></a>
+
+						<div sec:authorize="isAuthenticated()" class="dropdown"
+							th:with="currentUser =${#authentication.principal}">
+							<a href="#"
+								class="d-flex align-items-center text-decoration-none dropdown-toggle"
+								id="dropdownAdminUser" data-bs-toggle="dropdown"
+								aria-expanded="false"> <img
+								th:src="${currentUser.avatarUrl ?: '/images/default-avatar.png'}"
+								alt="Admin Avatar" width="32" height="32"
+								class="rounded-circle me-2">
+								<div>
+									<div class="fw-bold" th:text="${currentUser.fullName}">Tên
+										Người dùng</div>
+									<div class="small text-muted"
+										th:text="${currentUser.role.name}">Vai trò</div>
+								</div>
+							</a>
+							<ul class="dropdown-menu dropdown-menu-end"
+								aria-labelledby="dropdownAdminUser">
+
+								<li><a class="dropdown-item" th:href="@{/vendor/dashboard}"><i
+										class="fa-brands fa-shopify me-2"></i> Trang người bán</a></li>
+								<li><a class="dropdown-item" th:href="@{/shipper/dashboard}"><i
+										class="fas fa-motorcycle me-2"></i> Trang shipper</a></li>
+								<li><hr class="dropdown-divider"></li>
+								<li><a class="dropdown-item" th:href="@{/logout}"><i
+										class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+
+							</ul>
+						</div>
+
+						<div sec:authorize="!isAuthenticated()">
+							<a th:href="@{/login}" class="btn btn-primary">Đăng nhập</a>
+						</div>
+					</div>
+				</div>
+			</nav>
+
+			<div class="container-fluid p-4">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb">
+						<li class="breadcrumb-item"><a th:href="@{/admin/dashboard}">Trang
+								chủ</a></li>
+						<li class="breadcrumb-item" th:if="${parentPageTitle}"><a
+							th:href="@{${parentPageUrl}}" th:text="${parentPageTitle}"></a></li>
+						<li class="breadcrumb-item active" aria-current="page"
+							th:text="${pageTitle}"></li>
+					</ol>
+				</nav>
+				<div class="page-content" th:replace="${pageContent}"></div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap JS Bundle -->
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+	<!-- Sidebar Toggle Script -->
+	<script>
+		const sidebarToggle = document.getElementById('sidebarToggle');
+		const wrapper = document.getElementById('wrapper');
+
+		// Sidebar toggle with persistence on small screens
+		sidebarToggle.addEventListener('click', function() {
+			wrapper.classList.toggle('toggled');
+			try { localStorage.setItem('adminSidebarToggled', wrapper.classList.contains('toggled') ? '1' : '0'); } catch (e) {}
+		});
+
+		// Restore sidebar toggle state
+		try {
+			const savedToggle = localStorage.getItem('adminSidebarToggled');
+			if (savedToggle === '1') { wrapper.classList.add('toggled'); }
+		} catch (e) {}
+
+		// Theme handling (Bootstrap 5.3)
+		const themeToggleBtn = document.getElementById('themeToggle');
+		const themeIcon = document.getElementById('themeIcon');
+
+		function applyTheme(theme) {
+			const root = document.documentElement;
+			if (theme === 'dark') {
+				root.setAttribute('data-bs-theme', 'dark');
+				themeIcon.classList.remove('fa-moon');
+				themeIcon.classList.add('fa-sun');
+				themeToggleBtn.classList.remove('btn-light');
+				themeToggleBtn.classList.add('btn-dark');
+			} else {
+				root.setAttribute('data-bs-theme', 'light');
+				themeIcon.classList.remove('fa-sun');
+				themeIcon.classList.add('fa-moon');
+				themeToggleBtn.classList.remove('btn-dark');
+				themeToggleBtn.classList.add('btn-light');
+			}
+		}
+
+		function getPreferredTheme() {
+			try {
+				const saved = localStorage.getItem('adminTheme');
+				if (saved === 'light' || saved === 'dark') return saved;
+			} catch (e) {}
+			return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		}
+
+		let currentTheme = getPreferredTheme();
+		applyTheme(currentTheme);
+
+		themeToggleBtn.addEventListener('click', function() {
+			currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+			applyTheme(currentTheme);
+			try { localStorage.setItem('adminTheme', currentTheme); } catch (e) {}
+		});
+	</script>
+</body>
+</html>

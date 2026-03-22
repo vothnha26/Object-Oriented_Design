@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(pageTitle, pageContent)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' - Kênh Giao Hàng'">Kênh Giao Hàng</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" th:href="@{/css/admin-style.css}">
+    <style>
+        .shipper-theme #sidebar-wrapper {
+            background: linear-gradient(180deg, #00b4d8 0%, #0096c7 100%);
+        }
+        .shipper-theme .sidebar-heading a {
+            color: white !important;
+        }
+        .shipper-theme .list-group-item {
+            color: rgba(255,255,255,0.9);
+            background: transparent;
+            border: none;
+        }
+        .shipper-theme .list-group-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        .shipper-theme .list-group-item.active-custom {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="shipper-theme">
+<div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-white border-end" id="sidebar-wrapper">
+        <div class="sidebar-heading border-bottom">
+            <a th:href="@{/shipper/dashboard}" class="d-flex align-items-center text-decoration-none">
+                <i class="fas fa-motorcycle me-2"></i>
+                <span class="fw-bold">Kênh Giao Hàng</span>
+            </a>
+        </div>
+        <div class="list-group list-group-flush">
+            <a th:href="@{/shipper/dashboard}"
+               class="list-group-item list-group-item-action"
+               th:classappend="${currentPage == 'shipper-dashboard'} ? 'active-custom' : ''">
+                <i class="fas fa-gauge me-2"></i> Bảng điều khiển
+            </a>
+            <a th:href="@{/shipper/available-orders}"
+               class="list-group-item list-group-item-action"
+               th:classappend="${currentPage == 'shipper-available-orders'} ? 'active-custom' : ''">
+                <i class="fas fa-clock me-2"></i> Đơn chờ nhận
+            </a>
+            <a th:href="@{/shipper/orders}"
+               class="list-group-item list-group-item-action"
+               th:classappend="${currentPage == 'shipper-orders'} ? 'active-custom' : ''">
+                <i class="fas fa-box me-2"></i> Đơn được phân công
+            </a>
+        </div>
+    </div>
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
+            <div class="container-fluid">
+                <button class="btn btn-light" id="sidebarToggle"><i class="fas fa-bars"></i></button>
+                <div class="d-flex align-items-center ms-auto">
+                    <!-- Theme toggle -->
+                    <button id="themeToggle" class="btn btn-light me-2" title="Chuyển chế độ sáng/tối" aria-label="Chuyển chế độ sáng/tối">
+                        <i class="fa-solid fa-moon fs-5" id="themeIcon"></i>
+                    </button>
+                    <a href="#" class="btn btn-light me-3"><i class="fas fa-bell fs-5"></i></a>
+                    <div sec:authorize="isAuthenticated()" class="dropdown" th:with="currentUser=${#authentication.principal}">
+                        <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                            <img th:src="${currentUser.avatarUrl ?: '/images/default-avatar.png'}" alt="Avatar" width="32" height="32" class="rounded-circle me-2">
+                            <div class="d-none d-md-block">
+                                <div class="fw-bold" th:text="${currentUser.fullName}">Người dùng</div>
+                                <div class="small text-muted" th:text="${currentUser.role.name}">Vai trò</div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" th:href="@{/admin/dashboard}"><i class="fas fa-user-shield me-2"></i>Trang admin</a></li>
+                            <li><a class="dropdown-item" th:href="@{/vendor/dashboard}"><i class="fa-brands fa-shopify me-2"></i>Trang người bán</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" th:href="@{/logout}"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </div>
+                    <div sec:authorize="!isAuthenticated()">
+                        <a th:href="@{/login}" class="btn btn-primary">Đăng nhập</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="container-fluid p-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/shipper/dashboard}">Kênh Giao Hàng</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" th:text="${pageTitle}"></li>
+                </ol>
+            </nav>
+            
+            <!-- Flash messages -->
+            <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <div class="page-content" th:replace="${pageContent}"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const wrapper = document.getElementById('wrapper');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            wrapper.classList.toggle('toggled');
+            try { localStorage.setItem('shipperSidebarToggled', wrapper.classList.contains('toggled') ? '1' : '0'); } catch(e){}
+        });
+        try {
+            if (localStorage.getItem('shipperSidebarToggled') === '1') { wrapper.classList.add('toggled'); }
+        } catch(e){}
+    }
+
+    // Theme handling
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    function applyTheme(theme) {
+        const root = document.documentElement;
+        if (theme === 'dark') {
+            root.setAttribute('data-bs-theme', 'dark');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+            themeToggleBtn.classList.remove('btn-light');
+            themeToggleBtn.classList.add('btn-dark');
+        } else {
+            root.setAttribute('data-bs-theme', 'light');
+            themeIcon.classList.remove('fa-sun');
+            themeIcon.classList.add('fa-moon');
+            themeToggleBtn.classList.remove('btn-dark');
+            themeToggleBtn.classList.add('btn-light');
+        }
+    }
+    function getPreferredTheme() {
+        try { const saved = localStorage.getItem('shipperTheme'); if (saved==='light'||saved==='dark') return saved; } catch(e){}
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    let currentTheme = getPreferredTheme();
+    applyTheme(currentTheme);
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', ()=>{
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            applyTheme(currentTheme);
+            try { localStorage.setItem('shipperTheme', currentTheme);} catch(e){}
+        });
+    }
+</script>
+</body>
+</html>

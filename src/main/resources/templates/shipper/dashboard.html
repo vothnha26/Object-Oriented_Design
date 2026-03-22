@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/shipper-layout :: layout(pageTitle='Kênh Giao Hàng - Bảng điều khiển', pageContent=~{::pageContent})}">
+<body>
+<div class="page-content" th:fragment="pageContent" th:with="currentPage='shipper-dashboard'">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0"><i class="fas fa-motorcycle me-2 text-info"></i>Bảng điều khiển</h4>
+        <a th:href="@{/shipper/orders}" class="btn btn-sm btn-outline-info">
+            <i class="fas fa-list me-1"></i> Xem tất cả đơn hàng
+        </a>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-bg-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Đang giao</div>
+                            <div class="display-6" th:text="${stats.shipping}">0</div>
+                        </div>
+                        <i class="fas fa-shipping-fast fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!--  
+        <div class="col-md-3">
+            <div class="card text-bg-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Đã giao hôm nay</div>
+                            <div class="display-6" th:text="${stats.deliveredToday}">0</div>
+                        </div>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>-->
+        
+        <div class="col-md-3">
+            <div class="card text-bg-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Tổng được phân công</div>
+                            <div class="display-6" th:text="${stats.totalAssigned}">0</div>
+                        </div>
+                        <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- 
+        <div class="col-md-3">
+            <div class="card text-bg-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">Giao tuần này</div>
+                            <div class="display-6" th:text="${stats.deliveredThisWeek}">0</div>
+                        </div>
+                        <i class="fas fa-calendar-week fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- Today's Shipping Orders -->
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-motorcycle me-2"></i>Đơn đang giao</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Người nhận</th>
+                        <th>Điện thoại</th>
+                        <th>Địa chỉ giao</th>
+                        <th>Thời gian</th>
+                        <th>Thanh toán</th>
+                        <th class="text-end">Tổng tiền</th>
+                        <th class="text-end">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="o : ${shippingOrders}">
+                        <td>
+                            <span class="badge bg-info" th:text="${o.id}"></span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold" th:text="${o.receiverName}">Tên người nhận</div>
+                        </td>
+                        <td>
+                            <a th:href="'tel:' + ${o.receiverPhone}" class="text-decoration-none">
+                                <i class="fas fa-phone text-success me-1"></i>
+                                <span th:text="${o.receiverPhone}">0123456789</span>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 300px;" th:text="${o.shippingAddress}">Địa chỉ giao hàng</div>
+                        </td>
+                        <td>
+                            <small th:text="${#temporals.format(o.createdAt, 'HH:mm dd/MM')}">10:30 27/10</small>
+                        </td>
+                        <td>
+                            <span class="badge" 
+                                  th:classappend="${o.paymentStatus=='DaThanhToan'?'bg-success':'bg-warning'}"
+                                  th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'COD'}">
+                                COD
+                            </span>
+                            <span th:if="${o.paymentStatus=='DaThanhToan'}" class="badge bg-success">
+                                <i class="fas fa-check"></i> Đã thanh toán
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <span class="fw-bold text-danger" 
+                                  th:text="${#numbers.formatDecimal(o.total,0,'COMMA',0,'POINT')} + ' ₫'">
+                                100.000 ₫
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group" role="group">
+                                <a th:href="@{'/shipper/orders/' + ${o.id}}" 
+                                   class="btn btn-sm btn-outline-secondary"
+                                   title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <form th:action="@{'/shipper/orders/' + ${o.id} + '/mark-delivered'}" 
+                                      method="post" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Xác nhận đã giao hàng thành công?');">
+                                    <input type="hidden" name="from" value="dashboard">
+                                    <button class="btn btn-sm btn-success" type="submit" title="Đã giao hàng">
+                                        <i class="fas fa-check-double"></i> Đã giao
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(shippingOrders)}">
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <div>Chưa có đơn hàng nào đang giao.</div>
+                            <div class="small mt-2">
+                                <a th:href="@{/shipper/available-orders}" class="text-decoration-none">
+                                    <i class="fas fa-plus-circle me-1"></i>Xem đơn chờ nhận
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
