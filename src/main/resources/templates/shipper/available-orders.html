@@ -76,17 +76,17 @@
                         <td>
                             <div>
                                 <span class="badge" 
-                                      th:classappend="${o.paymentMethod=='ChuyenKhoan'?'bg-primary':'bg-warning'}"
-                                      th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'COD'}">
+                                      th:classappend="${o.paymentMethod.name() == 'BANK_TRANSFER' ? 'bg-primary' : 'bg-warning'}"
+                                      th:text="${o.paymentMethod.name() == 'BANK_TRANSFER' ? 'Chuyển khoản' : 'COD'}">
                                     COD
                                 </span>
                             </div>
-                            <div th:if="${o.paymentStatus=='DaThanhToan'}">
+                            <div th:if="${o.paymentStatus.name() == 'PAID'}">
                                 <span class="badge bg-success">
                                     <i class="fas fa-check"></i> Đã thanh toán
                                 </span>
                             </div>
-                            <div th:if="${o.paymentStatus!='DaThanhToan'}">
+                            <div th:if="${o.paymentStatus.name() != 'PAID'}">
                                 <span class="badge bg-secondary">Chưa thanh toán</span>
                             </div>
                         </td>

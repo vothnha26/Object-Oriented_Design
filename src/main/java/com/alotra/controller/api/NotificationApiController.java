@@ -1,6 +1,6 @@
 package com.alotra.controller.api;
 
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.NotificationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +20,7 @@ public class NotificationApiController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getNotifications(@AuthenticationPrincipal KhachHangUserDetails current) {
+    public ResponseEntity<?> getNotifications(@AuthenticationPrincipal CustomerUserDetails current) {
         if (current == null) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }

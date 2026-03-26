@@ -38,8 +38,8 @@
                     <label class="form-label mb-0 small">Trạng thái</label>
                     <select class="form-select" name="status">
                         <option value="" th:selected="${status == null}">Tất cả</option>
-                        <option th:value="1" th:selected="${status != null and status == 1}">Đang bán</option>
-                        <option th:value="0" th:selected="${status != null and status == 0}">Ngừng bán</option>
+                        <option th:value="ACTIVE" th:selected="${status != null and status.name() == 'ACTIVE'}">Đang bán</option>
+                        <option th:value="INACTIVE" th:selected="${status != null and status.name() == 'INACTIVE'}">Ngừng bán</option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex gap-2">
@@ -68,8 +68,8 @@
                     <td th:text="${p.name}"></td>
                     <td th:text="${p.category != null ? p.category.name : '—'}"></td>
                     <td>
-                        <span class="badge" th:text="${p.status == 1 ? 'Đang bán' : 'Ngừng bán'}"
-                              th:classappend="${p.status == 1 ? 'bg-success' : 'bg-secondary'}"></span>
+                        <span class="badge" th:text="${p.status.name() == 'ACTIVE' ? 'Đang bán' : 'Ngừng bán'}"
+                              th:classappend="${p.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                     </td>
                     <td class="text-end">
                         <button type="button" class="btn btn-secondary btn-sm me-1" data-bs-toggle="modal" data-bs-target="#variantsModal" th:attr="data-product-id=${p.id}">
@@ -155,7 +155,7 @@
                             <td>${idx + 1}</td>
                             <td>${v.size ?? '—'}</td>
                             <td>${formatPrice(v.price)}</td>
-                            <td><span class="badge ${v.status == 1 ? 'bg-success' : 'bg-secondary'}">${v.status == 1 ? 'Đang bán' : 'Ngừng bán'}</span></td>
+                            <td><span class="badge ${v.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">${v.status == 'ACTIVE' ? 'Đang bán' : 'Ngừng bán'}</span></td>
                         </tr>
                     `).join('');
                 })

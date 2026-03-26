@@ -1,8 +1,8 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.GioHangCT;
-import com.alotra.entity.KhachHang;
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.entity.CartItem;
+import com.alotra.entity.Customer;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.CartService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,17 +25,16 @@ public class CartController {
     }
 
     @GetMapping
-    public String viewCart(@AuthenticationPrincipal KhachHangUserDetails principal, Model model,
+    public String viewCart(@AuthenticationPrincipal CustomerUserDetails principal, Model model,
                            @RequestParam(value = "msg", required = false) String msg,
                            @RequestParam(value = "error", required = false) String error) {
-        KhachHang kh = principal.getKhachHang();
-        List<GioHangCT> items = cartService.listItems(kh);
+        Customer customer = principal.getCustomer();
+        List<CartItem> items = cartService.listItems(customer);
         model.addAttribute("pageTitle", "Giỏ hàng");
         model.addAttribute("items", items);
-        // toppings per item and catalogs for UI
         model.addAttribute("itemToppingsMap", cartService.getToppingsForItems(items));
         model.addAttribute("toppingsCatalog", cartService.listActiveToppings());
-        // Build a simple map: itemId -> (toppingId -> qty) for default values
+        
         Map<Integer, Map<Integer,Integer>> qtyMap = new HashMap<>();
         cartService.getToppingsForItems(items).forEach((itemId, list) -> {
             Map<Integer,Integer> inner = new HashMap<>();
@@ -43,28 +42,27 @@ public class CartController {
             qtyMap.put(itemId, inner);
         });
         model.addAttribute("itemTopQtyMap", qtyMap);
-        // New: variants per item to allow changing size
+        
         Map<Integer, List<com.alotra.entity.ProductVariant>> itemVariantsMap = new HashMap<>();
-        for (GioHangCT it : items) {
+        for (CartItem it : items) {
             var product = it.getVariant() != null ? it.getVariant().getProduct() : null;
             itemVariantsMap.put(it.getId(), cartService.listVariantsForProduct(product));
         }
         model.addAttribute("itemVariantsMap", itemVariantsMap);
         model.addAttribute("total", cartService.calcTotal(items));
-        // Backward compatibility: map legacy ?msg= to template's "message"
+        
         if (msg != null) model.addAttribute("message", msg);
         if (error != null) model.addAttribute("error", error);
         return "cart/cart";
     }
 
     @PostMapping("/update")
-    public String updateQty(@AuthenticationPrincipal KhachHangUserDetails principal,
+    public String updateQty(@AuthenticationPrincipal CustomerUserDetails principal,
                             @RequestParam("itemId") Integer itemId,
                             @RequestParam("qty") Integer qty,
                             RedirectAttributes ra) {
         try {
-            cartService.updateQuantity(principal.getKhachHang(), itemId, qty);
-            // Optional: show success
+            cartService.updateQuantity(principal.getCustomer(), itemId, qty);
             ra.addFlashAttribute("message", "Đã cập nhật số lượng.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
@@ -73,11 +71,11 @@ public class CartController {
     }
 
     @GetMapping("/remove/{id}")
-    public String remove(@AuthenticationPrincipal KhachHangUserDetails principal,
+    public String remove(@AuthenticationPrincipal CustomerUserDetails principal,
                          @PathVariable Integer id,
                          RedirectAttributes ra) {
         try {
-            cartService.removeItem(principal.getKhachHang(), id);
+            cartService.removeItem(principal.getCustomer(), id);
             ra.addFlashAttribute("message", "Đã xóa sản phẩm khỏi giỏ hàng.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
@@ -86,7 +84,7 @@ public class CartController {
     }
 
     @PostMapping("/item/{id}/toppings")
-    public String updateItemToppings(@AuthenticationPrincipal KhachHangUserDetails principal,
+    public String updateItemToppings(@AuthenticationPrincipal CustomerUserDetails principal,
                                      @PathVariable("id") Integer itemId,
                                      @RequestParam MultiValueMap<String, String> params,
                                      RedirectAttributes ra) {
@@ -101,12 +99,11 @@ public class CartController {
                         Integer q;
                         try { q = (raw == null || raw.isBlank()) ? 0 : Integer.valueOf(raw); }
                         catch (NumberFormatException nfe) { q = 0; }
-                        // Include even when q == 0 so the service can delete it
                         map.put(tid, Math.max(0, q));
                     } catch (NumberFormatException ignored) {}
                 }
             }
-            cartService.updateToppings(principal.getKhachHang(), itemId, map);
+            cartService.updateToppings(principal.getCustomer(), itemId, map);
             ra.addFlashAttribute("message", "Đã cập nhật topping.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());
@@ -114,14 +111,13 @@ public class CartController {
         return "redirect:/cart";
     }
 
-    // New: change size (variant) of a cart item
     @PostMapping("/item/{id}/variant")
-    public String changeVariant(@AuthenticationPrincipal KhachHangUserDetails principal,
+    public String changeVariant(@AuthenticationPrincipal CustomerUserDetails principal,
                                 @PathVariable("id") Integer itemId,
                                 @RequestParam("variantId") Integer newVariantId,
                                 RedirectAttributes ra) {
         try {
-            cartService.changeVariant(principal.getKhachHang(), itemId, newVariantId);
+            cartService.changeVariant(principal.getCustomer(), itemId, newVariantId);
             ra.addFlashAttribute("message", "Đã cập nhật kích cỡ sản phẩm.");
         } catch (RuntimeException ex) {
             ra.addFlashAttribute("error", ex.getMessage());

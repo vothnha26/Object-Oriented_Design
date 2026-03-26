@@ -1,7 +1,8 @@
 package com.alotra.auth;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.repository.KhachHangRepository;
+import com.alotra.entity.Customer;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.repository.CustomerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -17,10 +18,10 @@ import org.springframework.stereotype.Component;
 public class CreateAdminInitializer implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(CreateAdminInitializer.class);
 
-    private final KhachHangRepository repo;
+    private final CustomerRepository repo;
     private final PasswordEncoder encoder;
 
-    public CreateAdminInitializer(KhachHangRepository repo, PasswordEncoder encoder) {
+    public CreateAdminInitializer(CustomerRepository repo, PasswordEncoder encoder) {
         this.repo = repo;
         this.encoder = encoder;
     }
@@ -28,22 +29,22 @@ public class CreateAdminInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         // If a user with username 'boss' already exists, do nothing
-        KhachHang existing = repo.findByUsername("boss");
+        Customer existing = repo.findByUsername("boss").orElse(null);
         if (existing != null) {
             log.info("Admin account 'boss' already exists (id={}).", existing.getId());
             return;
         }
         // Also guard by email in case someone created it with email.
-        if (repo.findByEmail("boss@alotra.com") != null) {
+        if (repo.findByEmail("boss@alotra.com").isPresent()) {
             log.info("An account with email boss@alotra.com already exists; skipping admin seed.");
             return;
         }
-        KhachHang admin = new KhachHang();
+        Customer admin = new Customer();
         admin.setUsername("boss");
         admin.setFullName("AloTra Administrator");
         admin.setEmail("boss@alotra.com");
         admin.setPhone("0900000000");
-        admin.setStatus(1);
+        admin.setStatus(CustomerStatus.ACTIVE);
         admin.setPasswordHash(encoder.encode("123"));
         repo.save(admin);
         log.warn("Seeded default admin account: username='boss', password='123'. Please change the password after first login.");

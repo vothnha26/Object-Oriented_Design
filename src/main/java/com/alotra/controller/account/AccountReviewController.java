@@ -1,7 +1,7 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.entity.Customer;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.ReviewService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,10 +18,10 @@ public class AccountReviewController {
         this.reviewService = reviewService;
     }
 
-    private KhachHang currentCustomer() {
+    private Customer currentCustomer() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Object p = auth != null ? auth.getPrincipal() : null;
-        if (p instanceof KhachHangUserDetails kh) return kh.getKhachHang();
+        if (p instanceof CustomerUserDetails kh) return kh.getCustomer();
         return null;
     }
 
@@ -32,9 +32,9 @@ public class AccountReviewController {
                          @RequestParam(value = "comment", required = false) String comment,
                          RedirectAttributes ra) {
         try {
-            KhachHang kh = currentCustomer();
-            if (kh == null) throw new IllegalStateException("Bạn cần đăng nhập");
-            reviewService.submitReview(kh, lineId, stars != null ? stars : 5, comment);
+            Customer customer = currentCustomer();
+            if (customer == null) throw new IllegalStateException("Bạn cần đăng nhập");
+            reviewService.submitReview(customer, lineId, stars != null ? stars : 5, comment);
             ra.addFlashAttribute("msg", "Đã gửi đánh giá.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -49,9 +49,9 @@ public class AccountReviewController {
                        @RequestParam(value = "comment", required = false) String comment,
                        RedirectAttributes ra) {
         try {
-            KhachHang kh = currentCustomer();
-            if (kh == null) throw new IllegalStateException("Bạn cần đăng nhập");
-            reviewService.updateIfAllowed(kh, id, stars, comment);
+            Customer customer = currentCustomer();
+            if (customer == null) throw new IllegalStateException("Bạn cần đăng nhập");
+            reviewService.updateIfAllowed(customer, id, stars, comment);
             ra.addFlashAttribute("msg", "Đã cập nhật đánh giá.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -64,9 +64,9 @@ public class AccountReviewController {
                          @RequestParam("orderId") Integer orderId,
                          RedirectAttributes ra) {
         try {
-            KhachHang kh = currentCustomer();
-            if (kh == null) throw new IllegalStateException("Bạn cần đăng nhập");
-            reviewService.deleteIfAllowed(kh, id);
+            Customer customer = currentCustomer();
+            if (customer == null) throw new IllegalStateException("Bạn cần đăng nhập");
+            reviewService.deleteIfAllowed(customer, id);
             ra.addFlashAttribute("msg", "Đã xóa đánh giá.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());

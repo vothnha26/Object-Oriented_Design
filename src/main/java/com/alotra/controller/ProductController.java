@@ -4,11 +4,14 @@ import com.alotra.entity.*;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
-import com.alotra.repository.KhuyenMaiSanPhamRepository;
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.CartService;
-import com.alotra.service.KhachHangService;
+import com.alotra.service.CustomerService;
+import com.alotra.service.ReviewService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -25,23 +28,23 @@ public class ProductController {
     private final ProductVariantRepository variantRepo;
     private final ToppingRepository toppingRepo;
     private final CartService cartService;
-    private final KhachHangService khService;
-    private final KhuyenMaiSanPhamRepository promoRepo;
-    private final com.alotra.service.ReviewService reviewService;
+    private final CustomerService customerService;
+    private final ProductPromotionRepository productPromotionRepository;
+    private final ReviewService reviewService;
 
     public ProductController(ProductRepository productRepo,
                              ProductVariantRepository variantRepo,
                              ToppingRepository toppingRepo,
                              CartService cartService,
-                             KhachHangService khService,
-                             KhuyenMaiSanPhamRepository promoRepo,
-                             com.alotra.service.ReviewService reviewService) {
+                             CustomerService customerService,
+                             ProductPromotionRepository productPromotionRepository,
+                             ReviewService reviewService) {
         this.productRepo = productRepo;
         this.variantRepo = variantRepo;
         this.toppingRepo = toppingRepo;
         this.cartService = cartService;
-        this.khService = khService;
-        this.promoRepo = promoRepo;
+        this.customerService = customerService;
+        this.productPromotionRepository = productPromotionRepository;
         this.reviewService = reviewService;
     }
 
@@ -49,17 +52,16 @@ public class ProductController {
     public String detail(@PathVariable Integer id, Model model) {
         Product p = productRepo.findById(id).orElseThrow();
         List<ProductVariant> variants = variantRepo.findByProduct(p);
-        variants.removeIf(v -> v.getStatus() == null || v.getStatus() == 0);
+        variants.removeIf(v -> !v.isActive());
         variants.sort(Comparator.comparing(ProductVariant::getPrice));
         List<Topping> toppings = toppingRepo.findByDeletedAtIsNull();
-        toppings.removeIf(t -> t.getStatus() != null && t.getStatus() == 0);
+        toppings.removeIf(t -> !t.isAvailable());
 
-        Integer discountPercent = promoRepo.findActiveMaxDiscountPercentForProduct(p.getId());
+        Integer discountPercent = productPromotionRepository.findActiveMaxDiscountPercentForProduct(p.getId());
         BigDecimal basePrice = (!variants.isEmpty() ? variants.get(0).getPrice() : BigDecimal.ZERO);
         BigDecimal discountedPrice = applyPercent(basePrice, discountPercent);
 
-        // Fetch reviews for this product (newest first)
-        java.util.List<com.alotra.entity.DanhGia> reviews = reviewService.listByProduct(id, null);
+        List<Review> reviews = reviewService.listByProduct(id, null);
 
         model.addAttribute("pageTitle", p.getName());
         model.addAttribute("product", p);
@@ -87,22 +89,22 @@ public class ProductController {
                             @RequestParam(value = "sugar", defaultValue = "Bình thường") String sugar,
                             @RequestParam(value = "ice", defaultValue = "Bình thường") String ice,
                             HttpServletRequest request,
-                            @org.springframework.security.core.annotation.AuthenticationPrincipal KhachHangUserDetails principal,
+                            @AuthenticationPrincipal CustomerUserDetails principal,
                             RedirectAttributes ra) {
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        KhachHang kh = null;
-        if (principal != null) kh = principal.getKhachHang();
-        if (kh == null && auth != null && auth.isAuthenticated() && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
-            kh = khService.findByUsername(auth.getName());
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        Customer customer = null;
+        if (principal != null) customer = principal.getCustomer();
+        if (customer == null && auth != null && auth.isAuthenticated() && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+            customer = customerService.findByUsername(auth.getName());
         }
-        if (kh == null) {
+        if (customer == null) {
             ra.addFlashAttribute("error", "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng");
             return "redirect:/login";
         }
         Map<Integer, Integer> toppingQty = extractToppings(request);
         String note = String.format("Đường: %s; Đá: %s", sugar, ice);
         try {
-            cartService.addItemWithOptions(kh, variantId, qty, toppingQty, note);
+            cartService.addItemWithOptions(customer, variantId, qty, toppingQty, note);
             ra.addFlashAttribute("message", "Đã thêm vào giỏ hàng");
             return "redirect:/";
         } catch (RuntimeException ex) {

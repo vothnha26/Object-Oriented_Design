@@ -1,0 +1,329 @@
+@startuml AloTra_ClassDiagram
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+skinparam linetype ortho
+
+' =============================================
+' ENUMS
+' =============================================
+enum CustomerStatus {
+    ACTIVE
+    INACTIVE
+    BANNED
+}
+
+enum EmployeeStatus {
+    ACTIVE
+    INACTIVE
+}
+
+enum EmployeeRole {
+    ADMIN
+    STAFF
+    SHIPPER
+}
+
+enum ProductStatus {
+    ACTIVE
+    INACTIVE
+    OUT_OF_STOCK
+}
+
+enum PromotionStatus {
+    ACTIVE
+    INACTIVE
+    EXPIRED
+}
+
+enum ToppingStatus {
+    ACTIVE
+    INACTIVE
+}
+
+enum OrderStatus {
+    PENDING
+    PREPARING
+    DELIVERING
+    DELIVERED
+    CANCELLED
+}
+
+enum PaymentStatus {
+    UNPAID
+    PAID
+    REFUNDED
+}
+
+enum PaymentMethod {
+    CASH
+    BANK_TRANSFER
+    MOMO
+}
+
+enum ReceivingMethod {
+    DELIVERY
+    PICKUP
+}
+
+enum Unit {
+    KG
+    GRAM
+    LITER
+    ML
+    PIECE
+}
+
+' =============================================
+' ABSTRACT BASE
+' =============================================
+abstract class User {
+    - Integer id
+    - String username
+    - String passwordHash
+    - String email
+    - String fullName
+    - String phone
+    - LocalDateTime createdAt
+    + getDisplayName() : String
+    + isActive() : boolean
+}
+
+class Customer {
+    - CustomerStatus status
+}
+
+class Employee {
+    - EmployeeStatus status
+    - EmployeeRole role
+    - LocalDateTime deletedAt
+    + isAdmin() : boolean
+    + isShipper() : boolean
+}
+
+User <|-- Customer
+User <|-- Employee
+Customer ..> CustomerStatus
+Employee ..> EmployeeStatus
+Employee ..> EmployeeRole
+
+' =============================================
+' VALUE OBJECTS
+' =============================================
+class ShippingInfo <<embeddable>> {
+    - String receiverName
+    - String receiverPhone
+    - String shippingAddress
+    - ReceivingMethod method
+    + isValid() : boolean
+}
+
+class PaymentInfo <<embeddable>> {
+    - PaymentStatus status
+    - PaymentMethod method
+    - LocalDateTime paidAt
+    + isPaid() : boolean
+}
+
+ShippingInfo ..> ReceivingMethod
+PaymentInfo ..> PaymentStatus
+PaymentInfo ..> PaymentMethod
+
+' =============================================
+' ABSTRACT LINE ITEM
+' =============================================
+abstract class OrderLineItem {
+    - Integer quantity
+    - BigDecimal unitPrice
+    - BigDecimal lineTotal
+    - String note
+    + {abstract} calculateTotal() : BigDecimal
+}
+
+class CartItem {
+    - Integer id
+    + calculateTotal() : BigDecimal
+}
+
+class OrderItem {
+    - Integer id
+    - BigDecimal lineDiscount
+    + calculateTotal() : BigDecimal
+    + getNetTotal() : BigDecimal
+}
+
+OrderLineItem <|-- CartItem
+OrderLineItem <|-- OrderItem
+
+' =============================================
+' PRODUCT GROUP
+' =============================================
+class Category {
+    - Integer id
+    - String name
+    - String description
+    - LocalDateTime deletedAt
+}
+
+class Product {
+    - Integer id
+    - String name
+    - String description
+    - ProductStatus status
+    - String imageUrl
+    - LocalDateTime deletedAt
+    + isAvailable() : boolean
+}
+
+class ProductSize {
+    - Integer id
+    - String name
+    - ProductStatus status
+}
+
+class ProductVariant {
+    - Integer id
+    - BigDecimal price
+    - ProductStatus status
+    + isActive() : boolean
+}
+
+class Topping {
+    - Integer id
+    - String name
+    - BigDecimal extraPrice
+    - ToppingStatus status
+    - String imageUrl
+    - LocalDateTime deletedAt
+}
+
+Category "1" o-- "many" Product : contains
+Product "1" *-- "many" ProductVariant : has variants
+ProductSize "1" --> "many" ProductVariant : applies to
+Product ..> ProductStatus
+ProductVariant ..> ProductStatus
+ProductSize ..> ProductStatus
+Topping ..> ToppingStatus
+
+' =============================================
+' INVENTORY GROUP
+' =============================================
+class Ingredient {
+    - Integer id
+    - String name
+    - String description
+    - Unit unit
+    - LocalDateTime deletedAt
+    + isLowStock() : boolean
+}
+
+class IngredientStock {
+    - Integer id
+    - BigDecimal quantity
+    - BigDecimal alertThreshold
+    - LocalDateTime updatedAt
+    + isEnough(BigDecimal needed) : boolean
+    + restock(BigDecimal amount) : void
+    + consume(BigDecimal amount) : void
+}
+
+Ingredient ..> Unit
+Ingredient "1" *-- "1" IngredientStock : tracks stock
+
+' =============================================
+' PROMOTION GROUP
+' =============================================
+class Promotion {
+    - Integer id
+    - String name
+    - String description
+    - LocalDate startDate
+    - LocalDate endDate
+    - PromotionStatus status
+    - String imageUrl
+    - Integer views
+    - LocalDateTime deletedAt
+    + isActive() : boolean
+}
+
+class ProductPromotion {
+    - ProductPromotionId id
+    - Integer discountPercent
+    + applyDiscount(BigDecimal price) : BigDecimal
+    + isValidDiscount() : boolean
+}
+
+Promotion ..> PromotionStatus
+Promotion "1" *-- "many" ProductPromotion : includes
+Product "1" o-- "many" ProductPromotion : is applied to
+
+' =============================================
+' CART GROUP
+' =============================================
+class Cart {
+    - Integer id
+    - String status
+    - LocalDateTime createdAt
+    - LocalDateTime updatedAt
+    + getItemCount() : int
+    + getTotalAmount() : BigDecimal
+}
+
+Customer "1" o-- "many" Cart : owns
+Cart "1" *-- "many" CartItem : contains
+ProductVariant "1" --> "many" CartItem : references
+
+' =============================================
+' ORDER GROUP
+' =============================================
+class Order {
+    - Integer id
+    - LocalDateTime createdAt
+    - OrderStatus status
+    - BigDecimal subtotal
+    - BigDecimal discount
+    - BigDecimal shippingFee
+    - BigDecimal totalAmount
+    - String note
+    - ShippingInfo shippingInfo
+    - PaymentInfo payment
+    + canCancel() : boolean
+    + isDone() : boolean
+    + calcFinalTotal() : BigDecimal
+    + syncTotal() : void
+}
+
+Order *-- ShippingInfo : contains
+Order *-- PaymentInfo : contains
+Order ..> OrderStatus
+
+Customer "1" o-- "many" Order : places
+Employee "1" --> "many" Order : handles
+Promotion "0..1" --> "many" Order : applied to
+Order "1" *-- "many" OrderItem : contains
+ProductVariant "1" --> "many" OrderItem : references
+
+' =============================================
+' REVIEW GROUP
+' =============================================
+class Review {
+    - Integer id
+    - Integer stars
+    - String comment
+    - LocalDateTime createdAt
+    - String adminReply
+    - LocalDateTime adminRepliedAt
+    + hasReply() : boolean
+}
+
+Customer "1" o-- "many" Review : writes
+OrderItem "1" *-- "0..1" Review : is reviewed
+Employee "0..1" --> "many" Review : replies to
+
+@enduml

@@ -3,11 +3,13 @@ package com.alotra.controller.admin;
 import com.alotra.entity.Category;
 import com.alotra.entity.Product;
 import com.alotra.entity.ProductVariant;
-import com.alotra.entity.SizeSanPham;
+import com.alotra.entity.ProductSize;
+import com.alotra.entity.enums.ProductStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
-import com.alotra.repository.SizeSanPhamRepository;
+import com.alotra.repository.ProductSizeRepository;
+import com.alotra.repository.OrderItemRepository;
 import com.alotra.service.CloudinaryService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -26,27 +28,23 @@ import java.util.*;
 public class AdminProductController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final SizeSanPhamRepository sizeRepository;
+    private final ProductSizeRepository sizeRepository;
     private final ProductVariantRepository variantRepository;
     private final CloudinaryService cloudinaryService;
-    // New: prevent delete when referenced
-    private final com.alotra.repository.KhuyenMaiSanPhamRepository promoLinkRepository;
-    private final com.alotra.repository.CTDonHangRepository orderLineRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public AdminProductController(ProductRepository productRepository,
                                   CategoryRepository categoryRepository,
-                                  SizeSanPhamRepository sizeRepository,
+                                  ProductSizeRepository sizeRepository,
                                   ProductVariantRepository variantRepository,
                                   CloudinaryService cloudinaryService,
-                                  com.alotra.repository.KhuyenMaiSanPhamRepository promoLinkRepository,
-                                  com.alotra.repository.CTDonHangRepository orderLineRepository) {
+                                  OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.sizeRepository = sizeRepository;
         this.variantRepository = variantRepository;
         this.cloudinaryService = cloudinaryService;
-        this.promoLinkRepository = promoLinkRepository;
-        this.orderLineRepository = orderLineRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @GetMapping
@@ -54,13 +52,17 @@ public class AdminProductController {
                        @RequestParam(value = "kw", required = false) String kw,
                        @RequestParam(value = "categoryId", required = false) Integer categoryId,
                        @RequestParam(value = "status", required = false) Integer status) {
-        // Normalize inputs
         String keyword = (kw != null && !kw.isBlank()) ? kw.trim() : null;
-        List<Product> items = productRepository.adminSearch(keyword, categoryId, status);
+        ProductStatus statusEnum = null;
+        if (status != null) {
+            try {
+                statusEnum = ProductStatus.fromValue(status);
+            } catch (Exception ignored) { }
+        }
+        List<Product> items = productRepository.adminSearch(keyword, categoryId, statusEnum);
         model.addAttribute("pageTitle", "Sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("items", items);
-        // Filters
         model.addAttribute("kw", kw);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("status", status);
@@ -68,13 +70,11 @@ public class AdminProductController {
         return "admin/products";
     }
 
-    // Quick view: JSON variants for a product
     @GetMapping("/{id}/variants/json")
     @ResponseBody
     public ResponseEntity<?> getVariantsJson(@PathVariable Integer id) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) return ResponseEntity.notFound().build();
-        // Eagerly fetch Size to avoid lazy loading issues outside view
         List<ProductVariant> list = variantRepository.findByProductFetchingSize(productOpt.get());
         List<Map<String, Object>> data = new ArrayList<>();
         for (ProductVariant v : list) {
@@ -94,7 +94,6 @@ public class AdminProductController {
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", new Product());
         model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
-        // Include sizes so we can define variants right at creation time
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
     }
@@ -111,7 +110,6 @@ public class AdminProductController {
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", p);
         model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
-        // Eagerly fetch size to prevent LazyInitializationException in template (v.size.name)
         model.addAttribute("variants", variantRepository.findByProductFetchingSize(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
@@ -121,12 +119,10 @@ public class AdminProductController {
     public String save(@ModelAttribute Product product,
                        @RequestParam("categoryId") Integer categoryId,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                       // New: batch variants right from the create form
                        @RequestParam(value = "variantSizeId", required = false) List<Integer> variantSizeIds,
                        @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
                        @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
                        RedirectAttributes ra) {
-        // Unique name guard (active products only, case-insensitive)
         String name = product.getName() != null ? product.getName().trim() : null;
         product.setName(name);
         if (name == null || name.isBlank()) {
@@ -134,49 +130,42 @@ public class AdminProductController {
             return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
         }
         var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-        if (dup != null && (product.getId() == null || !dup.getId().equals(product.getId()))) {
+        if (dup != null && (product.getId() == null || !java.util.Objects.equals(dup.getId(), product.getId()))) {
             ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
             return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
         }
-        // attach category
         Category cat = new Category();
         cat.setId(categoryId);
         product.setCategory(cat);
-        // default active if not provided
         if (product.getStatus() == null) {
-            product.setStatus(1);
+            product.setStatus(ProductStatus.ACTIVE);
         }
-        // if image uploaded => upload to cloudinary
         if (imageFile != null && !imageFile.isEmpty()) {
             String url = cloudinaryService.uploadFile(imageFile);
             product.setImageUrl(url);
         }
-        // save product first to get ID
         product = productRepository.save(product);
 
-        // If variants are provided in the same form (creation time), persist them now
         if (variantSizeIds != null && !variantSizeIds.isEmpty()) {
-            // Ensure parallel lists are aligned; use min size to avoid IndexOutOfBounds
             int n = variantSizeIds.size();
             int pn = variantPrices != null ? variantPrices.size() : 0;
             int sn = variantStatuses != null ? variantStatuses.size() : 0;
-            int limit = Math.min(n, Math.min(pn, Math.max(sn, n))); // status optional, default 1
-            // Avoid duplicate sizes within the same product
+            int limit = Math.min(n, Math.min(pn, Math.max(sn, n)));
             Set<Integer> seenSizeIds = new HashSet<>();
             for (int i = 0; i < limit; i++) {
                 Integer sizeId = variantSizeIds.get(i);
                 BigDecimal price = (variantPrices != null && i < variantPrices.size()) ? variantPrices.get(i) : null;
                 Integer statusVal = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : 1;
                 if (sizeId == null || price == null) continue;
-                if (price.signum() < 0) continue; // skip negative
-                if (!seenSizeIds.add(sizeId)) continue; // skip duplicate rows
+                if (price.signum() < 0) continue;
+                if (!seenSizeIds.add(sizeId)) continue;
                 ProductVariant v = new ProductVariant();
                 v.setProduct(product);
-                SizeSanPham sz = new SizeSanPham();
+                ProductSize sz = new ProductSize();
                 sz.setId(sizeId);
                 v.setSize(sz);
                 v.setPrice(price);
-                v.setStatus(statusVal != null ? statusVal : 1);
+                v.setStatus(ProductStatus.fromValue(statusVal != null ? statusVal : 1));
                 variantRepository.save(v);
             }
         }
@@ -193,18 +182,16 @@ public class AdminProductController {
         }
         Product p = opt.get();
 
-        // 3) Used in order lines via variants?
         long usedInOrders = 0L;
         try {
-            usedInOrders = orderLineRepository.countByVariant_Product_Id(p.getId());
-        } catch (Exception ignored) { /* if method unavailable */ }
+            usedInOrders = orderItemRepository.countByVariant_Product_Id(p.getId());
+        } catch (Exception ignored) { }
         if (usedInOrders > 0) {
             ra.addFlashAttribute("error", "Không thể xóa sản phẩm vì đã phát sinh đơn hàng.");
             return "redirect:/admin/products";
         }
-        // Passed all guards => soft delete
         p.setDeletedAt(LocalDateTime.now());
-        p.setStatus(0);
+        p.setStatus(ProductStatus.INACTIVE);
         productRepository.save(p);
         ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
         return "redirect:/admin/products";
@@ -222,13 +209,13 @@ public class AdminProductController {
             return "redirect:/admin/products";
         }
         Product p = productOpt.get();
-        SizeSanPham size = new SizeSanPham();
+        ProductSize size = new ProductSize();
         size.setId(sizeId);
         ProductVariant v = new ProductVariant();
         v.setProduct(p);
         v.setSize(size);
         v.setPrice(price);
-        v.setStatus(status);
+        v.setStatus(ProductStatus.fromValue(status));
         variantRepository.save(v);
         return "redirect:/admin/products/edit/" + id;
     }

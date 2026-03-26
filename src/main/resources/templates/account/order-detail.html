@@ -24,9 +24,10 @@
                             <div><strong>Ngày đặt:</strong> <span th:text="${order.createdAt != null ? #temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></span></div>
                         </div>
                         <div class="col-md-6">
-                            <div><strong>Trạng thái:</strong> <span class="badge" th:text="${order.status}"
-                                   th:classappend="${order.status=='ChoXuLy'?'bg-warning':(order.status=='DangPhaChe'?'bg-primary':(order.status=='DangGiao'?'bg-info':(order.status=='DaGiao'?'bg-success':'bg-secondary')))}"></span></div>
-                            <div><strong>Thanh toán:</strong> <span class="badge" th:text="${order.paymentStatus}" th:classappend="${order.paymentStatus == 'DaThanhToan' ? 'bg-success' : 'bg-secondary'}"></span></div>
+                            <div><strong>Trạng thái:</strong> <span class="badge" 
+                                   th:text="${order.status.name() == 'PENDING' ? 'Chờ xử lý' : (order.status.name() == 'PREPARING' ? 'Đang pha chế' : (order.status.name() == 'DELIVERING' ? 'Đang giao' : (order.status.name() == 'DELIVERED' ? 'Đã giao' : (order.status.name() == 'CANCELLED' ? 'Đã hủy' : order.status))))}"
+                                   th:classappend="${order.status.name() == 'PENDING' ? 'bg-warning' : (order.status.name() == 'PREPARING' ? 'bg-primary' : (order.status.name() == 'DELIVERING' ? 'bg-info' : (order.status.name() == 'DELIVERED' ? 'bg-success' : 'bg-secondary')))}"></span></div>
+                            <div><strong>Thanh toán:</strong> <span class="badge" th:text="${order.paymentStatus.name() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}" th:classappend="${order.paymentStatus.name() == 'PAID' ? 'bg-success' : 'bg-secondary'}"></span></div>
                         </div>
                     </div>
                 </div>
@@ -163,9 +164,9 @@
                     <h5 class="card-title">Nhận hàng</h5>
                     <div class="mb-2">
                         <strong>Phương thức:</strong>
-                        <span th:text="${order.receivingMethod == 'Ship' ? 'Ship tận nơi' : 'Đến cửa hàng lấy'}">Ship tận nơi</span>
+                        <span th:text="${order.receivingMethod.name() == 'DELIVERY' ? 'Ship tận nơi' : 'Đến cửa hàng lấy'}">Ship tận nơi</span>
                     </div>
-                    <div th:if="${order.receivingMethod == 'Ship'}">
+                    <div th:if="${order.receivingMethod.name() == 'DELIVERY'}">
                         <div><strong>Người nhận:</strong> <span th:text="${order.receiverName} ?: '-'">-</span></div>
                         <div><strong>SĐT:</strong> <span th:text="${order.receiverPhone} ?: '-'">-</span></div>
                         <div><strong>Địa chỉ:</strong> <span th:text="${order.shippingAddress} ?: '-'">-</span></div>

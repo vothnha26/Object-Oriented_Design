@@ -1,17 +1,13 @@
 package com.alotra.controller.admin;
 
-import com.alotra.entity.Category;
-import com.alotra.entity.NhanVien;
-import com.alotra.entity.Product;
-import com.alotra.entity.Topping;
-import com.alotra.entity.SuKienKhuyenMai;
+import com.alotra.entity.Promotion;
 import com.alotra.repository.CategoryRepository;
-import com.alotra.repository.NhanVienRepository;
+import com.alotra.repository.EmployeeRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
-import com.alotra.repository.SuKienKhuyenMaiRepository;
-import com.alotra.repository.KhuyenMaiSanPhamRepository;
-import com.alotra.service.NhanVienService;
+import com.alotra.repository.PromotionRepository;
+import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.service.EmployeeService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,25 +22,25 @@ public class AdminTrashController {
     private final CategoryRepository categoryRepo;
     private final ProductRepository productRepo;
     private final ToppingRepository toppingRepo;
-    private final NhanVienRepository nhanVienRepo;
-    private final NhanVienService nhanVienService;
-    private final SuKienKhuyenMaiRepository promotionRepo;
-    private final KhuyenMaiSanPhamRepository promoLinkRepo;
+    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
+    private final PromotionRepository promotionRepo;
+    private final ProductPromotionRepository productPromotionRepository;
 
     public AdminTrashController(CategoryRepository categoryRepo,
                                 ProductRepository productRepo,
                                 ToppingRepository toppingRepo,
-                                NhanVienRepository nhanVienRepo,
-                                NhanVienService nhanVienService,
-                                SuKienKhuyenMaiRepository promotionRepo,
-                                KhuyenMaiSanPhamRepository promoLinkRepo) {
+                                EmployeeRepository employeeRepository,
+                                EmployeeService employeeService,
+                                PromotionRepository promotionRepo,
+                                ProductPromotionRepository productPromotionRepository) {
         this.categoryRepo = categoryRepo;
         this.productRepo = productRepo;
         this.toppingRepo = toppingRepo;
-        this.nhanVienRepo = nhanVienRepo;
-        this.nhanVienService = nhanVienService;
+        this.employeeRepository = employeeRepository;
+        this.employeeService = employeeService;
         this.promotionRepo = promotionRepo;
-        this.promoLinkRepo = promoLinkRepo;
+        this.productPromotionRepository = productPromotionRepository;
     }
 
     @GetMapping
@@ -54,12 +50,11 @@ public class AdminTrashController {
         model.addAttribute("categories", categoryRepo.findByDeletedAtIsNotNull());
         model.addAttribute("products", productRepo.findByDeletedAtIsNotNull());
         model.addAttribute("toppings", toppingRepo.findByDeletedAtIsNotNull());
-        model.addAttribute("employees", nhanVienRepo.findByDeletedAtIsNotNull());
+        model.addAttribute("employees", employeeRepository.findByDeletedAtIsNotNull());
         model.addAttribute("promotions", promotionRepo.findByDeletedAtIsNotNull());
         return "admin/trash";
     }
 
-    // Restore
     @GetMapping("/categories/{id}/restore")
     public String restoreCategory(@PathVariable Integer id, RedirectAttributes ra) {
         categoryRepo.findById(id).ifPresent(c -> { c.setDeletedAt(null); categoryRepo.save(c); });
@@ -83,7 +78,7 @@ public class AdminTrashController {
 
     @GetMapping("/employees/{id}/restore")
     public String restoreEmployee(@PathVariable Integer id, RedirectAttributes ra) {
-        nhanVienService.restoreFromTrash(id);
+        employeeService.restoreFromTrash(id);
         ra.addFlashAttribute("message", "Đã khôi phục nhân viên.");
         return "redirect:/admin/trash";
     }
@@ -95,7 +90,6 @@ public class AdminTrashController {
         return "redirect:/admin/trash";
     }
 
-    // Hard delete (may violate FK) => show friendly error
     @GetMapping("/categories/{id}/delete")
     public String hardDeleteCategory(@PathVariable Integer id, RedirectAttributes ra) {
         try {
@@ -132,7 +126,7 @@ public class AdminTrashController {
     @GetMapping("/employees/{id}/delete")
     public String hardDeleteEmployee(@PathVariable Integer id, RedirectAttributes ra) {
         try {
-            nhanVienService.deleteById(id);
+            employeeService.deleteById(id);
             ra.addFlashAttribute("message", "Đã xóa vĩnh viễn nhân viên.");
         } catch (DataIntegrityViolationException ex) {
             ra.addFlashAttribute("error", "Không thể xóa vì nhân viên đã tham gia xử lý đơn hàng.");
@@ -147,9 +141,8 @@ public class AdminTrashController {
             ra.addFlashAttribute("error", "Không tìm thấy sự kiện khuyến mãi.");
             return "redirect:/admin/trash";
         }
-        SuKienKhuyenMai promo = opt.get();
-        // Block hard delete when still applied to products
-        if (!promoLinkRepo.findByPromotion(promo).isEmpty()) {
+        Promotion promo = opt.get();
+        if (!productPromotionRepository.findByPromotion(promo).isEmpty()) {
             ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa.");
             return "redirect:/admin/trash";
         }

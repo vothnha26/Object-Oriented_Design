@@ -3,11 +3,13 @@ package com.alotra.controller.vendor;
 import com.alotra.entity.Category;
 import com.alotra.entity.Product;
 import com.alotra.entity.ProductVariant;
-import com.alotra.entity.SizeSanPham;
+import com.alotra.entity.ProductSize;
+import com.alotra.entity.enums.ProductStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
-import com.alotra.repository.SizeSanPhamRepository;
+import com.alotra.repository.ProductSizeRepository;
+import com.alotra.repository.OrderItemRepository;
 import com.alotra.service.CloudinaryService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -26,23 +28,23 @@ import java.util.*;
 public class VendorProductController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final SizeSanPhamRepository sizeRepository;
+    private final ProductSizeRepository sizeRepository;
     private final ProductVariantRepository variantRepository;
     private final CloudinaryService cloudinaryService;
-    private final com.alotra.repository.CTDonHangRepository orderLineRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public VendorProductController(ProductRepository productRepository,
                                    CategoryRepository categoryRepository,
-                                   SizeSanPhamRepository sizeRepository,
+                                   ProductSizeRepository sizeRepository,
                                    ProductVariantRepository variantRepository,
                                    CloudinaryService cloudinaryService,
-                                   com.alotra.repository.CTDonHangRepository orderLineRepository) {
+                                   OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.sizeRepository = sizeRepository;
         this.variantRepository = variantRepository;
         this.cloudinaryService = cloudinaryService;
-        this.orderLineRepository = orderLineRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     @GetMapping
@@ -51,7 +53,13 @@ public class VendorProductController {
                        @RequestParam(value = "categoryId", required = false) Integer categoryId,
                        @RequestParam(value = "status", required = false) Integer status) {
         String keyword = (kw != null && !kw.isBlank()) ? kw.trim() : null;
-        List<Product> items = productRepository.adminSearch(keyword, categoryId, status);
+        ProductStatus statusEnum = null;
+        if (status != null) {
+            try {
+                statusEnum = ProductStatus.fromValue(status);
+            } catch (Exception ignored) { }
+        }
+        List<Product> items = productRepository.adminSearch(keyword, categoryId, statusEnum);
         model.addAttribute("pageTitle", "Sản phẩm");
         model.addAttribute("currentPage", "vendor-products");
         model.addAttribute("items", items);
@@ -122,7 +130,7 @@ public class VendorProductController {
             return product.getId() == null ? "redirect:/vendor/products/add" : ("redirect:/vendor/products/edit/" + product.getId());
         }
         var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-        if (dup != null && (product.getId() == null || !dup.getId().equals(product.getId()))) {
+        if (dup != null && (product.getId() == null || !java.util.Objects.equals(dup.getId(), product.getId()))) {
             ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
             return product.getId() == null ? "redirect:/vendor/products/add" : ("redirect:/vendor/products/edit/" + product.getId());
         }
@@ -130,23 +138,9 @@ public class VendorProductController {
         cat.setId(categoryId);
         product.setCategory(cat);
         if (product.getStatus() == null) {
-            product.setStatus(1);
-        }
-        // Preserve existing fields if editing and not provided in form
-        if (product.getId() != null) {
-            Optional<Product> oldOpt = productRepository.findById(product.getId());
-            if (oldOpt.isPresent()) {
-                Product old = oldOpt.get();
-                if (product.getDescription() == null) {
-                    product.setDescription(old.getDescription());
-                }
-                if (product.getImageUrl() == null || product.getImageUrl().isBlank()) {
-                    product.setImageUrl(old.getImageUrl());
-                }
-            }
+            product.setStatus(ProductStatus.ACTIVE);
         }
 
-        // Preserve existing fields when editing and not provided by the form
         Product existing = null;
         if (product.getId() != null) {
             existing = productRepository.findById(product.getId()).orElse(null);
@@ -155,19 +149,15 @@ public class VendorProductController {
             String url = cloudinaryService.uploadFile(imageFile);
             product.setImageUrl(url);
         } else if (existing != null) {
-            // Keep current image if not uploading new
             product.setImageUrl(existing.getImageUrl());
         }
-        // Preserve description if not bound
-        try {
-            var descField = product.getClass().getDeclaredField("description");
-            descField.setAccessible(true);
-            Object descVal = descField.get(product);
-            if ((descVal == null || String.valueOf(descVal).isEmpty()) && existing != null) {
-                descField.set(product, existing.getDescription());
+
+        if (existing != null) {
+            if (product.getDescription() == null || product.getDescription().isBlank()) {
+                product.setDescription(existing.getDescription());
             }
-        } catch (NoSuchFieldException ignored) { /* description may be absent */
-        } catch (IllegalAccessException ignored) {}
+        }
+
         product = productRepository.save(product);
 
         if (variantSizeIds != null && !variantSizeIds.isEmpty()) {
@@ -185,11 +175,11 @@ public class VendorProductController {
                 if (!seenSizeIds.add(sizeId)) continue;
                 ProductVariant v = new ProductVariant();
                 v.setProduct(product);
-                SizeSanPham sz = new SizeSanPham();
+                ProductSize sz = new ProductSize();
                 sz.setId(sizeId);
                 v.setSize(sz);
                 v.setPrice(price);
-                v.setStatus(statusVal != null ? statusVal : 1);
+                v.setStatus(ProductStatus.fromValue(statusVal != null ? statusVal : 1));
                 variantRepository.save(v);
             }
         }
@@ -207,14 +197,14 @@ public class VendorProductController {
         Product p = opt.get();
         long usedInOrders = 0L;
         try {
-            usedInOrders = orderLineRepository.countByVariant_Product_Id(p.getId());
+            usedInOrders = orderItemRepository.countByVariant_Product_Id(p.getId());
         } catch (Exception ignored) {}
         if (usedInOrders > 0) {
             ra.addFlashAttribute("error", "Không thể xóa sản phẩm vì đã phát sinh đơn hàng.");
             return "redirect:/vendor/products";
         }
         p.setDeletedAt(LocalDateTime.now());
-        p.setStatus(0);
+        p.setStatus(ProductStatus.INACTIVE);
         productRepository.save(p);
         ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
         return "redirect:/vendor/products";
@@ -232,13 +222,13 @@ public class VendorProductController {
             return "redirect:/vendor/products";
         }
         Product p = productOpt.get();
-        SizeSanPham size = new SizeSanPham();
+        ProductSize size = new ProductSize();
         size.setId(sizeId);
         ProductVariant v = new ProductVariant();
         v.setProduct(p);
         v.setSize(size);
         v.setPrice(price);
-        v.setStatus(status);
+        v.setStatus(ProductStatus.fromValue(status));
         variantRepository.save(v);
         return "redirect:/vendor/products/edit/" + id;
     }

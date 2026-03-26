@@ -1,9 +1,13 @@
 package com.alotra.service;
 
-import com.alotra.entity.DonHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.DonHangRepository;
-import com.alotra.repository.NhanVienRepository;
+import com.alotra.entity.Order;
+import com.alotra.entity.Employee;
+import com.alotra.entity.ShippingInfo;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentMethod;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.repository.OrderRepository;
+import com.alotra.repository.EmployeeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,44 +21,35 @@ import java.util.stream.Collectors;
 
 @Service
 public class ShipperOrderService {
-    private final DonHangRepository donHangRepository;
-    private final NhanVienRepository nhanVienRepository;
+    private final OrderRepository orderRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public ShipperOrderService(DonHangRepository donHangRepository, NhanVienRepository nhanVienRepository) {
-        this.donHangRepository = donHangRepository;
-        this.nhanVienRepository = nhanVienRepository;
+    public ShipperOrderService(OrderRepository orderRepository, EmployeeRepository employeeRepository) {
+        this.orderRepository = orderRepository;
+        this.employeeRepository = employeeRepository;
     }
 
-    /**
-     * Lấy thống kê cho dashboard của shipper (ĐÃ SỬA LỖI)
-     */
     public Map<String, Object> getDashboardStats(Integer shipperId) {
         Map<String, Object> stats = new HashMap<>();
 
-        // Xác định các mốc thời gian
         LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
-        // Tính mốc 7 ngày trước (ví dụ: nếu hôm nay là thứ 3, lấy từ thứ 3 tuần trước)
-        LocalDateTime startOfWeek = LocalDateTime.of(LocalDate.now().minusDays(6), LocalTime.MIN); // 7 ngày bao gồm hôm nay
+        LocalDateTime startOfWeek = LocalDateTime.of(LocalDate.now().minusDays(6), LocalTime.MIN);
 
-        // === BẮT ĐẦU SỬA LỖI: Gọi đúng các hàm Repository ===
+        // 1. Delivering (Specific to this shipper)
+        long shipping = orderRepository.countByEmployeeIdAndStatus(shipperId, OrderStatus.DELIVERING);
 
-        // 1. Đang giao (Chỉ của shipper này)
-        long shipping = donHangRepository.countByEmployeeIdAndStatus(shipperId, "DangGiao");
+        // 2. Delivered today (Specific to this shipper)
+        long deliveredToday = orderRepository.countByEmployeeIdAndStatusAndCreatedAtBetween(
+                shipperId, OrderStatus.DELIVERED, startOfDay, endOfDay);
 
-        // 2. Đã giao hôm nay (Chỉ của shipper này)
-        long deliveredToday = donHangRepository.countByEmployeeIdAndStatusAndCreatedAtBetween(
-                shipperId, "DaGiao", startOfDay, endOfDay);
+        // 3. Total assigned (Specific to this shipper)
+        List<OrderStatus> assignedStatuses = List.of(OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.DELIVERING);
+        long totalAssigned = orderRepository.countByEmployeeIdAndStatusIn(shipperId, assignedStatuses);
 
-        // 3. Tổng được phân công (Các đơn shipper này đang xử lý, bao gồm cả đơn vừa nhận)
-        List<String> assignedStatuses = List.of("ChoXuLy", "DangPhaChe", "DangGiao");
-        long totalAssigned = donHangRepository.countByEmployeeIdAndStatusIn(shipperId, assignedStatuses);
-
-        // 4. Giao tuần này (Tính 7 ngày gần nhất, chỉ của shipper này)
-        long deliveredThisWeek = donHangRepository.countByEmployeeIdAndStatusAndCreatedAtAfter(
-                shipperId, "DaGiao", startOfWeek);
-        
-        // === KẾT THÚC SỬA LỖI ===
+        // 4. Delivered this week (7 days, specific to this shipper)
+        long deliveredThisWeek = orderRepository.countByEmployeeIdAndStatusAndCreatedAtAfter(
+                shipperId, OrderStatus.DELIVERED, startOfWeek);
 
         stats.put("shipping", shipping);
         stats.put("deliveredToday", deliveredToday);
@@ -64,54 +59,46 @@ public class ShipperOrderService {
         return stats;
     }
 
-    /**
-     * Lấy danh sách đơn hàng (TẤT CẢ, không phân biệt shipper)
-     */
     public List<OrderDto> getAssignedOrders(Integer shipperId, String status, String keyword, Integer limit) {
-    	List<String> targetStatuses;
-        // Xác định các trạng thái cần lấy
+        final List<OrderStatus> targetStatuses;
         if (status != null && !status.isBlank()) {
-            // Nếu có lọc status cụ thể
-            if ("DaHuy".equals(status)) { // Tránh lấy đơn đã hủy trừ khi được yêu cầu rõ
-                 return List.of(); // Hoặc trả về đơn hủy nếu cần
+            OrderStatus filteredStatus = null;
+            try {
+                filteredStatus = OrderStatus.valueOf(status.toUpperCase());
+            } catch (Exception e) {
+                // Ignore invalid status
             }
-            targetStatuses = List.of(status);
+            if (filteredStatus != null && filteredStatus != OrderStatus.CANCELLED) {
+                targetStatuses = List.of(filteredStatus);
+            } else {
+                targetStatuses = List.of(OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.DELIVERING, OrderStatus.DELIVERED);
+            }
         } else {
-            // Mặc định lấy các trạng thái liên quan đến shipper (trừ hủy)
-            targetStatuses = List.of("ChoXuLy", "DangPhaChe", "DangGiao", "DaGiao");
+            targetStatuses = List.of(OrderStatus.PENDING, OrderStatus.PREPARING, OrderStatus.DELIVERING, OrderStatus.DELIVERED);
         }
         
-     // === Sử dụng query trong Repository (Cách tốt nhất) ===
-        // List<DonHang> orders = donHangRepository.findByEmployeeIdAndStatusIn(shipperId, targetStatuses);
-        // Tạm thời filter trong code:
-        List<DonHang> orders = donHangRepository.findAll().stream()
-                .filter(o -> o.getEmployee() != null && shipperId.equals(o.getEmployee().getId())) // LỌC THEO SHIPPER ID
-                .filter(o -> targetStatuses.contains(o.getStatus())) // Lọc theo trạng thái mong muốn
-             // === BẮT ĐẦU SỬA: Lọc bỏ đơn đã hoàn thành ===
-                .filter(o -> !(
-                    "DaGiao".equals(o.getStatus()) && "DaThanhToan".equals(o.getPaymentStatus())
-                ))
-                // === KẾT THÚC SỬA ===
+        List<Order> orders = orderRepository.findAll().stream()
+                .filter(o -> o.getEmployee() != null && java.util.Objects.equals(shipperId, o.getEmployee().getId()))
+                .filter(o -> targetStatuses.contains(o.getStatus()))
+                .filter(o -> !(o.getStatus() == OrderStatus.DELIVERED && o.getPayment().getStatus() == PaymentStatus.PAID))
                 .collect(Collectors.toList());
         
-        // Filter by keyword
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase();
             orders = orders.stream()
                 .filter(o -> {
                     String custName = o.getCustomer() != null && o.getCustomer().getFullName() != null 
                         ? o.getCustomer().getFullName().toLowerCase() : "";
-                    String phone = o.getReceiverPhone() != null ? o.getReceiverPhone() : "";
-                    String address = o.getShippingAddress() != null ? o.getShippingAddress().toLowerCase() : "";
+                    ShippingInfo si = o.getShippingInfo();
+                    String phone = si != null && si.getReceiverPhone() != null ? si.getReceiverPhone() : "";
+                    String address = si != null && si.getShippingAddress() != null ? si.getShippingAddress().toLowerCase() : "";
                     return custName.contains(kw) || phone.contains(kw) || address.contains(kw);
                 })
                 .collect(Collectors.toList());
         }
         
-        // Sort by created time desc
         orders.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
         
-        // Apply limit
         if (limit != null && limit > 0 && orders.size() > limit) {
             orders = orders.subList(0, limit);
         }
@@ -119,32 +106,27 @@ public class ShipperOrderService {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    /**
-     * Lấy danh sách đơn hàng chờ xử lý (chưa có shipper)
-     */
     public List<OrderDto> getAvailableOrders(String keyword, Integer limit) {
-    	List<DonHang> orders = donHangRepository.findAll().stream()
-                .filter(o -> "ChoXuLy".equals(o.getStatus()) && o.getEmployee() == null) // LOGIC ĐÚNG
+        List<Order> orders = orderRepository.findAll().stream()
+                .filter(o -> o.getStatus() == OrderStatus.PENDING && o.getEmployee() == null)
                 .collect(Collectors.toList());
         
-        // Filter by keyword
         if (keyword != null && !keyword.isBlank()) {
             String kw = keyword.toLowerCase();
             orders = orders.stream()
                 .filter(o -> {
                     String custName = o.getCustomer() != null && o.getCustomer().getFullName() != null 
                         ? o.getCustomer().getFullName().toLowerCase() : "";
-                    String phone = o.getReceiverPhone() != null ? o.getReceiverPhone() : "";
-                    String address = o.getShippingAddress() != null ? o.getShippingAddress().toLowerCase() : "";
+                    ShippingInfo si = o.getShippingInfo();
+                    String phone = si != null && si.getReceiverPhone() != null ? si.getReceiverPhone() : "";
+                    String address = si != null && si.getShippingAddress() != null ? si.getShippingAddress().toLowerCase() : "";
                     return custName.contains(kw) || phone.contains(kw) || address.contains(kw);
                 })
                 .collect(Collectors.toList());
         }
         
-        // Sort by created time desc
         orders.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
         
-        // Apply limit
         if (limit != null && limit > 0 && orders.size() > limit) {
             orders = orders.subList(0, limit);
         }
@@ -152,12 +134,9 @@ public class ShipperOrderService {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    /**
-     * Lấy đơn hàng đang giao (TẤT CẢ, không giới hạn ngày)
-     */
     public List<OrderDto> getTodayShippingOrders(Integer shipperId) {
-        List<DonHang> orders = donHangRepository.findAll().stream()
-            .filter(o -> "DangGiao".equals(o.getStatus()))
+        List<Order> orders = orderRepository.findAll().stream()
+            .filter(o -> o.getStatus() == OrderStatus.DELIVERING)
             .collect(Collectors.toList());
         
         orders.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));
@@ -165,225 +144,150 @@ public class ShipperOrderService {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
-    /**
-     * Cập nhật trạng thái đơn hàng (shipper chỉ có thể chuyển từ DangGiao -> DaGiao)
-     */
     @Transactional
     public boolean markAsDelivered(Integer orderId, Integer shipperId) {
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
-        // Kiểm tra đơn có được phân cho shipper này không
-        if (order.getEmployee() == null || !order.getEmployee().getId().equals(shipperId)) {
+        if (order.getEmployee() == null || !java.util.Objects.equals(order.getEmployee().getId(), shipperId)) {
             return false;
         }
         
-        // Chỉ cho phép chuyển từ DangGiao -> DaGiao
-        if (!"DangGiao".equals(order.getStatus())) {
+        if (order.getStatus() != OrderStatus.DELIVERING) {
             return false;
         }
         
-        order.setStatus("DaGiao");
-        donHangRepository.save(order);
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
         return true;
     }
 
-    /**
-     * Shipper nhận đơn hàng (assign shipper vào đơn)
-     */
     @Transactional
     public boolean acceptOrder(Integer orderId, Integer shipperId) {
-        System.out.println("=== SERVICE DEBUG: acceptOrder - orderId=" + orderId + ", shipperId=" + shipperId);
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return false;
+        if (order.getEmployee() != null) return false;
         
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
-        if (order == null) {
-            System.out.println("=== SERVICE DEBUG: Order NOT FOUND");
-            return false;
-        }
+        Employee shipper = employeeRepository.findById(shipperId).orElse(null);
+        if (shipper == null) return false;
         
-        System.out.println("=== SERVICE DEBUG: Order found, current employee=" + 
-            (order.getEmployee() != null ? order.getEmployee().getId() : "NULL"));
-        
-        // Chỉ nhận đơn chưa có shipper hoặc đang ChoXuLy
-        if (order.getEmployee() != null) {
-            System.out.println("=== SERVICE DEBUG: Order already has employee");
-            return false; // Đã có shipper khác
-        }
-        
-        // Load shipper entity từ database
-        NhanVien shipper = nhanVienRepository.findById(shipperId).orElse(null);
-        if (shipper == null) {
-            System.out.println("=== SERVICE DEBUG: Shipper NOT FOUND in database");
-            return false;
-        }
-        
-        System.out.println("=== SERVICE DEBUG: Shipper found: " + shipper.getFullName());
-        
-        // Gán shipper cho đơn
         order.setEmployee(shipper);
-        
-        System.out.println("=== SERVICE DEBUG: Saving order...");
-        donHangRepository.save(order);
-        System.out.println("=== SERVICE DEBUG: Order saved successfully");
+        orderRepository.save(order);
         return true;
     }
 
-    /**
-     * Chuyển bước tiếp theo của đơn hàng (như Vendor)
-     */
     @Transactional
     public boolean advanceOrder(Integer orderId, Integer shipperId) {
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
-        // Kiểm tra quyền: phải là shipper của đơn này
-        if (order.getEmployee() == null || !shipperId.equals(order.getEmployee().getId())) {
-            System.out.println("=== SERVICE ADVANCE: Order not assigned to this shipper");
+        if (order.getEmployee() == null || !java.util.Objects.equals(shipperId, order.getEmployee().getId())) {
             return false;
         }
         
-        // Block nếu chưa thanh toán mà là chuyển khoản
-        if ("ChuyenKhoan".equalsIgnoreCase(order.getPaymentMethod())
-                && !"DaThanhToan".equals(order.getPaymentStatus())) {
-            System.out.println("=== SERVICE ADVANCE: Blocked - ChuyenKhoan not paid");
+        if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
+                && order.getPayment().getStatus() != PaymentStatus.PAID) {
             return false;
         }
         
-        String currentStatus = order.getStatus();
-        
-        // === BỎ ĐOẠN CODE BLOCK NÀY ===
-        // if ("ChoXuLy".equals(currentStatus)) {
-        //     System.out.println("=== SERVICE ADVANCE: Cannot advance from ChoXuLy");
-        //     return false;
-        // }
-        // === KẾT THÚC BỎ ===
-        
-        String nextStatus = getNextStatus(currentStatus);
-        System.out.println("=== SERVICE ADVANCE: current=" + currentStatus + ", next=" + nextStatus);
+        OrderStatus currentStatus = order.getStatus();
+        OrderStatus nextStatus = getNextStatus(currentStatus);
 
-        if (nextStatus != null && !nextStatus.equals(currentStatus)) {
+        if (nextStatus != null && nextStatus != currentStatus) {
             order.setStatus(nextStatus);
-            donHangRepository.save(order);
-            System.out.println("=== SERVICE ADVANCE: Status updated");
+            orderRepository.save(order);
             return true;
         }
-        System.out.println("=== SERVICE ADVANCE: No status change");
         return false;
     }
 
-    /**
-     * Chuyển bước đơn giản - không cần kiểm tra ownership, tự động gán shipper
-     */
     @Transactional
     public boolean advanceOrderSimple(Integer orderId, Integer shipperId) {
-        System.out.println("=== SERVICE: advanceOrderSimple - orderId=" + orderId + ", shipperId=" + shipperId);
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return false;
         
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
-        if (order == null) {
-            System.out.println("=== SERVICE: Order NOT FOUND");
-            return false;
-        }
-        
-        // Nếu chưa có employee, tự động gán shipper này
         if (order.getEmployee() == null) {
-            NhanVien shipper = nhanVienRepository.findById(shipperId).orElse(null);
+            Employee shipper = employeeRepository.findById(shipperId).orElse(null);
             if (shipper != null) {
                 order.setEmployee(shipper);
-                System.out.println("=== SERVICE: Auto-assigned shipper to order");
             }
         }
         
-        // Block nếu chưa thanh toán mà là chuyển khoản
-        if ("ChuyenKhoan".equalsIgnoreCase(order.getPaymentMethod())
-                && !"DaThanhToan".equals(order.getPaymentStatus())) {
-            System.out.println("=== SERVICE: Blocked - ChuyenKhoan not paid yet");
+        if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
+                && order.getPayment().getStatus() != PaymentStatus.PAID) {
             return false;
         }
         
-        String currentStatus = order.getStatus();
-        String nextStatus = getNextStatus(currentStatus);
+        OrderStatus currentStatus = order.getStatus();
+        OrderStatus nextStatus = getNextStatus(currentStatus);
         
-        System.out.println("=== SERVICE: currentStatus=" + currentStatus + ", nextStatus=" + nextStatus);
-        
-        if (nextStatus != null && !nextStatus.equals(currentStatus)) {
+        if (nextStatus != null && nextStatus != currentStatus) {
             order.setStatus(nextStatus);
-            donHangRepository.save(order);
-            System.out.println("=== SERVICE: Order status updated successfully");
+            orderRepository.save(order);
             return true;
         }
-        
-        System.out.println("=== SERVICE: No status change needed");
         return false;
     }
 
-    /**
-     * Hủy đơn hàng (chỉ khi ChoXuLy hoặc DangPhaChe)
-     */
     @Transactional
     public boolean cancelOrder(Integer orderId, Integer shipperId) {
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
-        // Kiểm tra quyền
         if (order.getEmployee() == null || !order.getEmployee().getId().equals(shipperId)) {
             return false;
         }
         
-        String currentStatus = order.getStatus();
+        OrderStatus currentStatus = order.getStatus();
         if (canCancel(currentStatus)) {
-            order.setStatus("DaHuy");
-            donHangRepository.save(order);
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
             return true;
         }
-        
         return false;
     }
 
-    /**
-     * Lấy trạng thái tiếp theo
-     */
-    private String getNextStatus(String currentStatus) {
+    private OrderStatus getNextStatus(OrderStatus currentStatus) {
         if (currentStatus == null) return null;
-        switch (currentStatus) {
-            case "ChoXuLy": return "DangPhaChe";
-            case "DangPhaChe": return "DangGiao";
-            case "DangGiao": return "DaGiao";
-            default: return null;
-        }
+        return switch (currentStatus) {
+            case PENDING -> OrderStatus.PREPARING;
+            case PREPARING -> OrderStatus.DELIVERING;
+            case DELIVERING -> OrderStatus.DELIVERED;
+            default -> null;
+        };
     }
 
-    /**
-     * Kiểm tra có thể hủy đơn không
-     */
-    private boolean canCancel(String status) {
-        return "ChoXuLy".equals(status) || "DangPhaChe".equals(status);
+    private boolean canCancel(OrderStatus status) {
+        return status == OrderStatus.PENDING || status == OrderStatus.PREPARING;
     }
 
-    /**
-     * Kiểm tra xem đơn có thuộc về shipper này không
-     */
     public boolean isOrderAssignedToShipper(Integer orderId, Integer shipperId) {
-        DonHang order = donHangRepository.findById(orderId).orElse(null);
+        Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
-        
         return order.getEmployee() != null && order.getEmployee().getId().equals(shipperId);
     }
 
-    private OrderDto toDto(DonHang o) {
+    private OrderDto toDto(Order o) {
         OrderDto dto = new OrderDto();
         dto.id = o.getId();
         dto.customerName = o.getCustomer() != null ? o.getCustomer().getFullName() : "N/A";
         dto.customerPhone = o.getCustomer() != null ? o.getCustomer().getPhone() : "N/A";
-        dto.receiverName = o.getReceiverName();
-        dto.receiverPhone = o.getReceiverPhone();
-        dto.shippingAddress = o.getShippingAddress();
+        ShippingInfo si = o.getShippingInfo();
+        dto.receiverName = si != null ? si.getReceiverName() : null;
+        dto.receiverPhone = si != null ? si.getReceiverPhone() : null;
+        dto.shippingAddress = si != null ? si.getShippingAddress() : null;
         dto.createdAt = o.getCreatedAt();
-        dto.status = o.getStatus();
-        dto.paymentStatus = o.getPaymentStatus();
-        dto.paymentMethod = o.getPaymentMethod();
-        dto.total = o.getTongThanhToan();
+        dto.status = o.getStatus() != null ? o.getStatus().name() : null;
+        if (o.getPayment() != null) {
+            dto.paymentStatus = o.getPayment().getStatus() != null ? o.getPayment().getStatus().name() : null;
+            dto.paymentMethod = o.getPayment().getMethod() != null ? o.getPayment().getMethod().name() : null;
+        } else {
+            dto.paymentStatus = null;
+            dto.paymentMethod = null;
+        }
+        dto.total = o.getTotalAmount();
         dto.note = o.getNote();
-        dto.receivingMethod = o.getReceivingMethod();
+        dto.receivingMethod = si != null && si.getMethod() != null ? si.getMethod().name() : null;
         return dto;
     }
 

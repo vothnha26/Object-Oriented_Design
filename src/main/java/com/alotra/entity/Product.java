@@ -1,11 +1,11 @@
-// 📁 com/alotra/entity/Product.java
 package com.alotra.entity;
 
+import com.alotra.entity.enums.ProductStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "SanPham")
+@Table(name = "Product")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -14,7 +14,7 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "MaDM", nullable = false)
-    private Category category; // This should map to DanhMucSanPham entity
+    private Category category;
 
     @Column(name = "TenSP", nullable = false)
     private String name;
@@ -22,15 +22,20 @@ public class Product {
     @Column(name = "MoTa")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TrangThai", nullable = false)
-    private Integer status;
+    private ProductStatus status = ProductStatus.ACTIVE;
 
     @Column(name = "UrlAnh")
     private String imageUrl;
 
-    // Soft delete timestamp (null = active)
     @Column(name = "DeletedAt")
     private LocalDateTime deletedAt;
+
+    // === Business methods ===
+    public boolean isAvailable() {
+        return status == ProductStatus.ACTIVE && deletedAt == null;
+    }
 
     // Getters and Setters
     public Integer getId() { return id; }
@@ -41,8 +46,8 @@ public class Product {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
+    public ProductStatus getStatus() { return status; }
+    public void setStatus(ProductStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public LocalDateTime getDeletedAt() { return deletedAt; }

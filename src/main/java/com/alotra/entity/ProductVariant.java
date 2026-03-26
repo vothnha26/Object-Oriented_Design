@@ -1,40 +1,44 @@
-// 📁 com/alotra/entity/ProductVariant.java
 package com.alotra.entity;
 
+import com.alotra.entity.enums.ProductStatus;
 import java.math.BigDecimal;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "BienTheSanPham")
+@Table(name = "ProductVariant")
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaBT")
+    @Column(name = "Id")
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MaSP", nullable = false)
+    @JoinColumn(name = "ProductId", nullable = false)
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MaSize", nullable = false)
-    private SizeSanPham size;
+    @JoinColumn(name = "ProductSizeId", nullable = false)
+    private ProductSize size;
 
-    @Column(name = "GiaBan", nullable = false)
+    @Column(name = "Price", nullable = false)
     private BigDecimal price;
 
-    @Column(name = "TrangThai", nullable = false)
-    private Integer status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "Status", nullable = false)
+    private ProductStatus status = ProductStatus.ACTIVE;
+
+    // === Business methods ===
+    public boolean isActive() { return status == ProductStatus.ACTIVE; }
 
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public Product getProduct() { return product; }
     public void setProduct(Product product) { this.product = product; }
-    public SizeSanPham getSize() { return size; }
-    public void setSize(SizeSanPham size) { this.size = size; }
+    public ProductSize getSize() { return size; }
+    public void setSize(ProductSize size) { this.size = size; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
+    public ProductStatus getStatus() { return status; }
+    public void setStatus(ProductStatus status) { this.status = status; }
 }

@@ -1,8 +1,11 @@
 package com.alotra.controller.vendor;
 
-import com.alotra.entity.DonHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.DonHangRepository;
+import com.alotra.entity.Order;
+import com.alotra.entity.Employee;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentMethod;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.repository.OrderRepository;
 import com.alotra.service.OrderHistoryService;
 import com.alotra.service.VendorOrderService;
 import com.alotra.service.OrderHistoryService.OrderItemRow;
@@ -17,22 +20,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.alotra.security.NhanVienUserDetails;
+import com.alotra.security.EmployeeUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Controller
 @RequestMapping("/vendor")
 public class VendorController {
     private final VendorOrderService vendorOrderService;
-    private final OrderHistoryService customerOrderService;
-    private final DonHangRepository donHangRepository;
+    private final OrderHistoryService orderHistoryService;
+    private final OrderRepository orderRepository;
 
     public VendorController(VendorOrderService vendorOrderService,
-                            OrderHistoryService customerOrderService,
-                            DonHangRepository donHangRepository) {
+                            OrderHistoryService orderHistoryService,
+                            OrderRepository orderRepository) {
         this.vendorOrderService = vendorOrderService;
-        this.customerOrderService = customerOrderService;
-        this.donHangRepository = donHangRepository;
+        this.orderHistoryService = orderHistoryService;
+        this.orderRepository = orderRepository;
     }
 
     @GetMapping({"", "/dashboard"})
@@ -58,14 +61,14 @@ public class VendorController {
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
-        OrderRow order = customerOrderService.getOrder(id);
+        OrderRow order = orderHistoryService.getOrder(id);
         if (order == null) {
             return "redirect:/vendor/orders";
         }
-        List<OrderItemRow> items = customerOrderService.listOrderItems(id);
+        List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow it : items) {
-            toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
+            toppings.put(it.id, orderHistoryService.listOrderItemToppings(it.id));
         }
         model.addAttribute("order", order);
         model.addAttribute("items", items);
@@ -76,14 +79,14 @@ public class VendorController {
 
     @GetMapping("/orders/{id}/invoice")
     public String invoice(@PathVariable Integer id, Model model) {
-        OrderRow order = customerOrderService.getOrder(id);
+        OrderRow order = orderHistoryService.getOrder(id);
         if (order == null) {
             return "redirect:/vendor/orders";
         }
-        List<OrderItemRow> items = customerOrderService.listOrderItems(id);
+        List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow it : items) {
-            toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
+            toppings.put(it.id, orderHistoryService.listOrderItemToppings(it.id));
         }
         model.addAttribute("order", order);
         model.addAttribute("items", items);
@@ -97,24 +100,23 @@ public class VendorController {
     @PostMapping("/orders/{id}/advance")
     public String advance(@PathVariable Integer id,
                           @RequestParam(required = false) String from,
-                          @AuthenticationPrincipal NhanVienUserDetails current) {
-        DonHang dh = donHangRepository.findById(id).orElse(null);
-        if (dh != null) {
-            // Assign current employee if not yet assigned
-            if (current != null && dh.getEmployee() == null) {
-                NhanVien nv = new NhanVien();
-                nv.setId(current.getId());
-                dh.setEmployee(nv);
-                donHangRepository.save(dh);
+                          @AuthenticationPrincipal EmployeeUserDetails current) {
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order != null) {
+            if (current != null && order.getEmployee() == null) {
+                Employee e = new Employee();
+                e.setId(current.getId());
+                order.setEmployee(e);
+                orderRepository.save(order);
             }
-            // Block advancing when unpaid bank transfer
-            if ("ChuyenKhoan".equalsIgnoreCase(String.valueOf(dh.getPaymentMethod()))
-                    && !"DaThanhToan".equals(dh.getPaymentStatus())) {
+            if (order.getPayment() != null
+                    && order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
+                    && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 return redirectFrom(id, from);
             }
-            String currentSt = dh.getStatus();
-            String next = vendorOrderService.nextStatus(currentSt);
-            if (next != null && !next.equals(currentSt)) {
+            OrderStatus currentSt = order.getStatus();
+            OrderStatus next = vendorOrderService.nextStatus(currentSt);
+            if (next != null && next != currentSt) {
                 vendorOrderService.updateStatus(id, next);
             }
         }
@@ -124,18 +126,18 @@ public class VendorController {
     @PostMapping("/orders/{id}/cancel")
     public String cancel(@PathVariable Integer id,
                          @RequestParam(required = false) String from,
-                         @AuthenticationPrincipal NhanVienUserDetails current) {
-        DonHang dh = donHangRepository.findById(id).orElse(null);
-        String currentSt = dh != null ? dh.getStatus() : null;
-        if (dh != null) {
-            if (current != null && dh.getEmployee() == null) {
-                NhanVien nv = new NhanVien();
-                nv.setId(current.getId());
-                dh.setEmployee(nv);
-                donHangRepository.save(dh);
+                         @AuthenticationPrincipal EmployeeUserDetails current) {
+        Order order = orderRepository.findById(id).orElse(null);
+        String currentSt = order != null && order.getStatus() != null ? order.getStatus().name() : null;
+        if (order != null) {
+            if (current != null && order.getEmployee() == null) {
+                Employee e = new Employee();
+                e.setId(current.getId());
+                order.setEmployee(e);
+                orderRepository.save(order);
             }
             if (vendorOrderService.canCancel(currentSt)) {
-                vendorOrderService.updateStatus(id, "DaHuy");
+                vendorOrderService.updateStatus(id, OrderStatus.CANCELLED);
             }
         }
         return redirectFrom(id, from);
@@ -144,18 +146,17 @@ public class VendorController {
     @PostMapping("/orders/{id}/mark-cash-paid")
     public String markCashPaid(@PathVariable Integer id,
                                @RequestParam(required = false) String from,
-                               @AuthenticationPrincipal NhanVienUserDetails current) {
-        donHangRepository.findById(id).ifPresent(dh -> {
-            if (!"DaThanhToan".equals(dh.getPaymentStatus())) {
-                dh.setPaymentStatus("DaThanhToan");
-                dh.setPaidAt(LocalDateTime.now());
-                // Assign employee if not yet assigned
-                if (current != null && dh.getEmployee() == null) {
-                    NhanVien nv = new NhanVien();
-                    nv.setId(current.getId());
-                    dh.setEmployee(nv);
+                               @AuthenticationPrincipal EmployeeUserDetails current) {
+        orderRepository.findById(id).ifPresent(order -> {
+            if (order.getPayment() != null && order.getPayment().getStatus() != PaymentStatus.PAID) {
+                order.getPayment().setStatus(PaymentStatus.PAID);
+                order.getPayment().setPaidAt(LocalDateTime.now());
+                if (current != null && order.getEmployee() == null) {
+                    Employee e = new Employee();
+                    e.setId(current.getId());
+                    order.setEmployee(e);
                 }
-                donHangRepository.save(dh);
+                orderRepository.save(order);
             }
         });
         return redirectFrom(id, from);

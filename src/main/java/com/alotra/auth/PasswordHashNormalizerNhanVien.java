@@ -1,7 +1,6 @@
 package com.alotra.auth;
 
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.NhanVienRepository;
+import com.alotra.repository.EmployeeRepository;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -9,10 +8,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PasswordHashNormalizerNhanVien implements ApplicationRunner {
-    private final NhanVienRepository repo;
+    private final EmployeeRepository repo;
     private final PasswordEncoder encoder;
 
-    public PasswordHashNormalizerNhanVien(NhanVienRepository repo, PasswordEncoder encoder) {
+    public PasswordHashNormalizerNhanVien(EmployeeRepository repo, PasswordEncoder encoder) {
         this.repo = repo;
         this.encoder = encoder;
     }

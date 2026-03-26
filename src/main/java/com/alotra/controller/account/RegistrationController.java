@@ -1,7 +1,8 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.repository.KhachHangRepository;
+import com.alotra.entity.Customer;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.repository.CustomerRepository;
 import com.alotra.service.OtpService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.constraints.Email;
@@ -18,23 +19,22 @@ import java.time.LocalDateTime;
 
 @Controller
 public class RegistrationController {
-    private final KhachHangRepository khRepo;
+    private final CustomerRepository customerRepository;
     private final PasswordEncoder encoder;
     private final OtpService otpService;
 
-    public RegistrationController(KhachHangRepository khRepo, PasswordEncoder encoder, OtpService otpService) {
-        this.khRepo = khRepo;
+    public RegistrationController(CustomerRepository customerRepository, PasswordEncoder encoder, OtpService otpService) {
+        this.customerRepository = customerRepository;
         this.encoder = encoder;
         this.otpService = otpService;
     }
 
-    // Simple DTO for registration form (must have getters/setters for Spring binding)
     public static class RegisterForm implements Serializable {
         @NotBlank private String username;
         @NotBlank private String fullName;
         @Email @NotBlank private String email;
         @NotBlank private String phone;
-        @NotBlank private String password; // raw password from form
+        @NotBlank private String password;
         @NotBlank private String confirmPassword;
         public String getUsername() { return username; }
         public void setUsername(String username) { this.username = username; }
@@ -50,13 +50,12 @@ public class RegistrationController {
         public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
     }
 
-    // Session-scoped pending registration
     public static class PendingReg implements Serializable {
         private String username;
         private String fullName;
         private String email;
         private String phone;
-        private String passwordHash; // store hashed only
+        private String passwordHash;
         private String otp;
         private LocalDateTime expiresAt;
         public String getUsername() { return username; }
@@ -80,7 +79,6 @@ public class RegistrationController {
         if (!model.containsAttribute("registerForm")) {
             model.addAttribute("registerForm", new RegisterForm());
         }
-        // Clear any previous pending to avoid confusion
         session.removeAttribute("pendingReg");
         model.addAttribute("pageTitle", "Đăng ký");
         return "auth/register";
@@ -91,29 +89,27 @@ public class RegistrationController {
                                 BindingResult br,
                                 HttpSession session,
                                 RedirectAttributes ra) {
-        // Basic validations
         if (form.getPassword() == null || !form.getPassword().equals(form.getConfirmPassword())) {
             ra.addFlashAttribute("error", "Mật khẩu xác nhận không khớp");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        // Duplicate guards
-        if (khRepo.findByUsername(form.getUsername()) != null) {
+        if (customerRepository.findByUsername(form.getUsername()) != null) {
             ra.addFlashAttribute("error", "Tên đăng nhập đã tồn tại");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        if (khRepo.findByEmail(form.getEmail()) != null) {
+        if (customerRepository.findByEmail(form.getEmail()) != null) {
             ra.addFlashAttribute("error", "Email đã được sử dụng");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        if (form.getPhone() != null && !form.getPhone().isBlank() && khRepo.findByPhone(form.getPhone()) != null) {
+        if (form.getPhone() != null && !form.getPhone().isBlank() && customerRepository.findByPhone(form.getPhone()) != null) {
             ra.addFlashAttribute("error", "Số điện thoại đã được sử dụng");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        // Create pending and send OTP
+        
         PendingReg pr = new PendingReg();
         pr.setUsername(form.getUsername().trim());
         pr.setFullName(form.getFullName().trim());
@@ -157,21 +153,20 @@ public class RegistrationController {
             ra.addFlashAttribute("error", "Mã OTP không đúng");
             return "redirect:/register/verify";
         }
-        // Final duplicate guards to avoid race conditions
-        if (khRepo.findByUsername(pr.getUsername()) != null || khRepo.findByEmail(pr.getEmail()) != null) {
+        if (customerRepository.findByUsername(pr.getUsername()) != null || customerRepository.findByEmail(pr.getEmail()) != null) {
             session.removeAttribute("pendingReg");
             ra.addFlashAttribute("error", "Tài khoản/Email đã tồn tại. Vui lòng đăng ký lại bằng thông tin khác.");
             return "redirect:/register";
         }
-        // Create customer only now
-        KhachHang kh = new KhachHang();
-        kh.setUsername(pr.getUsername());
-        kh.setFullName(pr.getFullName());
-        kh.setEmail(pr.getEmail());
-        kh.setPhone(pr.getPhone());
-        kh.setPasswordHash(pr.getPasswordHash());
-        kh.setStatus(1);
-        khRepo.save(kh);
+        
+        Customer customer = new Customer();
+        customer.setUsername(pr.getUsername());
+        customer.setFullName(pr.getFullName());
+        customer.setEmail(pr.getEmail());
+        customer.setPhone(pr.getPhone());
+        customer.setPasswordHash(pr.getPasswordHash());
+        customer.setStatus(CustomerStatus.ACTIVE);
+        customerRepository.save(customer);
         session.removeAttribute("pendingReg");
         return "redirect:/login?activated";
     }

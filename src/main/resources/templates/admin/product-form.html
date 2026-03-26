@@ -36,8 +36,8 @@
                         <div class="mb-3">
                             <label class="form-label">Trạng thái</label>
                             <select class="form-select" th:field="*{status}">
-                                <option th:value="1">Đang bán</option>
-                                <option th:value="0">Ngừng bán</option>
+                                <option value="ACTIVE">Đang bán</option>
+                                <option value="INACTIVE">Ngừng bán</option>
                             </select>
                         </div>
                         <div class="d-flex gap-2">
@@ -101,8 +101,8 @@
                 </div>
                 <div class="col-3">
                     <select class="form-select" name="status">
-                        <option value="1">Đang bán</option>
-                        <option value="0">Ngừng bán</option>
+                        <option value="ACTIVE">Đang bán</option>
+                        <option value="INACTIVE">Ngừng bán</option>
                     </select>
                 </div>
                 <div class="col-3">
@@ -119,8 +119,8 @@
                     <td th:text="${v.size.name}">M</td>
                     <td th:text="${#numbers.formatDecimal(v.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                     <td>
-                        <span class="badge" th:text="${v.status == 1 ? 'Đang bán' : 'Ngừng bán'}"
-                              th:classappend="${v.status == 1 ? 'bg-success' : 'bg-secondary'}"></span>
+                        <span class="badge" th:text="${v.status.name() == 'ACTIVE' ? 'Đang bán' : 'Ngừng bán'}"
+                              th:classappend="${v.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                     </td>
                     <td class="text-end">
                         <a th:href="@{'/admin/products/' + ${product.id} + '/variants/' + ${v.id} + '/delete'}" class="btn btn-sm btn-danger" onclick="return confirm('Xóa biến thể?')">Xóa</a>
@@ -163,8 +163,8 @@
                     </td>
                     <td>
                         <select class="form-select" name="variantStatus">
-                            <option value="1" selected>Đang bán</option>
-                            <option value="0">Ngừng bán</option>
+                            <option value="ACTIVE" selected>Đang bán</option>
+                            <option value="INACTIVE">Ngừng bán</option>
                         </select>
                     </td>
                     <td class="text-end">

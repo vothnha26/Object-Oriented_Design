@@ -12,8 +12,8 @@ public class OtpCode {
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "KhachHangId", referencedColumnName = "MaKH")
-    private KhachHang customer;
+    @JoinColumn(name = "CustomerId")
+    private Customer customer;
 
     @Column(name = "Code", nullable = false, length = 10)
     private String code;
@@ -30,8 +30,8 @@ public class OtpCode {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public KhachHang getCustomer() { return customer; }
-    public void setCustomer(KhachHang customer) { this.customer = customer; }
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
 
     public String getCode() { return code; }
     public void setCode(String code) { this.code = code; }

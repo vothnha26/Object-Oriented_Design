@@ -10,11 +10,11 @@
         <div class="col-md-3">
             <select class="form-select" name="status">
                 <option value="" th:selected="${status == null}">Tất cả trạng thái</option>
-                <option value="ChoXuLy" th:selected="${status == 'ChoXuLy'}">Chờ xử lý</option>
-                <option value="DangPhaChe" th:selected="${status == 'DangPhaChe'}">Đang pha chế</option>
-                <option value="DangGiao" th:selected="${status == 'DangGiao'}">Đang giao</option>
-                <option value="DaGiao" th:selected="${status == 'DaGiao'}">Đã giao</option>
-                <option value="DaHuy" th:selected="${status == 'DaHuy'}">Đã hủy</option>
+                <option value="PENDING" th:selected="${status == 'PENDING'}">Chờ xử lý</option>
+                <option value="PREPARING" th:selected="${status == 'PREPARING'}">Đang pha chế</option>
+                <option value="DELIVERING" th:selected="${status == 'DELIVERING'}">Đang giao</option>
+                <option value="DELIVERED" th:selected="${status == 'DELIVERED'}">Đã giao</option>
+                <option value="CANCELLED" th:selected="${status == 'CANCELLED'}">Đã hủy</option>
             </select>
         </div>
         <div class="col-md-4">
@@ -58,7 +58,7 @@
                     <tr th:each="o : ${orders}">
                         <td>
                             <span class="badge" 
-                                  th:classappend="${o.status=='ChoXuLy'?'bg-warning text-dark':(o.status=='DangPhaChe'?'bg-info':(o.status=='DangGiao'?'bg-primary':(o.status=='DaGiao'?'bg-success':(o.status=='DaHuy'?'bg-danger':'bg-secondary'))))}"
+                                  th:classappend="${o.status.name() == 'PENDING' ? 'bg-warning text-dark' : (o.status.name() == 'PREPARING' ? 'bg-info' : (o.status.name() == 'DELIVERING' ? 'bg-primary' : (o.status.name() == 'DELIVERED' ? 'bg-success' : (o.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'))))}"
                                   th:text="${o.id}">
                                 123
                             </span>
@@ -84,25 +84,25 @@
                         </td>
                         <td>
                             <span class="badge" 
-                                  th:classappend="${o.status=='ChoXuLy'?'bg-warning text-dark':(o.status=='DangPhaChe'?'bg-info':(o.status=='DangGiao'?'bg-primary':(o.status=='DaGiao'?'bg-success':(o.status=='DaHuy'?'bg-danger':'bg-secondary'))))}"
-                                  th:text="${o.status}">
+                                  th:classappend="${o.status.name() == 'PENDING' ? 'bg-warning text-dark' : (o.status.name() == 'PREPARING' ? 'bg-info' : (o.status.name() == 'DELIVERING' ? 'bg-primary' : (o.status.name() == 'DELIVERED' ? 'bg-success' : (o.status.name() == 'CANCELLED' ? 'bg-danger' : 'bg-secondary'))))}"
+                                  th:text="${o.status.name() == 'PENDING' ? 'Chờ xử lý' : (o.status.name() == 'PREPARING' ? 'Đang pha chế' : (o.status.name() == 'DELIVERING' ? 'Đang giao' : (o.status.name() == 'DELIVERED' ? 'Đã giao' : (o.status.name() == 'CANCELLED' ? 'Đã hủy' : o.status))))}">
                                 Đang giao
                             </span>
                         </td>
                         <td>
                             <div>
                                 <span class="badge" 
-                                      th:classappend="${o.paymentMethod=='ChuyenKhoan'?'bg-primary':'bg-warning'}"
-                                      th:text="${o.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'COD'}">
+                                      th:classappend="${o.paymentMethod.name() == 'BANK_TRANSFER' ? 'bg-primary' : 'bg-warning'}"
+                                      th:text="${o.paymentMethod.name() == 'BANK_TRANSFER' ? 'Chuyển khoản' : 'COD'}">
                                     COD
                                 </span>
                             </div>
-                            <div th:if="${o.paymentStatus=='DaThanhToan'}">
+                            <div th:if="${o.paymentStatus.name() == 'PAID'}">
                                 <span class="badge bg-success">
                                     <i class="fas fa-check"></i> Đã thanh toán
                                 </span>
                             </div>
-                            <div th:if="${o.paymentStatus!='DaThanhToan'}">
+                            <div th:if="${o.paymentStatus.name() != 'PAID'}">
                                 <span class="badge bg-secondary">Chưa thanh toán</span>
                             </div>
                         </td>
@@ -121,20 +121,20 @@
                                 </a>
                                 
                                 <!-- Nút chuyển bước (không hiển thị khi đã giao hoặc hủy) -->
-                                <form th:if="${o.status != 'DaGiao' && o.status != 'DaHuy'}"
+                                <form th:if="${o.status.name() != 'DELIVERED' && o.status.name() != 'CANCELLED'}"
                                       th:action="@{'/shipper/orders/' + ${o.id} + '/advance'}" 
                                       method="post" 
                                       onsubmit="return confirm('Chuyển sang bước tiếp theo?');">
                                     <input type="hidden" name="from" value="list">
                                     <button class="btn btn-sm btn-primary" type="submit" 
                                             title="Chuyển sang bước tiếp theo"
-                                            th:disabled="${o.paymentMethod=='ChuyenKhoan' && o.paymentStatus!='DaThanhToan'}">
+                                            th:disabled="${o.paymentMethod.name() == 'BANK_TRANSFER' && o.paymentStatus.name() != 'PAID'}">
                                         <i class="fas fa-arrow-right"></i> Chuyển bước
                                     </button>
                                 </form>
                                 
                                 <!-- Nút xác nhận thu tiền COD (chỉ hiển thị khi chưa thanh toán và COD) -->
-                                <form th:if="${o.paymentStatus != 'DaThanhToan' && o.paymentMethod == 'TienMat'}"
+                                <form th:if="${o.paymentStatus.name() != 'PAID' && o.paymentMethod.name() == 'CASH'}"
                                       th:action="@{'/shipper/orders/' + ${o.id} + '/confirm-payment'}" 
                                       method="post" 
                                       onsubmit="return confirm('Xác nhận đã thu tiền từ khách?');">

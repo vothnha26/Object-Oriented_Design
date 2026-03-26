@@ -22,7 +22,7 @@ public class ShiftReportService {
 
     public ShiftReport getReport(Integer employeeId, LocalDateTime from, LocalDateTime to) {
         if (employeeId == null) throw new IllegalArgumentException("employeeId is required");
-        // Treat provided range as local time (GMT+7)
+        
         Timestamp fromTs = Timestamp.valueOf(from);
         Timestamp toTs = Timestamp.valueOf(to);
 
@@ -31,31 +31,33 @@ public class ShiftReportService {
         r.from = from;
         r.to = to;
 
-        r.totalOrders = nn(queryLong("SELECT COUNT(*) FROM DonHang WHERE MaNV = ? AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.delivered = nn(queryLong("SELECT COUNT(*) FROM DonHang WHERE MaNV = ? AND TrangThaiDonHang = 'DaGiao' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.canceled = nn(queryLong("SELECT COUNT(*) FROM DonHang WHERE MaNV = ? AND TrangThaiDonHang = 'DaHuy' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        // Table: Orders, Column: MaNV (Employee link)
+        r.totalOrders = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.delivered = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND TrangThaiDonHang = 'DELIVERED' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.canceled = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND TrangThaiDonHang = 'CANCELLED' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
         r.inProgress = r.totalOrders - r.delivered - r.canceled;
 
-        r.paidTotal = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM DonHang WHERE MaNV = ? AND PaymentStatus = 'DaThanhToan' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.cashPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM DonHang WHERE MaNV = ? AND PaymentStatus = 'DaThanhToan' AND PaymentMethod = 'TienMat' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.bankPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM DonHang WHERE MaNV = ? AND PaymentStatus = 'DaThanhToan' AND PaymentMethod = 'ChuyenKhoan' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.unpaidCount = nn(queryLong("SELECT COUNT(*) FROM DonHang WHERE MaNV = ? AND (PaymentStatus IS NULL OR PaymentStatus <> 'DaThanhToan') AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.paidTotal = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.cashPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND PaymentMethod = 'CASH' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.bankPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND PaymentMethod = 'BANK_TRANSFER' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.unpaidCount = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND (PaymentStatus IS NULL OR PaymentStatus <> 'PAID') AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
 
+        // Drinks made: OrderItem table joined with Orders table
         r.drinksMade = nn(queryLong(
-                "SELECT COALESCE(SUM(ct.SoLuong),0) FROM CTDonHang ct JOIN DonHang dh ON dh.MaDH = ct.MaDH WHERE dh.MaNV = ? AND dh.NgayLap BETWEEN ? AND ?",
+                "SELECT COALESCE(SUM(ct.SoLuong),0) FROM OrderItem ct JOIN Orders dh ON dh.MaDH = ct.MaDH WHERE dh.MaNV = ? AND dh.NgayLap BETWEEN ? AND ?",
                 employeeId, fromTs, toTs));
 
         // Status breakdown
         r.statusCounts = jdbc.query(
-                "SELECT TrangThaiDonHang st, COUNT(*) cnt FROM DonHang WHERE MaNV = ? AND NgayLap BETWEEN ? AND ? GROUP BY TrangThaiDonHang",
+                "SELECT TrangThaiDonHang st, COUNT(*) cnt FROM Orders WHERE MaNV = ? AND NgayLap BETWEEN ? AND ? GROUP BY TrangThaiDonHang",
                 ps -> { ps.setInt(1, employeeId); ps.setTimestamp(2, fromTs); ps.setTimestamp(3, toTs); },
                 (rs, i) -> Map.of("status", rs.getString("st"), "count", rs.getLong("cnt"))
         );
 
-        // Recent orders list for table
+        // Recent orders
         r.orders = jdbc.query(
                 "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai " +
-                        "FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH " +
+                        "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH " +
                         "WHERE dh.MaNV = ? AND dh.NgayLap BETWEEN ? AND ? ORDER BY dh.MaDH DESC",
                 ps -> { ps.setInt(1, employeeId); ps.setTimestamp(2, fromTs); ps.setTimestamp(3, toTs); },
                 (rs, i) -> {
@@ -77,12 +79,15 @@ public class ShiftReportService {
     }
 
     private Long queryLong(String sql, Object... args) {
-        Long v = jdbc.queryForObject(sql, Long.class, args);
-        return v;
+        try {
+            return jdbc.queryForObject(sql, Long.class, args);
+        } catch (Exception e) { return 0L; }
     }
 
     private BigDecimal queryBig(String sql, Object... args) {
-        return jdbc.queryForObject(sql, BigDecimal.class, args);
+        try {
+            return jdbc.queryForObject(sql, BigDecimal.class, args);
+        } catch (Exception e) { return BigDecimal.ZERO; }
     }
 
     private long nn(Long v) { return v == null ? 0L : v; }

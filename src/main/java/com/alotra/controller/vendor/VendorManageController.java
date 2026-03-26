@@ -2,6 +2,7 @@ package com.alotra.controller.vendor;
 
 import com.alotra.entity.Category;
 import com.alotra.entity.Topping;
+import com.alotra.entity.enums.ToppingStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
@@ -34,7 +35,6 @@ public class VendorManageController {
         this.productRepository = productRepository;
     }
 
-    // Categories
     @GetMapping("/categories")
     public String categories(Model model) {
         List<Category> categories = categoryRepository.findByDeletedAtIsNull();
@@ -74,7 +74,7 @@ public class VendorManageController {
             return category.getId() == null ? "redirect:/vendor/categories/add" : ("redirect:/vendor/categories/edit/" + category.getId());
         }
         Category dup = categoryRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-        if (dup != null && (category.getId() == null || !dup.getId().equals(category.getId()))) {
+        if (dup != null && (category.getId() == null || !java.util.Objects.equals(dup.getId(), category.getId()))) {
             ra.addFlashAttribute("error", "Tên danh mục đã tồn tại.");
             return category.getId() == null ? "redirect:/vendor/categories/add" : ("redirect:/vendor/categories/edit/" + category.getId());
         }
@@ -98,7 +98,6 @@ public class VendorManageController {
         return "redirect:/vendor/categories";
     }
 
-    // Toppings
     @GetMapping("/toppings")
     public String toppings(Model model) {
         List<Topping> toppings = toppingRepository.findByDeletedAtIsNull();
@@ -141,7 +140,7 @@ public class VendorManageController {
                 return topping.getId() == null ? "redirect:/vendor/toppings/add" : ("redirect:/vendor/toppings/edit/" + topping.getId());
             }
             Topping dup = toppingRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-            if (dup != null && (topping.getId() == null || !dup.getId().equals(topping.getId()))) {
+            if (dup != null && (topping.getId() == null || !java.util.Objects.equals(dup.getId(), topping.getId()))) {
                 ra.addFlashAttribute("error", "Tên topping đã tồn tại.");
                 return topping.getId() == null ? "redirect:/vendor/toppings/add" : ("redirect:/vendor/toppings/edit/" + topping.getId());
             }
@@ -161,7 +160,7 @@ public class VendorManageController {
     public String deleteTopping(@PathVariable Integer id, RedirectAttributes ra) {
         toppingRepository.findById(id).ifPresent(t -> {
             t.setDeletedAt(LocalDateTime.now());
-            t.setStatus(0);
+            t.setStatus(ToppingStatus.UNAVAILABLE);
             toppingRepository.save(t);
         });
         ra.addFlashAttribute("message", "Đã chuyển topping vào thùng rác.");

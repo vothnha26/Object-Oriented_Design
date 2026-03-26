@@ -1,9 +1,14 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.DonHang;
-import com.alotra.security.KhachHangUserDetails;
+import java.util.List;
+
+import com.alotra.entity.Order;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentMethod;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.OrderHistoryService;
-import com.alotra.repository.DonHangRepository;
+import com.alotra.repository.OrderRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.Authentication;
@@ -20,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
-import java.math.BigDecimal;
 
 @Controller
 @RequestMapping("/payment")
@@ -33,45 +37,42 @@ public class PaymentController {
     private String ACCOUNT_NAME;
     private static final int EXPIRY_MINUTES = 30;
 
-    private final DonHangRepository orderRepo;
+    private final OrderRepository orderRepo;
     private final OrderHistoryService customerOrderService;
 
-    public PaymentController(DonHangRepository orderRepo, OrderHistoryService customerOrderService) {
+    public PaymentController(OrderRepository orderRepo, OrderHistoryService customerOrderService) {
         this.orderRepo = orderRepo;
         this.customerOrderService = customerOrderService;
     }
 
-    // Utility: determine if the stored payment method denotes bank transfer
     private boolean isTransferMethod(Object method) {
-        if (method == null) return false;
-        String m = String.valueOf(method).trim();
-        return m.equalsIgnoreCase("ChuyenKhoan") || m.equalsIgnoreCase("Chuyển khoản") || m.equalsIgnoreCase("Chuyen khoan");
+        return method == PaymentMethod.BANK_TRANSFER;
     }
 
     @GetMapping("/{id}")
     public String showPaymentPage(@PathVariable Integer id,
-                                  @AuthenticationPrincipal KhachHangUserDetails principal,
+                                  @AuthenticationPrincipal CustomerUserDetails principal,
                                   Model model) {
-        DonHang order = orderRepo.findById(id).orElse(null);
+        Order order = orderRepo.findById(id).orElse(null);
         if (order == null) return "redirect:/cart?error=Đơn hàng không tồn tại";
-        if (principal == null || order.getCustomer() == null || !order.getCustomer().getId().equals(principal.getId())) {
+        if (principal == null || order.getCustomer() == null || !java.util.Objects.equals(order.getCustomer().getId(), principal.getId())) {
             return "redirect:/account/orders";
         }
-        if (!isTransferMethod(order.getPaymentMethod())) {
+        if (!isTransferMethod(order.getPayment().getMethod())) {
             return "redirect:/account/orders";
         }
-        if ("DaThanhToan".equals(order.getPaymentStatus())) {
+        if (order.getPayment().getStatus() == PaymentStatus.PAID) {
             return "redirect:/payment/" + id + "/success";
         }
-        // Load order presentation rows
+        
         var header = customerOrderService.getOrder(id);
         var items = customerOrderService.listOrderItems(id);
-        java.util.Map<Integer, java.util.List<OrderHistoryService.ItemToppingRow>> toppings = new java.util.HashMap<>();
+        Map<Integer, List<OrderHistoryService.ItemToppingRow>> toppings = new HashMap<>();
         for (var it : items) toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
 
         String addInfo = "ALOTRA DH " + id;
-        String qrUrl = buildVietQrUrl(BANK_CODE, ACCOUNT_NUMBER, order.getTongThanhToan().intValue(), addInfo);
-        // Expiry timestamp (UTC) for countdown
+        String qrUrl = buildVietQrUrl(BANK_CODE, ACCOUNT_NUMBER, order.getTotalAmount().intValue(), addInfo);
+        
         LocalDateTime created = order.getCreatedAt();
         LocalDateTime expiry = (created != null ? created : LocalDateTime.now()).plusMinutes(EXPIRY_MINUTES);
         long expiryEpochMillis = expiry.toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -95,29 +96,26 @@ public class PaymentController {
     @GetMapping("/{id}/status")
     @ResponseBody
     public Map<String, Object> getStatus(@PathVariable Integer id,
-                                         @AuthenticationPrincipal KhachHangUserDetails principal) {
+                                         @AuthenticationPrincipal CustomerUserDetails principal) {
         Map<String,Object> m = new HashMap<>();
         var opt = orderRepo.findById(id);
         if (opt.isPresent()) {
-            DonHang order = opt.get();
-            // Auto-cancel if expired and still unpaid (transfer flow)
-            if (isTransferMethod(order.getPaymentMethod())
-                    && !"DaThanhToan".equals(order.getPaymentStatus())) {
+            Order order = opt.get();
+            if (isTransferMethod(order.getPayment().getMethod()) && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 LocalDateTime expiry = (order.getCreatedAt() != null ? order.getCreatedAt() : LocalDateTime.now()).plusMinutes(EXPIRY_MINUTES);
-                if (LocalDateTime.now().isAfter(expiry) && !"DaHuy".equals(order.getStatus())) {
-                    order.setStatus("DaHuy");
+                if (LocalDateTime.now().isAfter(expiry) && order.getStatus() != OrderStatus.CANCELLED) {
+                    order.setStatus(OrderStatus.CANCELLED);
                     orderRepo.save(order);
                 }
             }
         }
-        String status = opt.map(DonHang::getPaymentStatus).orElse("NA");
-        String orderStatus = opt.map(DonHang::getStatus).orElse("NA");
+        String status = opt.map(o -> o.getPayment().getStatus() != null ? o.getPayment().getStatus().name() : "NA").orElse("NA");
+        String orderStatus = opt.map(o -> o.getStatus() != null ? o.getStatus().name() : "NA").orElse("NA");
         m.put("paymentStatus", status);
         m.put("orderStatus", orderStatus);
         return m;
     }
 
-    // Admin-only helper for local testing: mark an order as paid (cash or transfer)
     @PostMapping("/{id}/admin/mark-paid")
     public ResponseEntity<?> adminMarkPaid(@PathVariable Integer id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -125,22 +123,21 @@ public class PaymentController {
         if (!isAdmin) {
             return ResponseEntity.status(403).body(Map.of("error", "forbidden"));
         }
-        DonHang order = orderRepo.findById(id).orElse(null);
+        Order order = orderRepo.findById(id).orElse(null);
         if (order == null) return ResponseEntity.notFound().build();
-        order.setPaymentStatus("DaThanhToan");
-        order.setPaidAt(LocalDateTime.now());
+        order.getPayment().setStatus(PaymentStatus.PAID);
+        order.getPayment().setPaidAt(LocalDateTime.now());
         orderRepo.save(order);
         return ResponseEntity.ok(Map.of("status", "OK"));
     }
 
-    // New: success page after paid
     @GetMapping("/{id}/success")
     public String success(@PathVariable Integer id,
-                          @AuthenticationPrincipal KhachHangUserDetails principal,
+                          @AuthenticationPrincipal CustomerUserDetails principal,
                           Model model) {
-        DonHang order = orderRepo.findById(id).orElse(null);
+        Order order = orderRepo.findById(id).orElse(null);
         if (order == null) return "redirect:/account/orders";
-        if (principal == null || order.getCustomer() == null || !order.getCustomer().getId().equals(principal.getId())) {
+        if (principal == null || order.getCustomer() == null || !java.util.Objects.equals(order.getCustomer().getId(), principal.getId())) {
             return "redirect:/account/orders";
         }
         model.addAttribute("orderId", id);
@@ -149,22 +146,21 @@ public class PaymentController {
 
     @PostMapping("/{id}/cancel")
     public String cancel(@PathVariable Integer id,
-                         @AuthenticationPrincipal KhachHangUserDetails principal,
+                         @AuthenticationPrincipal CustomerUserDetails principal,
                          RedirectAttributes ra) {
-        DonHang order = orderRepo.findById(id).orElse(null);
+        Order order = orderRepo.findById(id).orElse(null);
         if (order == null) {
             ra.addFlashAttribute("error", "Đơn hàng không tồn tại");
             return "redirect:/account/orders";
         }
-        if (principal == null || order.getCustomer() == null || !order.getCustomer().getId().equals(principal.getId())) {
+        if (principal == null || order.getCustomer() == null || !java.util.Objects.equals(order.getCustomer().getId(), principal.getId())) {
             return "redirect:/account/orders";
         }
-        if ("DaThanhToan".equals(order.getPaymentStatus())) {
+        if (order.getPayment().getStatus() == PaymentStatus.PAID) {
             return "redirect:/payment/" + id + "/success";
         }
-        // Only allow cancel when status is exactly ChoXuLy
-        if ("ChoXuLy".equals(order.getStatus())) {
-            order.setStatus("DaHuy");
+        if (order.getStatus() == OrderStatus.PENDING) {
+            order.setStatus(OrderStatus.CANCELLED);
             orderRepo.save(order);
             ra.addFlashAttribute("msg", "Đã hủy đơn #" + id);
         } else {

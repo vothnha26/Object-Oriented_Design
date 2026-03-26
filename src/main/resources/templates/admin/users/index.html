@@ -32,8 +32,8 @@
                 <div class="col-md-3">
                     <select class="form-select" name="statusC">
                         <option value="" th:selected="${statusC == null}">Tất cả trạng thái</option>
-                        <option th:value="1" th:selected="${statusC == 1}">Hoạt động</option>
-                        <option th:value="0" th:selected="${statusC == 0}">Khóa</option>
+                        <option value="ACTIVE" th:selected="${statusC != null and statusC.name() == 'ACTIVE'}">Hoạt động</option>
+                        <option value="INACTIVE" th:selected="${statusC != null and statusC.name() == 'INACTIVE'}">Khóa</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -55,14 +55,14 @@
                         <td th:text="${c.email}"></td>
                         <td th:text="${c.phone}"></td>
                         <td>
-                            <span class="badge" th:text="${c.status==1?'Hoạt động':'Khóa'}" th:classappend="${c.status==1?'bg-success':'bg-secondary'}"></span>
+                            <span class="badge" th:text="${c.status.name() == 'ACTIVE' ? 'Hoạt động' : 'Khóa'}" th:classappend="${c.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                         </td>
                         <td class="text-end d-flex gap-1 justify-content-end">
                             <a th:href="@{'/admin/users/customers/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Xem</a>
-                            <form th:if="${c.status == 1}" th:action="@{'/admin/users/customers/' + ${c.id} + '/lock'}" method="post" onsubmit="return confirm('Khóa tài khoản khách hàng này?');">
+                            <form th:if="${c.status.name() == 'ACTIVE'}" th:action="@{'/admin/users/customers/' + ${c.id} + '/lock'}" method="post" onsubmit="return confirm('Khóa tài khoản khách hàng này?');">
                                 <button type="submit" class="btn btn-sm btn-outline-warning">Khóa</button>
                             </form>
-                            <form th:if="${c.status != 1}" th:action="@{'/admin/users/customers/' + ${c.id} + '/unlock'}" method="post">
+                            <form th:if="${c.status.name() != 'ACTIVE'}" th:action="@{'/admin/users/customers/' + ${c.id} + '/unlock'}" method="post">
                                 <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa</button>
                             </form>
                             <form th:action="@{'/admin/users/customers/' + ${c.id} + '/delete'}" method="post" onsubmit="return confirm('Xóa vĩnh viễn tài khoản này? Hành động không thể hoàn tác!');">
@@ -88,15 +88,15 @@
                 <div class="col-md-3">
                     <select class="form-select" name="roleE">
                         <option value="" th:selected="${roleE == null}">Tất cả vai trò</option>
-                        <option th:value="1" th:selected="${roleE == 1}">Chủ cửa hàng</option>
-                        <option th:value="2" th:selected="${roleE == 2}">Nhân viên</option>
+                        <option value="ADMIN" th:selected="${roleE != null and roleE.name() == 'ADMIN'}">Chủ cửa hàng</option>
+                        <option value="STAFF" th:selected="${roleE != null and roleE.name() == 'STAFF'}">Nhân viên</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <select class="form-select" name="statusE">
                         <option value="" th:selected="${statusE == null}">Tất cả trạng thái</option>
-                        <option th:value="1" th:selected="${statusE == 1}">Hoạt động</option>
-                        <option th:value="0" th:selected="${statusE == 0}">Khóa</option>
+                        <option value="ACTIVE" th:selected="${statusE != null and statusE.name() == 'ACTIVE'}">Hoạt động</option>
+                        <option value="INACTIVE" th:selected="${statusE != null and statusE.name() == 'INACTIVE'}">Khóa</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -120,9 +120,9 @@
                         <td th:text="${e.fullName}"></td>
                         <td th:text="${e.email}"></td>
                         <td th:text="${e.phone}"></td>
-                        <td th:text="${e.role==1?'Chủ cửa hàng':'Nhân viên'}"></td>
+                        <td th:text="${e.role.name() == 'ADMIN' ? 'Chủ cửa hàng' : 'Nhân viên'}"></td>
                         <td>
-                            <span class="badge" th:text="${e.status==1?'Hoạt động':'Khóa'}" th:classappend="${e.status==1?'bg-success':'bg-secondary'}"></span>
+                            <span class="badge" th:text="${e.status.name() == 'ACTIVE' ? 'Hoạt động' : 'Khóa'}" th:classappend="${e.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                         </td>
                         <td class="text-end d-flex gap-1 justify-content-end">
                             <a th:href="@{'/admin/users/employees/edit/' + ${e.id}}" class="btn btn-sm btn-outline-primary">Sửa</a>

@@ -73,11 +73,11 @@
                         <div class="mb-3">
                             <label class="form-label">Phương thức thanh toán</label>
                             <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="paymentMethod" id="payCash" value="TienMat"
-                                       th:checked="${paymentMethod == null || paymentMethod == 'TienMat'}">
+                                <input type="radio" class="btn-check" name="paymentMethod" id="payCash" value="CASH"
+                                       th:checked="${paymentMethod == null || paymentMethod == 'CASH'}">
                                 <label class="btn btn-outline-success" for="payCash"><i class="fa fa-money-bill me-1"></i> Tiền mặt</label>
-                                <input type="radio" class="btn-check" name="paymentMethod" id="payBank" value="ChuyenKhoan"
-                                       th:checked="${paymentMethod == 'ChuyenKhoan'}">
+                                <input type="radio" class="btn-check" name="paymentMethod" id="payBank" value="BANK_TRANSFER"
+                                       th:checked="${paymentMethod == 'BANK_TRANSFER'}">
                                 <label class="btn btn-outline-success" for="payBank"><i class="fa fa-building-columns me-1"></i> Chuyển khoản</label>
                             </div>
                             <div class="form-text" id="bankHint" style="display:none">QR sẽ hiển thị sau khi xác nhận đặt hàng.</div>
@@ -91,11 +91,11 @@
                         <div class="mb-3">
                             <label class="form-label">Phương thức nhận hàng</label>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvShip" value="Ship" checked>
+                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvShip" value="DELIVERY" checked>
                                 <label class="form-check-label" for="recvShip">Ship tận nơi</label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvPickup" value="Pickup">
+                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvPickup" value="PICKUP">
                                 <label class="form-check-label" for="recvPickup">Đến cửa hàng lấy</label>
                             </div>
                         </div>

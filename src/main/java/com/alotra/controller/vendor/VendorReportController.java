@@ -1,7 +1,7 @@
 package com.alotra.controller.vendor;
 
-import com.alotra.security.NhanVienUserDetails;
-import com.alotra.service.NhanVienService;
+import com.alotra.security.EmployeeUserDetails;
+import com.alotra.service.EmployeeService;
 import com.alotra.service.ShiftReportService;
 import com.alotra.service.ShiftReportService.ShiftReport;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,17 +29,17 @@ import java.time.format.DateTimeFormatter;
 public class VendorReportController {
     private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final ShiftReportService shiftReportService;
-    private final NhanVienService nhanVienService;
+    private final EmployeeService employeeService;
     private final JdbcTemplate jdbcTemplate;
 
-    public VendorReportController(ShiftReportService shiftReportService, NhanVienService nhanVienService, JdbcTemplate jdbcTemplate) {
+    public VendorReportController(ShiftReportService shiftReportService, EmployeeService employeeService, JdbcTemplate jdbcTemplate) {
         this.shiftReportService = shiftReportService;
-        this.nhanVienService = nhanVienService;
+        this.employeeService = employeeService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping("/shift")
-    public String shiftReport(@AuthenticationPrincipal NhanVienUserDetails current,
+    public String shiftReport(@AuthenticationPrincipal EmployeeUserDetails current,
                               @RequestParam(value = "employeeId", required = false) Integer employeeId,
                               @RequestParam(value = "from", required = false)
                               @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime from,
@@ -51,7 +51,6 @@ public class VendorReportController {
             model.addAttribute("error", "Không xác định được nhân viên.");
             return "vendor/shift-report";
         }
-        // Default range: today 00:00 (GMT+7) -> now (GMT+7)
         if (from == null) from = LocalDate.now(HCM_ZONE).atStartOfDay();
         if (to == null) to = LocalDateTime.now(HCM_ZONE);
         if (to.isBefore(from)) {
@@ -59,7 +58,7 @@ public class VendorReportController {
         }
         ShiftReport report = shiftReportService.getReport(empId, from, to);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
-        model.addAttribute("employee", nhanVienService.findById(empId).orElse(null));
+        model.addAttribute("employee", employeeService.findById(empId).orElse(null));
         model.addAttribute("fromStr", fmt.format(from));
         model.addAttribute("toStr", fmt.format(to));
         model.addAttribute("report", report);
@@ -68,7 +67,7 @@ public class VendorReportController {
     }
 
     @GetMapping("/shift/export")
-    public ResponseEntity<byte[]> exportCsv(@AuthenticationPrincipal NhanVienUserDetails current,
+    public ResponseEntity<byte[]> exportCsv(@AuthenticationPrincipal EmployeeUserDetails current,
                                             @RequestParam(value = "employeeId", required = false) Integer employeeId,
                                             @RequestParam(value = "from", required = false)
                                             @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime from,
@@ -83,13 +82,11 @@ public class VendorReportController {
         if (to.isBefore(from)) { LocalDateTime tmp = from; from = to; to = tmp; }
 
         ShiftReport r = shiftReportService.getReport(empId, from, to);
-        String empName = nhanVienService.findById(empId).map(e -> e.getFullName() + " (" + e.getUsername() + ")").orElse("NV-" + empId);
+        String empName = employeeService.findById(empId).map(e -> e.getFullName() + " (" + e.getUsername() + ")").orElse("NV-" + empId);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         StringBuilder sb = new StringBuilder();
-        // UTF-8 BOM for Excel compatibility
         sb.append('\uFEFF');
-        // Header summary lines
         sb.append("Shift Report").append('\n');
         sb.append("Employee, ").append(escape(empName)).append('\n');
         sb.append("From, ").append(fmt.format(from)).append('\n');
@@ -104,7 +101,6 @@ public class VendorReportController {
         sb.append("Bank Paid, ").append(r.bankPaid).append('\n');
         sb.append("Unpaid Count, ").append(r.unpaidCount).append('\n');
         sb.append('\n');
-        // Orders table
         sb.append("Order ID,Time,Status,Payment Status,Payment Method,Customer,Phone,Total").append('\n');
         for (var o : r.orders) {
             String id = String.valueOf(o.get("id"));
@@ -134,17 +130,16 @@ public class VendorReportController {
     }
 
     @PostMapping("/shift/assign-me")
-    public String assignAllToMe(@AuthenticationPrincipal NhanVienUserDetails current,
+    public String assignAllToMe(@AuthenticationPrincipal EmployeeUserDetails current,
                                 @RequestParam(value = "from") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime from,
                                 @RequestParam(value = "to") @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime to) {
         if (current == null) return "redirect:/vendor/reports/shift";
         if (from == null) from = LocalDate.now(HCM_ZONE).atStartOfDay();
         if (to == null) to = LocalDateTime.now(HCM_ZONE);
         if (to.isBefore(from)) { LocalDateTime tmp = from; from = to; to = tmp; }
-        // Assign all orders in the time range that are currently unassigned
         java.sql.Timestamp fromTs = java.sql.Timestamp.valueOf(from);
         java.sql.Timestamp toTs = java.sql.Timestamp.valueOf(to);
-        jdbcTemplate.update("UPDATE DonHang SET MaNV = ? WHERE MaNV IS NULL AND NgayLap BETWEEN ? AND ?", current.getId(), fromTs, toTs);
+        jdbcTemplate.update("UPDATE [Orders] SET employee_id = ? WHERE employee_id IS NULL AND created_at BETWEEN ? AND ?", current.getId(), fromTs, toTs);
         return "redirect:/vendor/reports/shift?employeeId=" + current.getId() + "&from=" + from.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")) + "&to=" + to.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
     }
 

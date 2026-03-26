@@ -1,8 +1,9 @@
 package com.alotra.service;
 
-import com.alotra.entity.KhachHang;
+import com.alotra.entity.Customer;
 import com.alotra.entity.OtpCode;
-import com.alotra.repository.KhachHangRepository;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.repository.CustomerRepository;
 import com.alotra.repository.OtpCodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +22,17 @@ public class OtpService {
     public static final String TYPE_REGISTER = "REGISTER";
     private static final Logger log = LoggerFactory.getLogger(OtpService.class);
     private final OtpCodeRepository otpRepo;
-    private final KhachHangRepository khRepo;
+    private final CustomerRepository customerRepo;
     private final JavaMailSender mailSender;
     private final String fromAddress;
     private final SecureRandom random = new SecureRandom();
 
     public OtpService(OtpCodeRepository otpRepo,
-                      KhachHangRepository khRepo,
+                      CustomerRepository customerRepo,
                       JavaMailSender mailSender,
                       @Value("${app.mail.from:${spring.mail.username}}") String fromAddress) {
         this.otpRepo = otpRepo;
-        this.khRepo = khRepo;
+        this.customerRepo = customerRepo;
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
     }
@@ -43,21 +44,20 @@ public class OtpService {
     }
 
     @Transactional
-    public void sendRegisterOtp(KhachHang kh) {
-        // cleanup expired old codes for this user/type
-        otpRepo.deleteByCustomerAndTypeAndExpiresAtBefore(kh, TYPE_REGISTER, LocalDateTime.now().minusDays(1));
+    public void sendRegisterOtp(Customer customer) {
+        otpRepo.deleteByCustomerAndTypeAndExpiresAtBefore(customer, TYPE_REGISTER, LocalDateTime.now().minusDays(1));
         String code = generateNumericCode(6);
         OtpCode otp = new OtpCode();
-        otp.setCustomer(kh);
+        otp.setCustomer(customer);
         otp.setType(TYPE_REGISTER);
         otp.setCode(code);
         otp.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         otpRepo.save(otp);
-        sendMail(kh.getEmail(), "AloTra - Mã xác thực đăng ký", buildRegisterMailBody(kh, code));
+        sendMail(customer.getEmail(), "AloTra - Mã xác thực đăng ký", buildRegisterMailBody(customer, code));
     }
 
-    public String buildRegisterMailBody(KhachHang kh, String code) {
-        String name = kh.getFullName() != null ? kh.getFullName() : kh.getUsername();
+    public String buildRegisterMailBody(Customer customer, String code) {
+        String name = customer.getFullName() != null ? customer.getFullName() : customer.getUsername();
         return "Xin chào " + name + ",\n\n" +
                 "Cảm ơn bạn đã đăng ký tài khoản AloTra. Mã xác thực (OTP) của bạn là: " + code + "\n" +
                 "Mã sẽ hết hạn sau 5 phút. Vui lòng không chia sẻ mã này cho bất kỳ ai.\n\n" +
@@ -69,7 +69,6 @@ public class OtpService {
         msg.setTo(to);
         msg.setSubject(subject);
         msg.setText(text);
-        // Ensure a valid From is always set to avoid: "can't determine local email address"
         if (fromAddress != null && !fromAddress.isBlank()) {
             msg.setFrom(fromAddress.trim());
         }
@@ -77,7 +76,7 @@ public class OtpService {
             mailSender.send(msg);
         } catch (org.springframework.mail.MailException ex) {
             log.error("Failed to send email to {}: {}", to, ex.getMessage(), ex);
-            throw ex; // let controller decide how to handle (will result in 500 if unhandled)
+            throw ex;
         }
     }
 
@@ -87,12 +86,12 @@ public class OtpService {
             if (error != null) error.append("Thiếu email hoặc mã OTP.");
             return false;
         }
-        KhachHang kh = khRepo.findByEmail(email);
-        if (kh == null) {
+        Customer customer = customerRepo.findByEmail(email).orElse(null);
+        if (customer == null) {
             if (error != null) error.append("Không tìm thấy tài khoản theo email.");
             return false;
         }
-        Optional<OtpCode> opt = otpRepo.findTopByCustomerAndTypeAndCodeOrderByIdDesc(kh, TYPE_REGISTER, code.trim());
+        Optional<OtpCode> opt = otpRepo.findTopByCustomerAndTypeAndCodeOrderByIdDesc(customer, TYPE_REGISTER, code.trim());
         if (opt.isEmpty()) {
             if (error != null) error.append("Mã OTP không đúng.");
             return false;
@@ -106,24 +105,22 @@ public class OtpService {
             if (error != null) error.append("Mã OTP đã hết hạn.");
             return false;
         }
-        // mark used and activate user
         otp.setUsedAt(LocalDateTime.now());
         otpRepo.save(otp);
-        kh.setStatus(1);
-        khRepo.save(kh);
+        customer.setStatus(CustomerStatus.ACTIVE);
+        customerRepo.save(customer);
         return true;
     }
 
     @Transactional
     public boolean resendRegisterOtp(String email) {
         if (email == null || email.isBlank()) return false;
-        KhachHang kh = khRepo.findByEmail(email);
-        if (kh == null) return false;
-        sendRegisterOtp(kh);
+        Customer customer = customerRepo.findByEmail(email).orElse(null);
+        if (customer == null) return false;
+        sendRegisterOtp(customer);
         return true;
     }
 
-    // --- New helpers for pre-account OTP (session-based) ---
     public String generateOtp() {
         return generateNumericCode(6);
     }

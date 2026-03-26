@@ -1,9 +1,11 @@
 package com.alotra.controller.shipper;
 
-import com.alotra.entity.DonHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.DonHangRepository;
-import com.alotra.security.NhanVienUserDetails;
+import com.alotra.entity.Order;
+import com.alotra.entity.Employee;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.repository.OrderRepository;
+import com.alotra.security.EmployeeUserDetails;
 import com.alotra.service.OrderHistoryService;
 import com.alotra.service.OrderHistoryService.ItemToppingRow;
 import com.alotra.service.OrderHistoryService.OrderItemRow;
@@ -24,22 +26,18 @@ import java.util.Map;
 public class ShipperController {
     private final ShipperOrderService shipperOrderService;
     private final OrderHistoryService orderHistoryService;
-    private final DonHangRepository donHangRepository;
+    private final OrderRepository orderRepository;
 
     public ShipperController(ShipperOrderService shipperOrderService,
                             OrderHistoryService orderHistoryService,
-                            DonHangRepository donHangRepository) {
+                            OrderRepository orderRepository) {
         this.shipperOrderService = shipperOrderService;
         this.orderHistoryService = orderHistoryService;
-        this.donHangRepository = donHangRepository;
+        this.orderRepository = orderRepository;
     }
 
-    /**
-     * Dashboard - Trang chủ của shipper
-     */
     @GetMapping({"", "/", "/dashboard"})
     public String dashboard(@AuthenticationPrincipal Object principal, Model model) {
-        // Kiểm tra và lấy shipperId
         Integer shipperId = getShipperId(principal);
         if (shipperId == null) {
             model.addAttribute("error", "Bạn cần đăng nhập với tài khoản Shipper để truy cập trang này.");
@@ -49,11 +47,9 @@ public class ShipperController {
             return "shipper/dashboard";
         }
         
-        // Lấy thống kê
         Map<String, Object> stats = shipperOrderService.getDashboardStats(shipperId);
         model.addAttribute("stats", stats);
         
-        // Lấy đơn đang giao hôm nay
         List<ShipperOrderService.OrderDto> shippingOrders = shipperOrderService.getTodayShippingOrders(shipperId);
         model.addAttribute("shippingOrders", shippingOrders);
         
@@ -61,9 +57,6 @@ public class ShipperController {
         return "shipper/dashboard";
     }
 
-    /**
-     * Danh sách đơn hàng được phân công
-     */
     @GetMapping("/orders")
     public String listOrders(@AuthenticationPrincipal Object principal,
                             @RequestParam(required = false) String status,
@@ -89,9 +82,6 @@ public class ShipperController {
         return "shipper/orders";
     }
 
-    /**
-     * Danh sách đơn hàng chưa có người nhận (ChoXuLy)
-     */
     @GetMapping("/available-orders")
     public String availableOrders(@AuthenticationPrincipal Object principal,
                                   @RequestParam(required = false) String kw,
@@ -115,26 +105,18 @@ public class ShipperController {
         return "shipper/available-orders";
     }
 
-    /**
-     * Nhận đơn hàng (assign vào shipper)
-     */
     @PostMapping("/orders/{id}/accept")
     public String acceptOrder(@PathVariable Integer id,
                              @AuthenticationPrincipal Object principal,
                              @RequestParam(required = false) String from,
                              RedirectAttributes ra) {
-        System.out.println("=== DEBUG: acceptOrder called with id=" + id);
-        
         Integer shipperId = getShipperId(principal);
         if (shipperId == null) {
-            System.out.println("=== DEBUG: shipperId is NULL");
             ra.addFlashAttribute("error", "Bạn cần đăng nhập với tài khoản Shipper.");
             return "redirect:/shipper/available-orders";
         }
         
-        System.out.println("=== DEBUG: shipperId=" + shipperId + ", calling service...");
         boolean success = shipperOrderService.acceptOrder(id, shipperId);
-        System.out.println("=== DEBUG: service returned success=" + success);
         
         if (success) {
             ra.addFlashAttribute("message", "Đã nhận đơn hàng #" + id + " thành công!");
@@ -145,31 +127,28 @@ public class ShipperController {
         }
     }
 
-    /**
-     * Chuyển bước tiếp theo của đơn hàng
-     */
     @PostMapping("/orders/{id}/advance")
     public String advanceOrder(@PathVariable Integer id,
                                  @AuthenticationPrincipal Object principal,
                                  @RequestParam(required = false) String from,
                                  RedirectAttributes ra) {
-        System.out.println("=== CONTROLLER: advanceOrder called with id=" + id); // Thêm log
-
         Integer shipperId = getShipperId(principal);
-        if (shipperId == null) { /* ... xử lý lỗi ... */ }
+        if (shipperId == null) {
+             ra.addFlashAttribute("error", "Bạn cần đăng nhập với tài khoản Shipper.");
+             return "redirect:/shipper/orders";
+        }
 
-        // === Sửa: Gọi advanceOrder thay vì advanceOrderSimple ===
         boolean success = shipperOrderService.advanceOrder(id, shipperId);
-        // ======================================================
 
-        if (success) { /* ... */ } else { /* ... */ }
+        if (success) {
+            ra.addFlashAttribute("message", "Đã chuyển trạng thái đơn hàng #" + id);
+        } else {
+            ra.addFlashAttribute("error", "Không thể chuyển trạng thái đơn hàng này.");
+        }
 
         return redirectFrom(id, from);
     }
 
-    /**
-     * Hủy đơn hàng
-     */
     @PostMapping("/orders/{id}/cancel")
     public String cancelOrder(@PathVariable Integer id,
                              @AuthenticationPrincipal Object principal,
@@ -192,9 +171,6 @@ public class ShipperController {
         return redirectFrom(id, from);
     }
 
-    /**
-     * Chi tiết đơn hàng
-     */
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id,
                              @AuthenticationPrincipal Object principal,
@@ -206,14 +182,12 @@ public class ShipperController {
             return "redirect:/shipper/orders";
         }
         
-        // Lấy thông tin đơn hàng (không cần kiểm tra quyền)
         OrderRow order = orderHistoryService.getOrder(id);
         if (order == null) {
             ra.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
             return "redirect:/shipper/orders";
         }
         
-        // Lấy chi tiết items và toppings
         List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow item : items) {
@@ -229,9 +203,6 @@ public class ShipperController {
         return "shipper/order-detail";
     }
 
-    /**
-     * Đánh dấu đơn hàng đã giao thành công
-     */
     @PostMapping("/orders/{id}/mark-delivered")
     public String markDelivered(@PathVariable Integer id,
                                @AuthenticationPrincipal Object principal,
@@ -243,16 +214,15 @@ public class ShipperController {
             return "redirect:/shipper/orders";
         }
         
-        // Đơn giản: chỉ cần chuyển sang DaGiao
-        DonHang order = donHangRepository.findById(id).orElse(null);
-        if (order != null && "DangGiao".equals(order.getStatus())) {
-            // Tự động gán shipper nếu chưa có
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order != null && order.getStatus() == OrderStatus.DELIVERING) {
             if (order.getEmployee() == null) {
-                order.setEmployee(new NhanVien());
-                order.getEmployee().setId(shipperId);
+                Employee e = new Employee();
+                e.setId(shipperId);
+                order.setEmployee(e);
             }
-            order.setStatus("DaGiao");
-            donHangRepository.save(order);
+            order.setStatus(OrderStatus.DELIVERED);
+            orderRepository.save(order);
             ra.addFlashAttribute("message", "Đã cập nhật trạng thái đơn hàng thành công!");
         } else {
             ra.addFlashAttribute("error", "Không thể cập nhật trạng thái đơn hàng.");
@@ -261,9 +231,6 @@ public class ShipperController {
         return redirectFrom(id, from);
     }
 
-    /**
-     * Xác nhận đã thu tiền từ khách (COD)
-     */
     @PostMapping("/orders/{id}/confirm-payment")
     public String confirmPayment(@PathVariable Integer id,
                                 @AuthenticationPrincipal Object principal,
@@ -275,29 +242,25 @@ public class ShipperController {
             return "redirect:/shipper/orders";
         }
         
-        DonHang order = donHangRepository.findById(id).orElse(null);
+        Order order = orderRepository.findById(id).orElse(null);
         if (order == null) {
             ra.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
             return "redirect:/shipper/orders";
         }
         
-        if (!"DaThanhToan".equals(order.getPaymentStatus())) {
-            order.setPaymentStatus("DaThanhToan");
-            order.setPaidAt(java.time.LocalDateTime.now());
-            donHangRepository.save(order);
+        if (order.getPayment().getStatus() != PaymentStatus.PAID) {
+            order.getPayment().setStatus(PaymentStatus.PAID);
+            order.getPayment().setPaidAt(java.time.LocalDateTime.now());
+            orderRepository.save(order);
             ra.addFlashAttribute("message", "Đã xác nhận thu tiền từ khách.");
         }
         
         return redirectFrom(id, from);
     }
     
-    /**
-     * Helper method to get shipper ID from principal
-     */
     private Integer getShipperId(Object principal) {
-        if (principal instanceof NhanVienUserDetails) {
-            NhanVienUserDetails userDetails = (NhanVienUserDetails) principal;
-            // Chỉ cho phép nếu là SHIPPER thật (role = 3)
+        if (principal instanceof EmployeeUserDetails) {
+            EmployeeUserDetails userDetails = (EmployeeUserDetails) principal;
             boolean isShipper = userDetails.getAuthorities().stream()
                 .anyMatch(auth -> "ROLE_SHIPPER".equals(auth.getAuthority()));
             if (isShipper) {
@@ -307,9 +270,6 @@ public class ShipperController {
         return null;
     }
     
-    /**
-     * Create empty stats for display when no shipper logged in
-     */
     private Map<String, Object> createEmptyStats() {
         Map<String, Object> stats = new HashMap<>();
         stats.put("shipping", 0L);

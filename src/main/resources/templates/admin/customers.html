@@ -33,15 +33,15 @@
                         <td th:text="${u.email}"></td>
                         <td th:text="${u.phone}"></td>
                         <td>
-                            <span class="badge" th:text="${u.status == 1 ? 'Hoạt động' : 'Bị khóa'}"
-                                  th:classappend="${u.status == 1 ? 'bg-success' : 'bg-danger'}"></span>
+                            <span class="badge" th:text="${u.status.name() == 'ACTIVE' ? 'Hoạt động' : 'Bị khóa'}"
+                                  th:classappend="${u.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-danger'}"></span>
                         </td>
                         <td class="text-end">
                             <div class="d-inline-flex gap-1">
-                                <form th:if="${u.status == 1}" th:action="@{'/admin/customers/' + ${u.id} + '/lock'}" method="post">
+                                <form th:if="${u.status.name() == 'ACTIVE'}" th:action="@{'/admin/customers/' + ${u.id} + '/lock'}" method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Khóa tài khoản khách hàng này?')">Khóa</button>
                                 </form>
-                                <form th:if="${u.status != 1}" th:action="@{'/admin/customers/' + ${u.id} + '/unlock'}" method="post">
+                                <form th:if="${u.status.name() != 'ACTIVE'}" th:action="@{'/admin/customers/' + ${u.id} + '/unlock'}" method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-success">Mở khóa</button>
                                 </form>
                                 <form th:action="@{'/admin/customers/' + ${u.id} + '/delete'}" method="post">

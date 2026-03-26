@@ -1,72 +1,44 @@
 package com.alotra.controller;
 
-
-import com.alotra.dto.ProductDTO; // Thêm import
-import com.alotra.service.ProductService; // Thêm import
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import java.util.List; // Thêm import
-
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-
 import com.alotra.dto.ProductDTO;
-import com.alotra.entity.KhachHang;
-import com.alotra.service.KhachHangService;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
+import com.alotra.entity.Promotion;
+import com.alotra.repository.PromotionRepository;
+import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.service.ProductService;
+import com.alotra.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import jakarta.validation.Valid;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import com.alotra.repository.SuKienKhuyenMaiRepository;
-import com.alotra.repository.KhuyenMaiSanPhamRepository;
-import com.alotra.entity.SuKienKhuyenMai;
+
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import com.alotra.service.OtpService;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.bind.annotation.ResponseBody;
-
-// import org.springframework.web.bind.annotation.ResponseBody; // removed: avoid duplicate API mapping
+import java.util.List;
 
 @Controller
 public class HomeController {
-	 @Autowired
-	    private ProductService productService;
     @Autowired
-    private KhachHangService khachHangService;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private OtpService otpService;
-    // Promotions
-    @Autowired private SuKienKhuyenMaiRepository promoRepo;
-    @Autowired private KhuyenMaiSanPhamRepository promoLinkRepo;
-    @Autowired private com.alotra.service.CategoryService categoryService; // new
+    private ProductService productService;
+    @Autowired 
+    private PromotionRepository promotionRepository;
+    @Autowired 
+    private ProductPromotionRepository productPromotionRepository;
+    @Autowired 
+    private CategoryService categoryService;
 
     @GetMapping("/")
     public String homePage(Model model) {
         model.addAttribute("pageTitle", "AloTra - Trang Chủ");
-        // Sau này bạn có thể thêm dữ liệu sản phẩm nổi bật vào đây
-     // Lấy danh sách sản phẩm bán chạy từ service
         List<ProductDTO> bestSellers = productService.findBestSellers();
-
-        // Đưa danh sách vào model với tên là "bestSellers" để HTML có thể dùng
         model.addAttribute("bestSellers", bestSellers);
 
-        // Tin tức & Khuyến mãi: lấy tối đa 8 sự kiện đang hoạt động (không bị xóa)
-        List<SuKienKhuyenMai> promos = promoRepo.findTop8ByStatusAndDeletedAtIsNullOrderByStartDateDesc(1);
+        List<Promotion> promos = promotionRepository.findTop8ByStatusAndDeletedAtIsNullOrderByStartDateDesc(com.alotra.entity.enums.PromotionStatus.ACTIVE);
         List<PromotionCard> cards = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        for (SuKienKhuyenMai p : promos) {
-            // Ưu tiên ảnh riêng của sự kiện; nếu trống thì lấy 1 ảnh SP áp dụng; fallback placeholder
+        for (Promotion p : promos) {
             String eventImg = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : null;
-            String fallbackImg = promoLinkRepo.findByPromotion(p).stream()
+            String fallbackImg = productPromotionRepository.findByPromotion(p).stream()
                     .map(l -> l.getProduct())
                     .filter(pr -> pr != null && pr.getImageUrl() != null && !pr.getImageUrl().isBlank())
                     .map(pr -> pr.getImageUrl())
@@ -79,10 +51,9 @@ public class HomeController {
             cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period, views));
         }
         model.addAttribute("promotions", cards);
-        return "home/index"; // Trả về tên file template (home/index.html)
+        return "home/index";
     }
 
-    // Catalog page: categories + products with client-side AJAX filtering
     @GetMapping("/products")
     public String productsPage(@RequestParam(required = false) Integer categoryId,
                                @RequestParam(required = false) String search,
@@ -90,43 +61,37 @@ public class HomeController {
         model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
         var categories = categoryService.findActive();
         model.addAttribute("categories", categories);
-        // Initial list: by selected category and optional search when provided, else all
         List<ProductDTO> initial = productService.listByCategoryAndSearch(categoryId, search);
         model.addAttribute("products", initial);
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("search", search);
-        return "products/product_list"; // client renders grid and filters
+        return "products/product_list";
     }
-
-    // Note: JSON API for catalog is provided by CatalogApiController (/api/catalog/products)
 
     @GetMapping("/about")
     public String aboutPage(Model model) {
         model.addAttribute("pageTitle", "Về Chúng Tôi");
-        return "about/about"; // Sẽ tạo trang này sau
+        return "about/about";
     }
 
     @GetMapping("/contact")
     public String contactPage(Model model) {
         model.addAttribute("pageTitle", "Liên Hệ AloTra");
-        return "contact/contact"; // Sẽ tạo trang này sau
+        return "contact/contact";
     }
 
     @GetMapping("/login")
     public String loginPage(Model model) {
         model.addAttribute("pageTitle", "Đăng Nhập");
-        return "auth/login"; // Sẽ tạo trang này sau
+        return "auth/login";
     }
 
     @GetMapping("/policy")
     public String policyPage(Model model) {
         model.addAttribute("pageTitle", "Chính Sách");
-        return "policy/policy"; // Sẽ tạo trang này sau
+        return "policy/policy";
     }
 
-    // Removed legacy /register and OTP endpoints to use RegistrationController two-step flow
-
-    // Simple view-model for promotions on homepage
     public static class PromotionCard {
         public Integer id;
         public String title;

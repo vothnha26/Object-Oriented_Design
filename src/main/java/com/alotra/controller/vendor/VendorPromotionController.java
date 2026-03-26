@@ -1,7 +1,7 @@
 package com.alotra.controller.vendor;
 
-import com.alotra.entity.KhuyenMaiSanPham;
-import com.alotra.entity.SuKienKhuyenMai;
+import com.alotra.entity.ProductPromotion;
+import com.alotra.entity.Promotion;
 import com.alotra.entity.Product;
 import com.alotra.service.PromotionService;
 import com.alotra.service.CloudinaryService;
@@ -39,13 +39,13 @@ public class VendorPromotionController {
     public String createForm(Model model) {
         model.addAttribute("pageTitle", "Thêm sự kiện");
         model.addAttribute("currentPage", "vendor-promotions");
-        model.addAttribute("item", new SuKienKhuyenMai());
+        model.addAttribute("item", new Promotion());
         return "vendor/promotion-form";
     }
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Integer id, Model model) {
-        SuKienKhuyenMai item = promotionService.findById(id).orElseThrow();
+        Promotion item = promotionService.findById(id).orElseThrow();
         model.addAttribute("pageTitle", "Sửa sự kiện");
         model.addAttribute("currentPage", "vendor-promotions");
         model.addAttribute("item", item);
@@ -53,7 +53,7 @@ public class VendorPromotionController {
     }
 
     @PostMapping("/save")
-    public String save(@ModelAttribute("item") @Valid SuKienKhuyenMai item,
+    public String save(@ModelAttribute("item") @Valid Promotion item,
                        BindingResult result,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                        Model model,
@@ -94,7 +94,7 @@ public class VendorPromotionController {
             ra.addFlashAttribute("error", "Không tìm thấy sự kiện khuyến mãi.");
             return "redirect:/vendor/promotions";
         }
-        SuKienKhuyenMai p = promoOpt.get();
+        Promotion p = promoOpt.get();
         if (promotionService.listAssignments(id).size() > 0) {
             ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa. Vui lòng gỡ áp dụng trước.");
             return "redirect:/vendor/promotions";
@@ -107,8 +107,8 @@ public class VendorPromotionController {
 
     @GetMapping("/{id}/products")
     public String manageProducts(@PathVariable Integer id, Model model) {
-        SuKienKhuyenMai promo = promotionService.findById(id).orElseThrow();
-        List<KhuyenMaiSanPham> assigned = promotionService.listAssignments(id);
+        Promotion promo = promotionService.findById(id).orElseThrow();
+        List<ProductPromotion> assigned = promotionService.listAssignments(id);
         List<Product> unassigned = promotionService.listUnassignedProducts(id);
         model.addAttribute("pageTitle", "Áp sản phẩm - " + promo.getName());
         model.addAttribute("currentPage", "vendor-promotions");

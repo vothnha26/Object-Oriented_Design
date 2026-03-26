@@ -1,6 +1,6 @@
 package com.alotra.repository;
 
-import com.alotra.entity.KhachHang;
+import com.alotra.entity.Customer;
 import com.alotra.entity.OtpCode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,8 +11,8 @@ import java.util.Optional;
 
 @Repository
 public interface OtpCodeRepository extends JpaRepository<OtpCode, Long> {
-    List<OtpCode> findTop5ByCustomerAndTypeOrderByIdDesc(KhachHang customer, String type);
-    Optional<OtpCode> findTopByCustomerAndTypeOrderByIdDesc(KhachHang customer, String type);
-    Optional<OtpCode> findTopByCustomerAndTypeAndCodeOrderByIdDesc(KhachHang customer, String type, String code);
-    long deleteByCustomerAndTypeAndExpiresAtBefore(KhachHang customer, String type, LocalDateTime threshold);
+    List<OtpCode> findTop5ByCustomerAndTypeOrderByIdDesc(Customer customer, String type);
+    Optional<OtpCode> findTopByCustomerAndTypeOrderByIdDesc(Customer customer, String type);
+    Optional<OtpCode> findTopByCustomerAndTypeAndCodeOrderByIdDesc(Customer customer, String type, String code);
+    long deleteByCustomerAndTypeAndExpiresAtBefore(Customer customer, String type, LocalDateTime threshold);
 }

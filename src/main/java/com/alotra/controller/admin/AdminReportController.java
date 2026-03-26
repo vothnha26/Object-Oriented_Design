@@ -1,6 +1,6 @@
 package com.alotra.controller.admin;
 
-import com.alotra.service.NhanVienService;
+import com.alotra.service.EmployeeService;
 import com.alotra.service.ShiftReportService;
 import com.alotra.service.ShiftReportService.ShiftReport;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,11 +24,11 @@ import java.time.format.DateTimeFormatter;
 public class AdminReportController {
     private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final ShiftReportService shiftReportService;
-    private final NhanVienService nhanVienService;
+    private final EmployeeService employeeService;
 
-    public AdminReportController(ShiftReportService shiftReportService, NhanVienService nhanVienService) {
+    public AdminReportController(ShiftReportService shiftReportService, EmployeeService employeeService) {
         this.shiftReportService = shiftReportService;
-        this.nhanVienService = nhanVienService;
+        this.employeeService = employeeService;
     }
 
     @GetMapping("/shift")
@@ -40,7 +40,7 @@ public class AdminReportController {
                               Model model) {
         model.addAttribute("pageTitle", "Báo cáo cuối ca");
         model.addAttribute("currentPage", "reports");
-        model.addAttribute("employees", nhanVienService.findActive());
+        model.addAttribute("employees", employeeService.findActive());
 
         if (from == null) from = LocalDate.now(HCM_ZONE).atStartOfDay();
         if (to == null) to = LocalDateTime.now(HCM_ZONE);
@@ -51,7 +51,7 @@ public class AdminReportController {
 
         if (employeeId != null) {
             ShiftReport report = shiftReportService.getReport(employeeId, from, to);
-            model.addAttribute("employee", nhanVienService.findById(employeeId).orElse(null));
+            model.addAttribute("employee", employeeService.findById(employeeId).orElse(null));
             model.addAttribute("report", report);
         }
         return "admin/shift-report";
@@ -71,7 +71,7 @@ public class AdminReportController {
         if (to.isBefore(from)) { LocalDateTime tmp = from; from = to; to = tmp; }
 
         ShiftReport r = shiftReportService.getReport(employeeId, from, to);
-        String empName = nhanVienService.findById(employeeId).map(e -> e.getFullName() + " (" + e.getUsername() + ")").orElse("NV-" + employeeId);
+        String empName = employeeService.findById(employeeId).map(e -> e.getFullName() + " (" + e.getUsername() + ")").orElse("NV-" + employeeId);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
         StringBuilder sb = new StringBuilder();

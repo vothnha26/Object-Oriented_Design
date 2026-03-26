@@ -6,7 +6,6 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -21,19 +20,17 @@ public class OrderHistoryService {
 
     public OrderHistoryService() {}
 
-    // List orders for a specific customer (legacy)
     public List<OrderRow> listOrdersByCustomer(Integer customerId, String status) {
         return listOrdersByCustomer(customerId, status, null, null, null);
     }
 
-    // New: List orders for a specific customer with optional status, exact code and date range
     public List<OrderRow> listOrdersByCustomer(Integer customerId, String status, Integer orderId,
                                                LocalDateTime from, LocalDateTime to) {
-        StringBuilder jpql = new StringBuilder("SELECT dh FROM DonHang dh WHERE dh.customer.id = :cid");
+        StringBuilder jpql = new StringBuilder("SELECT dh FROM Order dh WHERE dh.customer.id = :cid");
         Map<String, Object> params = new HashMap<>();
         params.put("cid", customerId);
         if (status != null && !status.isBlank()) {
-            jpql.append(" AND dh.status = :st");
+            jpql.append(" AND CAST(dh.status AS string) = :st");
             params.put("st", status);
         }
         if (orderId != null) {
@@ -49,63 +46,59 @@ public class OrderHistoryService {
             params.put("to", to);
         }
         jpql.append(" ORDER BY dh.id DESC");
-        TypedQuery<DonHang> q = em.createQuery(jpql.toString(), DonHang.class);
+        TypedQuery<Order> q = em.createQuery(jpql.toString(), Order.class);
         params.forEach(q::setParameter);
-        List<DonHang> list = q.getResultList();
+        List<Order> list = q.getResultList();
         List<OrderRow> out = new ArrayList<>();
-        for (DonHang dh : list) out.add(mapOrderRow(dh));
+        for (Order dh : list) out.add(mapOrderRow(dh));
         return out;
     }
 
-    // Ensure an order belongs to a customer then return it
     public OrderRow getOrderOfCustomer(Integer orderId, Integer customerId) {
-        TypedQuery<DonHang> q = em.createQuery(
-                "SELECT dh FROM DonHang dh WHERE dh.id = :id AND dh.customer.id = :cid", DonHang.class);
+        TypedQuery<Order> q = em.createQuery(
+                "SELECT dh FROM Order dh WHERE dh.id = :id AND dh.customer.id = :cid", Order.class);
         q.setParameter("id", orderId);
         q.setParameter("cid", customerId);
-        List<DonHang> list = q.getResultList();
+        List<Order> list = q.getResultList();
         return list.isEmpty() ? null : mapOrderRow(list.get(0));
     }
 
-    // Order items with variant (product + size)
     public List<OrderItemRow> listOrderItems(Integer orderId) {
-        // Fetch joins to avoid N+1
-        TypedQuery<CTDonHang> q = em.createQuery(
-                "SELECT ct FROM CTDonHang ct " +
+        TypedQuery<OrderItem> q = em.createQuery(
+                "SELECT ct FROM OrderItem ct " +
                 "JOIN FETCH ct.variant v " +
                 "JOIN FETCH v.product p " +
                 "LEFT JOIN FETCH v.size s " +
-                "WHERE ct.order.id = :oid ORDER BY ct.id", CTDonHang.class);
+                "WHERE ct.order.id = :oid ORDER BY ct.id", OrderItem.class);
         q.setParameter("oid", orderId);
-        List<CTDonHang> items = q.getResultList();
+        List<OrderItem> items = q.getResultList();
         List<OrderItemRow> out = new ArrayList<>();
-        for (CTDonHang ct : items) {
+        for (OrderItem ct : items) {
             OrderItemRow r = new OrderItemRow();
             r.id = ct.getId();
             ProductVariant v = ct.getVariant();
             Product p = v != null ? v.getProduct() : null;
-            SizeSanPham sz = v != null ? v.getSize() : null;
+            ProductSize sz = v != null ? v.getSize() : null;
             r.productName = p != null ? p.getName() : null;
             r.sizeName = sz != null ? sz.getName() : null;
             r.quantity = ct.getQuantity();
             r.unitPrice = ct.getUnitPrice();
             r.lineDiscount = ct.getLineDiscount();
             r.lineTotal = ct.getLineTotal();
-            try { r.note = ct.getNote(); } catch (Exception ignore) { r.note = null; }
+            r.note = ct.getNote();
             out.add(r);
         }
         return out;
     }
 
-    // Toppings per order item
     public List<ItemToppingRow> listOrderItemToppings(Integer orderItemId) {
-        TypedQuery<CTDonHangTopping> q = em.createQuery(
-                "SELECT t FROM CTDonHangTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
-                CTDonHangTopping.class);
+        TypedQuery<OrderItemTopping> q = em.createQuery(
+                "SELECT t FROM OrderItemTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
+                OrderItemTopping.class);
         q.setParameter("lid", orderItemId);
-        List<CTDonHangTopping> rows = q.getResultList();
+        List<OrderItemTopping> rows = q.getResultList();
         List<ItemToppingRow> out = new ArrayList<>();
-        for (CTDonHangTopping t : rows) {
+        for (OrderItemTopping t : rows) {
             ItemToppingRow r = new ItemToppingRow();
             Topping tp = t.getTopping();
             r.toppingName = tp != null ? tp.getName() : null;
@@ -117,34 +110,32 @@ public class OrderHistoryService {
         return out;
     }
 
-    // Fetch order header by orderId regardless of customer (for vendor view)
     public OrderRow getOrder(Integer orderId) {
-        //DonHang dh = em.find(DonHang.class, orderId);
-    	// THAY THẾ BẰNG JPQL ĐỂ FETCH EMPLOYEE (kể cả khi employee là null)
-        TypedQuery<DonHang> q = em.createQuery(
-                "SELECT dh FROM DonHang dh LEFT JOIN FETCH dh.employee WHERE dh.id = :id", DonHang.class);
+        TypedQuery<Order> q = em.createQuery(
+                "SELECT dh FROM Order dh LEFT JOIN FETCH dh.employee WHERE dh.id = :id", Order.class);
         q.setParameter("id", orderId);
-        List<DonHang> list = q.getResultList();
-        DonHang dh = list.isEmpty() ? null : list.get(0);
-        // KẾT THÚC THAY THẾ
+        List<Order> list = q.getResultList();
+        Order dh = list.isEmpty() ? null : list.get(0);
         return dh == null ? null : mapOrderRow(dh);
     }
 
-    private OrderRow mapOrderRow(DonHang dh) {
+    private OrderRow mapOrderRow(Order dh) {
         OrderRow r = new OrderRow();
         r.id = dh.getId();
         LocalDateTime ts = dh.getCreatedAt();
         r.createdAt = ts != null ? OffsetDateTime.of(ts, HCM_ZONE.getRules().getOffset(ts)) : null;
-        r.status = dh.getStatus();
-        r.paymentStatus = dh.getPaymentStatus();
-        r.paymentMethod = dh.getPaymentMethod();
-        r.total = dh.getTongThanhToan();
-        // New fields
-        try { r.receivingMethod = dh.getReceivingMethod(); } catch (Exception ignore) {}
-        try { r.receiverName = dh.getReceiverName(); } catch (Exception ignore) {}
-        try { r.receiverPhone = dh.getReceiverPhone(); } catch (Exception ignore) {}
-        try { r.shippingAddress = dh.getShippingAddress(); } catch (Exception ignore) {}
-        try { r.employee = dh.getEmployee(); } catch (Exception ignore) {} // <--- THÊM DÒNG NÀY
+        r.status = dh.getStatus() != null ? dh.getStatus().name() : null;
+        r.paymentStatus = dh.getPayment().getStatus() != null ? dh.getPayment().getStatus().name() : null;
+        r.paymentMethod = dh.getPayment().getMethod() != null ? dh.getPayment().getMethod().name() : null;
+        r.total = dh.getTotalAmount();
+        ShippingInfo si = dh.getShippingInfo();
+        if (si != null) {
+            r.receivingMethod = si.getMethod() != null ? si.getMethod().name() : null;
+            r.receiverName = si.getReceiverName();
+            r.receiverPhone = si.getReceiverPhone();
+            r.shippingAddress = si.getShippingAddress();
+        }
+        r.employee = dh.getEmployee();
         return r;
     }
 
@@ -155,23 +146,22 @@ public class OrderHistoryService {
         public String paymentStatus;
         public String paymentMethod;
         public java.math.BigDecimal total;
-        // New fields
         public String receivingMethod;
         public String receiverName;
         public String receiverPhone;
         public String shippingAddress;
-        public NhanVien employee;
+        public Employee employee;
     }
 
     public static class OrderItemRow {
-        public Integer id; // MaCT
+        public Integer id;
         public String productName;
         public String sizeName;
         public Integer quantity;
         public java.math.BigDecimal unitPrice;
         public java.math.BigDecimal lineDiscount;
         public java.math.BigDecimal lineTotal;
-        public String note; // GhiChu: sugar/ice
+        public String note;
     }
 
     public static class ItemToppingRow {

@@ -2,12 +2,13 @@ package com.alotra.controller.admin;
 
 import com.alotra.entity.Category;
 import com.alotra.entity.Topping;
+import com.alotra.entity.enums.ToppingStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
 import com.alotra.service.CloudinaryService;
-import com.alotra.service.StatsService; // added
-import org.springframework.dao.DataIntegrityViolationException;
+import com.alotra.service.StatsService;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,15 +25,19 @@ public class AdminController {
     private final CategoryRepository categoryRepository;
     private final ToppingRepository toppingRepository;
     private final CloudinaryService cloudinaryService;
-    private final ProductRepository productRepository; // add
-    private final StatsService statsService; // new
+    private final ProductRepository productRepository;
+    private final StatsService statsService;
 
-    public AdminController(CategoryRepository categoryRepository, ToppingRepository toppingRepository, CloudinaryService cloudinaryService, ProductRepository productRepository, StatsService statsService) {
+    public AdminController(CategoryRepository categoryRepository, 
+                           ToppingRepository toppingRepository, 
+                           CloudinaryService cloudinaryService, 
+                           ProductRepository productRepository, 
+                           StatsService statsService) {
         this.categoryRepository = categoryRepository;
         this.toppingRepository = toppingRepository;
         this.cloudinaryService = cloudinaryService;
-        this.productRepository = productRepository; // add
-        this.statsService = statsService; // assign
+        this.productRepository = productRepository;
+        this.statsService = statsService;
     }
 
     @GetMapping
@@ -49,7 +54,6 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    // --- Categories ---
     @GetMapping("/categories")
     public String showCategories(Model model) {
         List<Category> categories = categoryRepository.findByDeletedAtIsNull();
@@ -89,7 +93,7 @@ public class AdminController {
             return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
         }
         Category dup = categoryRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-        if (dup != null && (category.getId() == null || !dup.getId().equals(category.getId()))) {
+        if (dup != null && (category.getId() == null || !java.util.Objects.equals(dup.getId(), category.getId()))) {
             ra.addFlashAttribute("error", "Tên danh mục đã tồn tại.");
             return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
         }
@@ -101,7 +105,6 @@ public class AdminController {
     @GetMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes ra) {
         categoryRepository.findById(id).ifPresentOrElse(c -> {
-            // Guard: prevent delete if category still has active products
             long cnt = productRepository.countByCategoryAndDeletedAtIsNull(c);
             if (cnt > 0) {
                 ra.addFlashAttribute("error", "Không thể xóa danh mục vì còn " + cnt + " sản phẩm đang thuộc danh mục này.");
@@ -114,7 +117,6 @@ public class AdminController {
         return "redirect:/admin/categories";
     }
 
-    // --- Toppings ---
     @GetMapping("/toppings")
     public String showToppings(Model model) {
         List<Topping> toppings = toppingRepository.findByDeletedAtIsNull();
@@ -157,7 +159,7 @@ public class AdminController {
                 return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
             }
             Topping dup = toppingRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
-            if (dup != null && (topping.getId() == null || !dup.getId().equals(topping.getId()))) {
+            if (dup != null && (topping.getId() == null || !java.util.Objects.equals(dup.getId(), topping.getId()))) {
                 ra.addFlashAttribute("error", "Tên topping đã tồn tại.");
                 return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
             }
@@ -177,11 +179,10 @@ public class AdminController {
     public String deleteTopping(@PathVariable Integer id, RedirectAttributes ra) {
         toppingRepository.findById(id).ifPresent(t -> {
             t.setDeletedAt(LocalDateTime.now());
-            t.setStatus(0);
+            t.setStatus(ToppingStatus.UNAVAILABLE);
             toppingRepository.save(t);
         });
         ra.addFlashAttribute("message", "Đã chuyển topping vào thùng rác.");
         return "redirect:/admin/toppings";
     }
-
 }

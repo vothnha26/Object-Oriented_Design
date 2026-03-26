@@ -1,5 +1,6 @@
 package com.alotra.service;
 
+import com.alotra.entity.enums.OrderStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -22,27 +23,28 @@ public class VendorOrderService {
 
     public Map<String, Object> getDashboardCounts() {
         Map<String, Object> m = new HashMap<>();
-        m.put("pending", countByStatus("ChoXuLy"));
-        m.put("preparing", countByStatus("DangPhaChe"));
-        m.put("shipping", countByStatus("DangGiao"));
-        // Today orders by date only (server local time)
-        String sqlToday = "SELECT COUNT(*) FROM DonHang WHERE CONVERT(date, NgayLap) = CONVERT(date, SYSDATETIME())";
+        m.put("pending", countByStatus(OrderStatus.PENDING.name()));
+        m.put("preparing", countByStatus(OrderStatus.PREPARING.name()));
+        m.put("shipping", countByStatus(OrderStatus.DELIVERING.name()));
+        
+        // Today orders (MySQL syntax)
+        String sqlToday = "SELECT COUNT(*) FROM Orders WHERE DATE(NgayLap) = CURDATE()";
         Integer today = jdbc.queryForObject(sqlToday, Integer.class);
         m.put("today", today == null ? 0 : today);
         return m;
     }
 
     public int countByStatus(String status) {
-        Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM DonHang WHERE TrangThaiDonHang = ?", Integer.class, status);
+        // Table: Orders, Column: TrangThaiDonHang
+        Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM Orders WHERE TrangThaiDonHang = ?", Integer.class, status);
         return n == null ? 0 : n;
     }
 
     public List<OrderRow> listOrders(String status, String kw, Integer limit) {
         StringBuilder sb = new StringBuilder();
-        sb.append("SELECT TOP ");
-        sb.append(limit != null && limit > 0 ? limit : 50);
-        sb.append(" dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n");
-        sb.append("FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH WHERE 1=1 ");
+        // Table: Customer, Column: MaKH, TenKH, SoDienThoai
+        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n"); 
+        sb.append("FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH WHERE 1=1 ");
         java.util.List<Object> params = new java.util.ArrayList<>();
         if (status != null && !status.isBlank()) {
             sb.append(" AND dh.TrangThaiDonHang = ?");
@@ -55,11 +57,18 @@ public class VendorOrderService {
             params.add(like);
         }
         sb.append(" ORDER BY dh.MaDH DESC");
+        sb.append(" LIMIT ");
+        sb.append(limit != null && limit > 0 ? limit : 50);
+        
         return jdbc.query(sb.toString(), params.toArray(), ORDER_ROW_MAPPER);
     }
 
     public void updateStatus(Integer id, String newStatus) {
-        jdbc.update("UPDATE DonHang SET TrangThaiDonHang = ? WHERE MaDH = ?", newStatus, id);
+        jdbc.update("UPDATE Orders SET TrangThaiDonHang = ? WHERE MaDH = ?", newStatus, id);
+    }
+
+    public void updateStatus(Integer id, OrderStatus newStatus) {
+        updateStatus(id, newStatus.name());
     }
 
     public static class OrderRow {
@@ -90,25 +99,25 @@ public class VendorOrderService {
         }
     };
 
-    public String nextStatus(String current) {
-        if (current == null) return "ChoXuLy";
+    public OrderStatus nextStatus(OrderStatus current) {
+        if (current == null) return OrderStatus.PENDING;
         return switch (current) {
-            case "ChoXuLy" -> "DangPhaChe";
-            case "DangPhaChe" -> "DangGiao";
-            case "DangGiao" -> "DaGiao";
-            default -> current; // DaGiao, DaHuy remain
+            case PENDING -> OrderStatus.PREPARING;
+            case PREPARING -> OrderStatus.DELIVERING;
+            case DELIVERING -> OrderStatus.DELIVERED;
+            default -> current;
         };
     }
 
     public boolean canCancel(String current) {
         if (current == null) return false;
-        return current.equals("ChoXuLy") || current.equals("DangPhaChe");
+        return OrderStatus.PENDING.name().equals(current) || OrderStatus.PREPARING.name().equals(current);
     }
 
     public List<OrderRow> listTodayOrders() {
         String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
-                "FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH\n" +
-                "WHERE CONVERT(date, dh.NgayLap) = CONVERT(date, SYSDATETIME())\n" +
+                "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH\n" +
+                "WHERE DATE(dh.NgayLap) = CURDATE()\n" +
                 "ORDER BY dh.MaDH DESC";
         return jdbc.query(sql, ORDER_ROW_MAPPER);
     }

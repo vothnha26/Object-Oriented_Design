@@ -192,7 +192,7 @@
                             <div class="admin-reply" th:if="${rv.adminReply}">
                                 <div class="meta mb-1">
                                     <strong>Phản hồi của cửa hàng</strong>
-                                    <span th:if="${rv.adminRepliedBy}"> · <span th:text="${rv.adminRepliedBy}"></span></span>
+                                    <span th:if="${rv.repliedBy}"> · <span th:text="${rv.repliedBy.fullName}"></span></span>
                                     <span th:if="${rv.adminRepliedAt}" th:text="${' · ' + #temporals.format(rv.adminRepliedAt, 'dd/MM/yyyy HH:mm')}"></span>
                                 </div>
                                 <div th:text="${rv.adminReply}"></div>

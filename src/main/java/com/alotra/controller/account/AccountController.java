@@ -1,9 +1,12 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Review;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.OrderHistoryService;
-import com.alotra.service.KhachHangService;
+import com.alotra.service.CustomerService;
 import com.alotra.service.ReviewService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,87 +27,79 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Controller
-@RequestMapping("/account") // Tất cả URL sẽ có tiền tố /account
+@RequestMapping("/account")
 public class AccountController {
 
     private final OrderHistoryService orderService;
-    private final KhachHangService khachHangService;
+    private final CustomerService customerService;
     private final PasswordEncoder passwordEncoder;
-    private final ReviewService reviewService; // new
+    private final ReviewService reviewService;
 
     public AccountController(OrderHistoryService orderService,
-                             KhachHangService khachHangService,
+                             CustomerService customerService,
                              PasswordEncoder passwordEncoder,
                              ReviewService reviewService) {
         this.orderService = orderService;
-        this.khachHangService = khachHangService;
+        this.customerService = customerService;
         this.passwordEncoder = passwordEncoder;
         this.reviewService = reviewService;
     }
 
-    // Profile - view form
     @GetMapping("/profile")
-    public String showProfilePage(@AuthenticationPrincipal KhachHangUserDetails current,
+    public String showProfilePage(@AuthenticationPrincipal CustomerUserDetails current,
                                   Model model,
                                   RedirectAttributes ra) {
-        // Check if user is authenticated and has valid ID
         if (current == null || current.getId() == null) {
             ra.addFlashAttribute("error", "Bạn cần đăng nhập để xem trang này.");
             return "redirect:/login";
         }
         
         model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
-        KhachHang kh = khachHangService.findById(current.getId());
+        Customer customer = customerService.findById(current.getId());
         
-        if (kh == null) {
+        if (customer == null) {
             ra.addFlashAttribute("error", "Không tìm thấy thông tin tài khoản.");
             return "redirect:/";
         }
         
         ProfileForm form = new ProfileForm();
-        form.fullName = kh.getFullName();
-        form.email = kh.getEmail();
-        form.phone = kh.getPhone();
+        form.fullName = customer.getFullName();
+        form.email = customer.getEmail();
+        form.phone = customer.getPhone();
         model.addAttribute("form", form);
-        model.addAttribute("kh", kh);
-        return "account/profile"; // Trỏ đến file /templates/account/profile.html
+        model.addAttribute("kh", customer);
+        return "account/profile";
     }
 
-    // Profile - submit updates
     @PostMapping("/profile")
-    public String updateProfile(@AuthenticationPrincipal KhachHangUserDetails current,
+    public String updateProfile(@AuthenticationPrincipal CustomerUserDetails current,
                                 @ModelAttribute("form") ProfileForm form,
                                 BindingResult result,
                                 RedirectAttributes ra,
                                 Model model) {
-        // Check if user is authenticated and has valid ID
         if (current == null || current.getId() == null) {
             ra.addFlashAttribute("error", "Bạn cần đăng nhập để thực hiện thao tác này.");
             return "redirect:/login";
         }
         
-        KhachHang kh = khachHangService.findById(current.getId());
-        
-        if (kh == null) {
+        Customer customer = customerService.findById(current.getId());
+        if (customer == null) {
             ra.addFlashAttribute("error", "Không tìm thấy thông tin tài khoản.");
             return "redirect:/";
         }
         
-        // Validate email unique (exclude self)
-        if (form.email != null && !form.email.equalsIgnoreCase(kh.getEmail())) {
-            KhachHang byEmail = khachHangService.findByEmail(form.email);
-            if (byEmail != null && !byEmail.getId().equals(kh.getId())) {
+        if (form.email != null && !form.email.equalsIgnoreCase(customer.getEmail())) {
+            Customer byEmail = customerService.findByEmail(form.email);
+            if (byEmail != null && !byEmail.getId().equals(customer.getId())) {
                 result.rejectValue("email", "dup", "Email đã được sử dụng.");
             }
         }
-        // Validate phone unique when present
         if (form.phone != null && !form.phone.isBlank()) {
-            KhachHang byPhone = khachHangService.findByPhone(form.phone);
-            if (byPhone != null && !byPhone.getId().equals(kh.getId())) {
+            Customer byPhone = customerService.findByPhone(form.phone);
+            if (byPhone != null && !byPhone.getId().equals(customer.getId())) {
                 result.rejectValue("phone", "dup", "Số điện thoại đã được sử dụng.");
             }
         }
-        // Password change validation (optional)
         boolean wantChangePwd = form.newPassword != null && !form.newPassword.isBlank();
         if (wantChangePwd) {
             if (form.confirmPassword == null || !form.newPassword.equals(form.confirmPassword)) {
@@ -113,24 +108,22 @@ public class AccountController {
         }
         if (result.hasErrors()) {
             model.addAttribute("pageTitle", "Thông Tin Tài Khoản");
-            model.addAttribute("kh", kh);
+            model.addAttribute("kh", customer);
             return "account/profile";
         }
-        // Apply updates
-        kh.setFullName(form.fullName);
-        kh.setEmail(form.email);
-        kh.setPhone(form.phone);
+        customer.setFullName(form.fullName);
+        customer.setEmail(form.email);
+        customer.setPhone(form.phone);
         if (wantChangePwd) {
-            kh.setPasswordHash(passwordEncoder.encode(form.newPassword));
+            customer.setPasswordHash(passwordEncoder.encode(form.newPassword));
         }
-        khachHangService.save(kh);
+        customerService.save(customer);
         ra.addFlashAttribute("message", "Cập nhật thông tin thành công.");
         return "redirect:/account/profile";
     }
 
-    // Orders list
     @GetMapping("/orders")
-    public String showOrdersPage(@AuthenticationPrincipal KhachHangUserDetails current,
+    public String showOrdersPage(@AuthenticationPrincipal CustomerUserDetails current,
                                  @RequestParam(value = "status", required = false) String status,
                                  @RequestParam(value = "code", required = false) String code,
                                  @RequestParam(value = "from", required = false)
@@ -139,7 +132,6 @@ public class AccountController {
                                  @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate to,
                                  RedirectAttributes ra,
                                  Model model) {
-        // Check if user is authenticated and has valid ID
         if (current == null || current.getId() == null) {
             ra.addFlashAttribute("error", "Bạn cần đăng nhập để xem trang này.");
             return "redirect:/login";
@@ -164,16 +156,14 @@ public class AccountController {
         model.addAttribute("code", code);
         model.addAttribute("from", from != null ? from.toString() : "");
         model.addAttribute("to", to != null ? to.toString() : "");
-        return "account/orders"; // đến file /templates/account/orders.html
+        return "account/orders";
     }
 
-    // Order detail 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable("id") Integer id,
-                              @AuthenticationPrincipal KhachHangUserDetails current,
+                              @AuthenticationPrincipal CustomerUserDetails current,
                               RedirectAttributes ra,
                               Model model) {
-        // Check if user is authenticated and has valid ID
         if (current == null || current.getId() == null) {
             ra.addFlashAttribute("error", "Bạn cần đăng nhập để xem trang này.");
             return "redirect:/login";
@@ -185,18 +175,19 @@ public class AccountController {
             return "redirect:/account/orders";
         }
         var items = orderService.listOrderItems(id);
-        // Build toppings map for each line item
         Map<Integer, List<OrderHistoryService.ItemToppingRow>> toppings = new HashMap<>();
         for (var it : items) {
             toppings.put(it.id, orderService.listOrderItemToppings(it.id));
         }
-        // Reviews map: lineId -> review (if any) for current user
         List<Integer> lineIds = items.stream().map(it -> it.id).collect(Collectors.toList());
-        Map<Integer, com.alotra.entity.DanhGia> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);
-        boolean eligibleForReview = reviewService.isOrderEligibleForReview(order.status, order.paymentStatus);
-        // Compute edit-allowed per line
+        Map<Integer, Review> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);
+        boolean eligibleForReview = reviewService.isOrderEligibleForReview(
+            order.status != null ? OrderStatus.valueOf(order.status) : null,
+            order.paymentStatus != null ? PaymentStatus.valueOf(order.paymentStatus) : null
+        );
         Map<Integer, Boolean> reviewEditableByLine = new HashMap<>();
         reviewsByLine.forEach((lineId, rv) -> reviewEditableByLine.put(lineId, reviewService.canEdit(rv)));
+        
         model.addAttribute("pageTitle", "Chi tiết đơn #" + id);
         model.addAttribute("order", order);
         model.addAttribute("items", items);
@@ -204,11 +195,10 @@ public class AccountController {
         model.addAttribute("reviewsByLine", reviewsByLine);
         model.addAttribute("eligibleForReview", eligibleForReview);
         model.addAttribute("reviewEditableByLine", reviewEditableByLine);
-        model.addAttribute("editWindowMinutes", com.alotra.service.ReviewService.EDIT_WINDOW.toMinutes());
+        model.addAttribute("editWindowMinutes", ReviewService.EDIT_WINDOW.toMinutes());
         return "account/order-detail";
     }
 
-    // Small profile form (DTO)
     public static class ProfileForm {
         @NotBlank
         public String fullName;
@@ -219,7 +209,6 @@ public class AccountController {
         public String newPassword;
         public String confirmPassword;
 
-        // getters/setters (Thymeleaf can access public fields directly, but add for safety)
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
         public String getEmail() { return email; }

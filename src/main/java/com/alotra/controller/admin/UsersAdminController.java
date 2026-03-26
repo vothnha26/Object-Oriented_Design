@@ -1,9 +1,12 @@
 package com.alotra.controller.admin;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.service.KhachHangService;
-import com.alotra.service.NhanVienService;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Employee;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.entity.enums.EmployeeRole;
+import com.alotra.entity.enums.EmployeeStatus;
+import com.alotra.service.CustomerService;
+import com.alotra.service.EmployeeService;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -17,26 +20,24 @@ import java.util.List;
 @Controller
 @RequestMapping("/admin/users")
 public class UsersAdminController {
-    private final KhachHangService khService;
-    private final NhanVienService nvService;
+    private final CustomerService customerService;
+    private final EmployeeService employeeService;
 
-    public UsersAdminController(KhachHangService khService, NhanVienService nvService) {
-        this.khService = khService;
-        this.nvService = nvService;
+    public UsersAdminController(CustomerService customerService, EmployeeService employeeService) {
+        this.customerService = customerService;
+        this.employeeService = employeeService;
     }
 
     @GetMapping
     public String index(Model model,
                         @RequestParam(value = "tab", required = false, defaultValue = "customers") String tab,
-                        // Customer filters
                         @RequestParam(value = "kwC", required = false) String kwC,
                         @RequestParam(value = "statusC", required = false) Integer statusC,
-                        // Employee filters
                         @RequestParam(value = "kwE", required = false) String kwE,
                         @RequestParam(value = "roleE", required = false) Integer roleE,
                         @RequestParam(value = "statusE", required = false) Integer statusE) {
-        List<KhachHang> customers = khService.search(kwC, statusC);
-        List<NhanVien> employees = nvService.search(kwE, roleE, statusE); // excludes trashed by repo query
+        List<Customer> customers = customerService.search(kwC, CustomerStatus.fromValue(statusC));
+        List<Employee> employees = employeeService.search(kwE, EmployeeRole.fromValue(roleE), EmployeeStatus.fromValue(statusE)); 
         model.addAttribute("pageTitle", "Người dùng");
         model.addAttribute("currentPage", "users");
         model.addAttribute("tab", tab);
@@ -52,26 +53,25 @@ public class UsersAdminController {
 
     @GetMapping("/customers/{id}")
     public String customerDetail(@PathVariable Integer id, Model model){
-        KhachHang kh = khService.findById(id);
-        if (kh == null) throw new IllegalArgumentException("Không tìm thấy khách hàng");
+        Customer customer = customerService.findById(id);
+        if (customer == null) throw new IllegalArgumentException("Không tìm thấy khách hàng");
         model.addAttribute("pageTitle", "Chi tiết khách hàng");
         model.addAttribute("currentPage", "users");
-        model.addAttribute("kh", kh);
+        model.addAttribute("kh", customer);
         return "admin/users/customer-detail";
     }
 
-    // === Customers: lock/unlock/delete ===
     @PostMapping("/customers/{id}/lock")
     public String lockCustomer(@PathVariable Integer id, RedirectAttributes ra) {
-        KhachHang kh = khService.findById(id);
-        if (kh == null) {
+        Customer customer = customerService.findById(id);
+        if (customer == null) {
             ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
-        } else if ("boss".equalsIgnoreCase(String.valueOf(kh.getUsername())) ||
-                   "boss@alotra.com".equalsIgnoreCase(String.valueOf(kh.getEmail()))) {
+        } else if ("boss".equalsIgnoreCase(String.valueOf(customer.getUsername())) ||
+                   "boss@alotra.com".equalsIgnoreCase(String.valueOf(customer.getEmail()))) {
             ra.addFlashAttribute("error", "Không thể khóa tài khoản quản trị hệ thống.");
         } else {
-            kh.setStatus(0);
-            khService.save(kh);
+            customer.setStatus(CustomerStatus.INACTIVE);
+            customerService.save(customer);
             ra.addFlashAttribute("msg", "Đã khóa tài khoản khách hàng.");
         }
         return "redirect:/admin/users?tab=customers";
@@ -79,18 +79,17 @@ public class UsersAdminController {
 
     @PostMapping("/customers/{id}/unlock")
     public String unlockCustomer(@PathVariable Integer id, RedirectAttributes ra) {
-        KhachHang kh = khService.findById(id);
-        if (kh == null) {
+        Customer customer = customerService.findById(id);
+        if (customer == null) {
             ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
         } else {
-            kh.setStatus(1);
-            khService.save(kh);
+            customer.setStatus(CustomerStatus.ACTIVE);
+            customerService.save(customer);
             ra.addFlashAttribute("msg", "Đã mở khóa tài khoản khách hàng.");
         }
         return "redirect:/admin/users?tab=customers";
     }
 
-    // Support both POST and GET delete patterns
     @PostMapping("/customers/{id}/delete")
     public String deleteCustomerPost(@PathVariable Integer id, RedirectAttributes ra) {
         return deleteCustomerInternal(id, ra);
@@ -102,18 +101,18 @@ public class UsersAdminController {
     }
 
     private String deleteCustomerInternal(Integer id, RedirectAttributes ra) {
-        KhachHang kh = khService.findById(id);
-        if (kh == null) {
+        Customer customer = customerService.findById(id);
+        if (customer == null) {
             ra.addFlashAttribute("error", "Không tìm thấy khách hàng.");
             return "redirect:/admin/users?tab=customers";
         }
-        if ("boss".equalsIgnoreCase(String.valueOf(kh.getUsername())) ||
-            "boss@alotra.com".equalsIgnoreCase(String.valueOf(kh.getEmail()))) {
+        if ("boss".equalsIgnoreCase(String.valueOf(customer.getUsername())) ||
+            "boss@alotra.com".equalsIgnoreCase(String.valueOf(customer.getEmail()))) {
             ra.addFlashAttribute("error", "Không thể xóa tài khoản quản trị hệ thống.");
             return "redirect:/admin/users?tab=customers";
         }
         try {
-            khService.deleteById(id);
+            customerService.deleteById(id);
             ra.addFlashAttribute("msg", "Đã xóa tài khoản khách hàng.");
         } catch (DataIntegrityViolationException ex) {
             ra.addFlashAttribute("error", "Không thể xóa vì tài khoản đã phát sinh dữ liệu. Vui lòng khóa thay vì xóa.");
@@ -125,45 +124,43 @@ public class UsersAdminController {
 
     @GetMapping("/employees/new")
     public String newEmployee(Model model){
-        NhanVien nv = new NhanVien();
-        nv.setRole(2); // default: Nhân viên
-        nv.setStatus(1);
+        Employee employee = new Employee();
+        employee.setRole(EmployeeRole.STAFF);
+        employee.setStatus(EmployeeStatus.ACTIVE);
         model.addAttribute("pageTitle", "Thêm nhân viên");
         model.addAttribute("currentPage", "users");
-        model.addAttribute("nv", nv);
+        model.addAttribute("nv", employee);
         return "admin/users/employee-form";
     }
 
     @GetMapping("/employees/edit/{id}")
     public String editEmployee(@PathVariable Integer id, Model model){
-        NhanVien nv = nvService.findById(id).orElseThrow();
+        Employee employee = employeeService.findById(id).orElseThrow();
         model.addAttribute("pageTitle", "Sửa nhân viên");
         model.addAttribute("currentPage", "users");
-        model.addAttribute("nv", nv);
+        model.addAttribute("nv", employee);
         return "admin/users/employee-form";
     }
 
     @PostMapping("/employees/save")
-    public String saveEmployee(@ModelAttribute("nv") @Valid NhanVien nv, BindingResult result, Model model, RedirectAttributes ra){
-        // Validate unique username/email/phone
-        NhanVien byU = nv.getUsername()!=null ? nvService.findByUsername(nv.getUsername()) : null;
-        if (byU != null && (nv.getId()==null || !byU.getId().equals(nv.getId()))) {
+    public String saveEmployee(@ModelAttribute("nv") @Valid Employee employee, BindingResult result, Model model, RedirectAttributes ra){
+        Employee byU = employee.getUsername()!=null ? employeeService.findByUsername(employee.getUsername()) : null;
+        if (byU != null && (employee.getId()==null || !byU.getId().equals(employee.getId()))) {
             result.rejectValue("username","dup","Tên đăng nhập đã tồn tại");
         }
-        NhanVien byE = nv.getEmail()!=null ? nvService.findByEmail(nv.getEmail()) : null;
-        if (byE != null && (nv.getId()==null || !byE.getId().equals(nv.getId()))) {
+        Employee byE = employee.getEmail()!=null ? employeeService.findByEmail(employee.getEmail()) : null;
+        if (byE != null && (employee.getId()==null || !byE.getId().equals(employee.getId()))) {
             result.rejectValue("email","dup","Email đã tồn tại");
         }
-        if (nv.getPhone()!=null && !nv.getPhone().isBlank()){
-            NhanVien byP = nvService.findByPhone(nv.getPhone());
-            if (byP != null && (nv.getId()==null || !byP.getId().equals(nv.getId()))) {
+        if (employee.getPhone()!=null && !employee.getPhone().isBlank()){
+            Employee byP = employeeService.findByPhone(employee.getPhone());
+            if (byP != null && (employee.getId()==null || !byP.getId().equals(employee.getId()))) {
                 result.rejectValue("phone","dup","Số điện thoại đã tồn tại");
             }
         }
-        // Password confirmation if provided or creating new
-        boolean isNew = nv.getId()==null;
-        String pw = nv.getPlainPassword();
-        String cpw = nv.getConfirmPassword();
+        boolean isNew = employee.getId()==null;
+        String pw = employee.getPlainPassword();
+        String cpw = employee.getConfirmPassword();
         if (isNew && (pw==null || pw.isBlank())) {
             result.rejectValue("plainPassword","empty","Vui lòng nhập mật khẩu");
         }
@@ -175,22 +172,21 @@ public class UsersAdminController {
             model.addAttribute("currentPage", "users");
             return "admin/users/employee-form";
         }
-        nvService.saveHandlingPassword(nv);
+        employeeService.saveHandlingPassword(employee);
         ra.addFlashAttribute("msg", isNew ? "Đã thêm nhân viên thành công." : "Đã cập nhật nhân viên thành công.");
         return "redirect:/admin/users?tab=employees";
     }
 
     @GetMapping("/employees/delete/{id}")
     public String deleteEmployee(@PathVariable Integer id, RedirectAttributes ra){
-        // Always soft-delete to trash; no FK risk here. Hard delete is only allowed from Trash page.
-        nvService.softDeleteToTrash(id);
+        employeeService.softDeleteToTrash(id);
         ra.addFlashAttribute("msg", "Đã chuyển nhân viên vào thùng rác.");
         return "redirect:/admin/users?tab=employees";
     }
 
     @PostMapping("/employees/{id}/reset-password")
     public String resetPassword(@PathVariable Integer id, RedirectAttributes ra) {
-        String temp = nvService.resetPassword(id);
+        String temp = employeeService.resetPassword(id);
         ra.addFlashAttribute("msg", "Đã đặt lại mật khẩu. Mật khẩu tạm thời: " + temp);
         return "redirect:/admin/users?tab=employees";
     }

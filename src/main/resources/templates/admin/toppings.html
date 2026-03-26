@@ -37,8 +37,8 @@
                             <td th:text="${topping.name}"></td>
                             <td th:text="${#numbers.formatDecimal(topping.extraPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                             <td>
-                                <span class="badge" th:text="${topping.status == 1 ? 'Đang bán' : 'Ngừng bán'}"
-                                      th:classappend="${topping.status == 1 ? 'bg-success' : 'bg-secondary'}"></span>
+                                <span class="badge" th:text="${topping.status.name() == 'ACTIVE' ? 'Đang bán' : 'Ngừng bán'}"
+                                      th:classappend="${topping.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                             </td>
                             <td class="text-end">
                                 <a th:href="@{/admin/toppings/edit/{id}(id=${topping.id})}" class="btn btn-info btn-sm">Sửa</a>

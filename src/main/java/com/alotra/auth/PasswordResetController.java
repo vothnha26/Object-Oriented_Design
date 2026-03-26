@@ -1,9 +1,9 @@
 package com.alotra.auth;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.KhachHangRepository;
-import com.alotra.repository.NhanVienRepository;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Employee;
+import com.alotra.repository.CustomerRepository;
+import com.alotra.repository.EmployeeRepository;
 import com.alotra.service.EmailService;
 import com.alotra.service.PasswordResetTokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,19 +20,19 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @Controller
 @RequestMapping
 public class PasswordResetController {
-    private final KhachHangRepository khRepo;
-    private final NhanVienRepository nvRepo;
+    private final CustomerRepository customerRepo;
+    private final EmployeeRepository employeeRepo;
     private final PasswordResetTokenService tokenService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
 
-    public PasswordResetController(KhachHangRepository khRepo,
-                                   NhanVienRepository nvRepo,
+    public PasswordResetController(CustomerRepository customerRepo,
+                                   EmployeeRepository employeeRepo,
                                    PasswordResetTokenService tokenService,
                                    EmailService emailService,
                                    PasswordEncoder passwordEncoder) {
-        this.khRepo = khRepo;
-        this.nvRepo = nvRepo;
+        this.customerRepo = customerRepo;
+        this.employeeRepo = employeeRepo;
         this.tokenService = tokenService;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
@@ -64,7 +64,7 @@ public class PasswordResetController {
                         "Nếu bạn không yêu cầu, hãy bỏ qua email này.";
                 // Send only if email exists to avoid backscatter? We still send to provided address.
                 // Safer: only send when account exists
-                boolean exists = khRepo.findByEmail(e) != null || nvRepo.findByEmail(e) != null;
+                boolean exists = customerRepo.findByEmail(e).isPresent() || employeeRepo.findByEmail(e).isPresent();
                 if (exists) {
                     emailService.send(e, subject, body);
                 }
@@ -110,16 +110,16 @@ public class PasswordResetController {
         }
         // Update for customer or employee
         boolean updated = false;
-        KhachHang kh = khRepo.findByEmail(email);
-        if (kh != null) {
-            kh.setPasswordHash(passwordEncoder.encode(password));
-            khRepo.save(kh);
+        Customer customer = customerRepo.findByEmail(email).orElse(null);
+        if (customer != null) {
+            customer.setPasswordHash(passwordEncoder.encode(password));
+            customerRepo.save(customer);
             updated = true;
         } else {
-            NhanVien nv = nvRepo.findByEmail(email);
-            if (nv != null) {
-                nv.setPasswordHash(passwordEncoder.encode(password));
-                nvRepo.save(nv);
+            Employee employee = employeeRepo.findByEmail(email).orElse(null);
+            if (employee != null) {
+                employee.setPasswordHash(passwordEncoder.encode(password));
+                employeeRepo.save(employee);
                 updated = true;
             }
         }

@@ -1,5 +1,6 @@
 package com.alotra.entity;
 
+import com.alotra.entity.enums.ToppingStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,13 +19,13 @@ public class Topping {
     @Column(name = "GiaThem", nullable = false)
     private BigDecimal extraPrice;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TrangThai", nullable = false)
-    private Integer status;
+    private ToppingStatus status = ToppingStatus.AVAILABLE;
 
     @Column(name = "UrlAnh")
     private String imageUrl;
 
-    // Soft delete timestamp (null = active)
     @Column(name = "DeletedAt")
     private LocalDateTime deletedAt;
 
@@ -35,10 +36,13 @@ public class Topping {
     public void setName(String name) { this.name = name; }
     public BigDecimal getExtraPrice() { return extraPrice; }
     public void setExtraPrice(BigDecimal extraPrice) { this.extraPrice = extraPrice; }
-    public Integer getStatus() { return status; }
-    public void setStatus(Integer status) { this.status = status; }
+    public ToppingStatus getStatus() { return status; }
+    public void setStatus(ToppingStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    // Business methods
+    public boolean isAvailable() { return status == ToppingStatus.AVAILABLE && deletedAt == null; }
 }

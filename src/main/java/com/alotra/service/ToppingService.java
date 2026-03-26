@@ -17,6 +17,7 @@ public class ToppingService {
     }
 
     public Topping findById(Integer id) {
+        if (id == null) return null;
         return toppingRepository.findById(id).orElse(null);
     }
 
@@ -25,6 +26,8 @@ public class ToppingService {
     }
 
     public void deleteById(Integer id) {
-        toppingRepository.deleteById(id);
+        if (id != null) {
+            toppingRepository.deleteById(id);
+        }
     }
 }

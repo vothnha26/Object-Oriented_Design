@@ -1,7 +1,7 @@
 package com.alotra.controller.api;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.security.KhachHangUserDetails;
+import com.alotra.entity.Customer;
+import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.CartService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,38 +20,38 @@ public class CartApiController {
 
     @PostMapping("/add")
     public ResponseEntity<?> add(@RequestBody AddRequest req, Authentication auth) {
-        KhachHang kh = getCurrentCustomer(auth);
-        if (kh == null) {
+        Customer c = getCurrentCustomer(auth);
+        if (c == null) {
             return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
         }
         Integer qty = (req.quantity == null || req.quantity <= 0) ? 1 : req.quantity;
         if (req.productId == null && req.variantId == null) {
             return ResponseEntity.badRequest().body(Map.of("error", "Missing productId or variantId"));
         }
-        cartService.addItemWithOptions(kh, req.variantId, qty, null, null);
-        int count = cartService.getItemCount(kh);
+        cartService.addItemWithOptions(c, req.variantId, qty, null, null);
+        int count = cartService.getItemCount(c);
         return ResponseEntity.ok(Map.of("ok", true, "count", count));
     }
 
     @GetMapping("/count")
     public Map<String, Object> count(Authentication auth) {
-        KhachHang kh = getCurrentCustomer(auth);
-        int count = (kh == null) ? 0 : cartService.getItemCount(kh);
+        Customer c = getCurrentCustomer(auth);
+        int count = (c == null) ? 0 : cartService.getItemCount(c);
         return Map.of("count", count);
     }
 
-    private KhachHang getCurrentCustomer(Authentication auth) {
+    private Customer getCurrentCustomer(Authentication auth) {
         if (auth == null || auth.getPrincipal() == null) return null;
         Object p = auth.getPrincipal();
-        if (p instanceof KhachHangUserDetails khd) {
-            return khd.getKhachHang();
+        if (p instanceof CustomerUserDetails cud) {
+            return cud.getCustomer();
         }
         return null;
     }
 
     public static class AddRequest {
-        public Integer productId; // optional if variantId provided
-        public Integer variantId; // optional if productId provided
-        public Integer quantity;  // default 1
+        public Integer productId;
+        public Integer variantId;
+        public Integer quantity;
     }
 }

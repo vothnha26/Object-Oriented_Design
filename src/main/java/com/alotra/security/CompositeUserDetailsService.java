@@ -1,9 +1,10 @@
 package com.alotra.security;
 
-import com.alotra.entity.KhachHang;
-import com.alotra.entity.NhanVien;
-import com.alotra.repository.KhachHangRepository;
-import com.alotra.repository.NhanVienRepository;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Employee;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.repository.CustomerRepository;
+import com.alotra.repository.EmployeeRepository;
 import org.springframework.context.annotation.Primary;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,41 +15,44 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Service
 @Primary
 public class CompositeUserDetailsService implements UserDetailsService {
-    private final NhanVienRepository nvRepo;
-    private final KhachHangRepository khRepo;
+    private final EmployeeRepository employeeRepo;
+    private final CustomerRepository customerRepo;
 
-    public CompositeUserDetailsService(NhanVienRepository nvRepo, KhachHangRepository khRepo) {
-        this.nvRepo = nvRepo;
-        this.khRepo = khRepo;
+    public CompositeUserDetailsService(EmployeeRepository employeeRepo, CustomerRepository customerRepo) {
+        this.employeeRepo = employeeRepo;
+        this.customerRepo = customerRepo;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         String u = username != null ? username.trim() : "";
-        // 0) Special bootstrap admin: "boss" (password "123"): take precedence to avoid DB conflicts
+        
+        // 0) Special bootstrap admin: "boss"
         if ("boss".equalsIgnoreCase(u) || "boss@alotra.com".equalsIgnoreCase(u)) {
-            KhachHang ghost = new KhachHang();
+            Customer ghost = new Customer();
             ghost.setUsername("boss");
             ghost.setEmail("boss@alotra.com");
             ghost.setFullName("AloTra Boss");
-            ghost.setStatus(1); // active
-            // Use local BCrypt to avoid depending on SecurityConfig's PasswordEncoder bean
+            ghost.setStatus(CustomerStatus.ACTIVE);
             String hash = new BCryptPasswordEncoder().encode("123");
             ghost.setPasswordHash(hash);
-            return new KhachHangUserDetails(ghost);
+            return new CustomerUserDetails(ghost);
         }
-        // 1) Try staff first (NhanVien): allow username or email
-        NhanVien nv = nvRepo.findByUsername(u);
-        if (nv == null) nv = nvRepo.findByEmail(u);
-        if (nv != null) {
-            return new NhanVienUserDetails(nv);
+        
+        // 1) Try staff first (Employee)
+        Employee employee = employeeRepo.findByUsername(u).orElse(null);
+        if (employee == null) employee = employeeRepo.findByEmail(u).orElse(null);
+        if (employee != null) {
+            return new EmployeeUserDetails(employee);
         }
-        // 2) Fallback to customers (KhachHang): allow username or email
-        KhachHang kh = khRepo.findByUsername(u);
-        if (kh == null) kh = khRepo.findByEmail(u);
-        if (kh != null) {
-            return new KhachHangUserDetails(kh);
+        
+        // 2) Fallback to customers (Customer)
+        Customer customer = customerRepo.findByUsername(u).orElse(null);
+        if (customer == null) customer = customerRepo.findByEmail(u).orElse(null);
+        if (customer != null) {
+            return new CustomerUserDetails(customer);
         }
+        
         throw new UsernameNotFoundException("Không tìm thấy tài khoản: " + username);
     }
 }

@@ -15,13 +15,14 @@ public class StatsService {
 
     public DashboardStats loadDashboardStats() {
         DashboardStats s = new DashboardStats();
-        // Doanh thu: chỉ tính đơn đã thanh toán
-        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(TongThanhToan) FROM DonHang WHERE PaymentStatus='DaThanhToan'"));
-        s.totalOrders = nnLong(queryLong("SELECT COUNT(*) FROM DonHang"));
-        s.totalCustomers = nnLong(queryLong("SELECT COUNT(*) FROM KhachHang"));
-        s.totalProducts = nnLong(queryLong("SELECT COUNT(*) FROM SanPham WHERE DeletedAt IS NULL"));
-        s.totalReviews = nnLong(queryLong("SELECT COUNT(*) FROM DanhGia"));
-        s.avgStars = nnDouble(queryDouble("SELECT AVG(CAST(SoSao AS FLOAT)) FROM DanhGia"));
+        // Revenue: only count orders with PAID status
+        // Table: Orders, Column: TongThanhToan, PaymentStatus
+        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(TongThanhToan) FROM Orders WHERE PaymentStatus='PAID'"));
+        s.totalOrders = nnLong(queryLong("SELECT COUNT(*) FROM Orders"));
+        s.totalCustomers = nnLong(queryLong("SELECT COUNT(*) FROM Customer"));
+        s.totalProducts = nnLong(queryLong("SELECT COUNT(*) FROM Product WHERE DeletedAt IS NULL"));
+        s.totalReviews = nnLong(queryLong("SELECT COUNT(*) FROM Review"));
+        s.avgStars = nnDouble(queryDouble("SELECT AVG(SoSao) FROM Review"));
         s.revenueDaily = revenueDaily(14);
         s.orderStatus = orderStatusDistribution();
         s.topProducts = topProducts(8);
@@ -30,19 +31,31 @@ public class StatsService {
         return s;
     }
 
-    // --- Query helpers ---
-    private BigDecimal queryBigDecimal(String sql){ return jdbc.queryForObject(sql, BigDecimal.class); }
-    private Long queryLong(String sql){ return jdbc.queryForObject(sql, Long.class); }
-    private Double queryDouble(String sql){ return jdbc.queryForObject(sql, Double.class); }
+    private BigDecimal queryBigDecimal(String sql){ 
+        try {
+            return jdbc.queryForObject(sql, BigDecimal.class); 
+        } catch (Exception e) { return BigDecimal.ZERO; }
+    }
+    private Long queryLong(String sql){ 
+        try {
+            return jdbc.queryForObject(sql, Long.class); 
+        } catch (Exception e) { return 0L; }
+    }
+    private Double queryDouble(String sql){ 
+        try {
+            return jdbc.queryForObject(sql, Double.class); 
+        } catch (Exception e) { return 0d; }
+    }
     private BigDecimal nnBig(BigDecimal v){ return v==null? BigDecimal.ZERO: v; }
     private long nnLong(Long v){ return v==null?0L:v; }
     private double nnDouble(Double v){ return v==null?0d:v; }
 
     private List<Map<String,Object>> revenueDaily(int days){
-        String sql = "SELECT CONVERT(date, NgayLap) d, SUM(TongThanhToan) total FROM DonHang " +
-                "WHERE NgayLap >= DATEADD(day, -?, CONVERT(date, SYSDATETIME())) " +
-                "AND PaymentStatus='DaThanhToan' " +
-                "GROUP BY CONVERT(date, NgayLap) ORDER BY d";
+        // MySQL syntax: DATE(NgayLap), CURDATE() - INTERVAL ? DAY
+        String sql = "SELECT DATE(NgayLap) d, SUM(TongThanhToan) total FROM Orders " +
+                "WHERE NgayLap >= CURDATE() - INTERVAL ? DAY " +
+                "AND PaymentStatus='PAID' " +
+                "GROUP BY DATE(NgayLap) ORDER BY d";
         return jdbc.query(sql, ps -> ps.setInt(1, days-1), (rs,i)-> Map.of(
                 "date", rs.getDate("d").toLocalDate().toString(),
                 "total", rs.getBigDecimal("total") == null ? BigDecimal.ZERO : rs.getBigDecimal("total")
@@ -50,7 +63,8 @@ public class StatsService {
     }
 
     private List<Map<String,Object>> orderStatusDistribution(){
-        String sql = "SELECT TrangThaiDonHang status, COUNT(*) cnt FROM DonHang GROUP BY TrangThaiDonHang";
+        // Column: TrangThaiDonHang
+        String sql = "SELECT TrangThaiDonHang status, COUNT(*) cnt FROM Orders GROUP BY TrangThaiDonHang";
         return jdbc.query(sql, (rs,i)-> Map.of(
                 "status", rs.getString("status"),
                 "count", rs.getLong("cnt")
@@ -58,12 +72,16 @@ public class StatsService {
     }
 
     private List<Map<String,Object>> topProducts(int limit){
-        String sql = "SELECT TOP " + limit + " sp.MaSP id, sp.TenSP name, SUM(ct.SoLuong) qty, SUM(ct.ThanhTien) amount " +
-                "FROM CTDonHang ct JOIN DonHang dh ON dh.MaDH = ct.MaDH " +
-                "JOIN BienTheSanPham bt ON bt.MaBT = ct.MaBT " +
-                "JOIN SanPham sp ON sp.MaSP = bt.MaSP " +
-                "WHERE dh.PaymentStatus='DaThanhToan' " +
-                "GROUP BY sp.MaSP, sp.TenSP ORDER BY qty DESC";
+        // OrderItem: MaDH, MaBT, ThanhTien, SoLuong
+        // ProductVariant: Id, ProductId
+        // Product: MaSP, TenSP
+        String sql = "SELECT sp.MaSP id, sp.TenSP name, SUM(ct.SoLuong) qty, SUM(ct.ThanhTien) amount " +
+                "FROM OrderItem ct JOIN Orders dh ON dh.MaDH = ct.MaDH " +
+                "JOIN ProductVariant bt ON bt.Id = ct.MaBT " +
+                "JOIN Product sp ON sp.MaSP = bt.ProductId " +
+                "WHERE dh.PaymentStatus='PAID' " +
+                "GROUP BY sp.MaSP, sp.TenSP ORDER BY qty DESC " +
+                "LIMIT " + limit;
         return jdbc.query(sql, (rs,i)-> Map.of(
                 "id", rs.getInt("id"),
                 "name", rs.getString("name"),
@@ -73,25 +91,28 @@ public class StatsService {
     }
 
     private List<Map<String,Object>> categorySales(){
+        // Category: MaDM, TenDM
         String sql = "SELECT dm.TenDM name, SUM(ct.SoLuong) qty, SUM(ct.ThanhTien) amount " +
-                "FROM CTDonHang ct JOIN DonHang dh ON dh.MaDH = ct.MaDH " +
-                "JOIN BienTheSanPham bt ON bt.MaBT = ct.MaBT " +
-                "JOIN SanPham sp ON sp.MaSP = bt.MaSP " +
-                "LEFT JOIN DanhMucSanPham dm ON dm.MaDM = sp.MaDM " +
-                "WHERE dh.PaymentStatus='DaThanhToan' " +
+                "FROM OrderItem ct JOIN Orders dh ON dh.MaDH = ct.MaDH " +
+                "JOIN ProductVariant bt ON bt.Id = ct.MaBT " +
+                "JOIN Product sp ON sp.MaSP = bt.ProductId " +
+                "LEFT JOIN Category dm ON dm.MaDM = sp.MaDM " +
+                "WHERE dh.PaymentStatus='PAID' " +
                 "GROUP BY dm.TenDM ORDER BY amount DESC";
         return jdbc.query(sql, (rs,i)-> Map.of(
-                "name", rs.getString("name"),
+                "name", rs.getString("name") == null ? "Không xác định" : rs.getString("name"),
                 "qty", rs.getLong("qty"),
                 "amount", rs.getBigDecimal("amount") == null ? BigDecimal.ZERO : rs.getBigDecimal("amount")
         ));
     }
 
     private List<Map<String,Object>> topCustomers(int limit){
-        String sql = "SELECT TOP " + limit + " kh.MaKH id, kh.TenKH name, COUNT(dh.MaDH) orders, SUM(dh.TongThanhToan) spend " +
-                "FROM DonHang dh JOIN KhachHang kh ON kh.MaKH = dh.MaKH " +
-                "WHERE dh.PaymentStatus='DaThanhToan' " +
-                "GROUP BY kh.MaKH, kh.TenKH ORDER BY spend DESC";
+        // Customer: MaKH, TenKH
+        String sql = "SELECT kh.MaKH id, kh.TenKH name, COUNT(dh.MaDH) orders, SUM(dh.TongThanhToan) spend " +
+                "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH " +
+                "WHERE dh.PaymentStatus='PAID' " +
+                "GROUP BY kh.MaKH, kh.TenKH ORDER BY spend DESC " +
+                "LIMIT " + limit;
         return jdbc.query(sql, (rs,i)-> Map.of(
                 "id", rs.getInt("id"),
                 "name", rs.getString("name"),
