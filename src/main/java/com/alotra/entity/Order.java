@@ -34,8 +34,8 @@ public class Order {
     @Column(name = "TrangThaiDonHang", nullable = false)
     private OrderStatus status = OrderStatus.PENDING;
 
-    @Embedded
-    private PaymentInfo payment = new PaymentInfo();
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Payment payment;
 
     @Column(name = "TongHang", nullable = false)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -87,8 +87,13 @@ public class Order {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public OrderStatus getStatus() { return status; }
     public void setStatus(OrderStatus status) { this.status = status; }
-    public PaymentInfo getPayment() { return payment; }
-    public void setPayment(PaymentInfo payment) { this.payment = payment; }
+    public Payment getPayment() { return payment; }
+    public void setPayment(Payment payment) { 
+        this.payment = payment; 
+        if (payment != null) {
+            payment.setOrder(this);
+        }
+    }
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
     public BigDecimal getDiscount() { return discount; }

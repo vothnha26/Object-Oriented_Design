@@ -183,9 +183,12 @@ public class CartService {
         
         Order order = new Order();
         order.setCustomer(customer);
+        
+        Payment payment = new Payment();
         if (paymentMethod != null) {
-            try { order.getPayment().setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase())); } catch (Exception ignored) {}
+            try { payment.setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase())); } catch (Exception ignored) {}
         }
+        order.setPayment(payment);
         
         // Build ShippingInfo
         ShippingInfo shipping = new ShippingInfo();

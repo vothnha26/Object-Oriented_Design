@@ -72,13 +72,7 @@ enum ReceivingMethod {
     PICKUP
 }
 
-enum Unit {
-    KG
-    GRAM
-    LITER
-    ML
-    PIECE
-}
+
 
 ' =============================================
 ' ABSTRACT BASE
@@ -124,16 +118,18 @@ class ShippingInfo <<embeddable>> {
     + isValid() : boolean
 }
 
-class PaymentInfo <<embeddable>> {
+class Payment {
+    - Integer id
     - PaymentStatus status
     - PaymentMethod method
+    - BigDecimal amount
     - LocalDateTime paidAt
-    + isPaid() : boolean
+    - String transactionRef
 }
 
 ShippingInfo ..> ReceivingMethod
-PaymentInfo ..> PaymentStatus
-PaymentInfo ..> PaymentMethod
+Payment ..> PaymentStatus
+Payment ..> PaymentMethod
 
 ' =============================================
 ' ABSTRACT LINE ITEM
@@ -212,29 +208,23 @@ ProductSize ..> ProductStatus
 Topping ..> ToppingStatus
 
 ' =============================================
-' INVENTORY GROUP
+' ADDITIONAL ENTITIES (OTP, MEDIA)
 ' =============================================
-class Ingredient {
+class OtpCode {
     - Integer id
-    - String name
-    - String description
-    - Unit unit
-    - LocalDateTime deletedAt
-    + isLowStock() : boolean
+    - String email
+    - String code
+    - LocalDateTime expiresAt
+    - boolean used
+    + isValid() : boolean
 }
+Customer "1" o-- "many" OtpCode : requests
 
-class IngredientStock {
+class ProductMedia {
     - Integer id
-    - BigDecimal quantity
-    - BigDecimal alertThreshold
-    - LocalDateTime updatedAt
-    + isEnough(BigDecimal needed) : boolean
-    + restock(BigDecimal amount) : void
-    + consume(BigDecimal amount) : void
+    - String url
 }
-
-Ingredient ..> Unit
-Ingredient "1" *-- "1" IngredientStock : tracks stock
+Product "1" *-- "many" ProductMedia : contains media
 
 ' =============================================
 ' PROMOTION GROUP
@@ -279,6 +269,13 @@ Customer "1" o-- "many" Cart : owns
 Cart "1" *-- "many" CartItem : contains
 ProductVariant "1" --> "many" CartItem : references
 
+class CartItemTopping {
+    - Integer quantity
+    - BigDecimal price
+}
+CartItem "1" *-- "many" CartItemTopping : contains
+Topping "1" <-- "many" CartItemTopping : references
+
 ' =============================================
 ' ORDER GROUP
 ' =============================================
@@ -292,7 +289,7 @@ class Order {
     - BigDecimal totalAmount
     - String note
     - ShippingInfo shippingInfo
-    - PaymentInfo payment
+    - Payment payment
     + canCancel() : boolean
     + isDone() : boolean
     + calcFinalTotal() : BigDecimal
@@ -300,7 +297,7 @@ class Order {
 }
 
 Order *-- ShippingInfo : contains
-Order *-- PaymentInfo : contains
+Order "1" --> "1" Payment : has
 Order ..> OrderStatus
 
 Customer "1" o-- "many" Order : places
@@ -308,6 +305,13 @@ Employee "1" --> "many" Order : handles
 Promotion "0..1" --> "many" Order : applied to
 Order "1" *-- "many" OrderItem : contains
 ProductVariant "1" --> "many" OrderItem : references
+
+class OrderItemTopping {
+    - Integer quantity
+    - BigDecimal price
+}
+OrderItem "1" *-- "many" OrderItemTopping : contains
+Topping "1" <-- "many" OrderItemTopping : references
 
 ' =============================================
 ' REVIEW GROUP

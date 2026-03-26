@@ -1,4 +1,4 @@
-USE website_trasua;
+USE website_bantrasua;
 -- ==========================================================
 -- DỮ LIỆU MẪU CHO HỆ THỐNG ALOTRA
 -- Mật khẩu mặc định cho tất cả user: 123456
