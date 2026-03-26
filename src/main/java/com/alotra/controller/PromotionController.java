@@ -1,9 +1,9 @@
 package com.alotra.controller;
 
 import com.alotra.entity.Promotion;
-import com.alotra.entity.ProductPromotion;
+import com.alotra.entity.AppliedPromotion;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.repository.AppliedPromotionRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -16,11 +16,11 @@ import java.util.List;
 @RequestMapping("/promotions")
 public class PromotionController {
     private final PromotionRepository promotionRepository;
-    private final ProductPromotionRepository productPromotionRepository;
+    private final AppliedPromotionRepository appliedPromotionRepository;
 
-    public PromotionController(PromotionRepository promotionRepository, ProductPromotionRepository productPromotionRepository) {
+    public PromotionController(PromotionRepository promotionRepository, AppliedPromotionRepository appliedPromotionRepository) {
         this.promotionRepository = promotionRepository;
-        this.productPromotionRepository = productPromotionRepository;
+        this.appliedPromotionRepository = appliedPromotionRepository;
     }
 
     @GetMapping
@@ -41,7 +41,7 @@ public class PromotionController {
         Integer currentViews = p.getViews();
         p.setViews((currentViews == null ? 0 : currentViews) + 1);
         
-        List<ProductPromotion> assigned = productPromotionRepository.findByPromotion(p);
+        List<AppliedPromotion> assigned = appliedPromotionRepository.findByPromotion(p);
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String period = (p.getStartDate() != null ? df.format(p.getStartDate()) : "?") +
                 " - " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");

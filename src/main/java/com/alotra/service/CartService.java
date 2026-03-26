@@ -19,10 +19,10 @@ public class CartService {
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final CartItemToppingRepository cartItemToppingRepository;
+    private final SelectedToppingRepository selectedToppingRepository;
     private final ToppingRepository toppingRepository;
-    private final OrderItemToppingRepository orderItemToppingRepository;
-    private final ProductPromotionRepository productPromotionRepository;
+    private final OrderedToppingRepository orderedToppingRepository;
+    private final AppliedPromotionRepository appliedPromotionRepository;
 
     public CartService(CartRepository cartRepository, 
                        CartItemRepository cartItemRepository,
@@ -30,20 +30,20 @@ public class CartService {
                        ProductRepository productRepository,
                        OrderRepository orderRepository, 
                        OrderItemRepository orderItemRepository,
-                       CartItemToppingRepository cartItemToppingRepository, 
+                       SelectedToppingRepository selectedToppingRepository, 
                        ToppingRepository toppingRepository,
-                       OrderItemToppingRepository orderItemToppingRepository,
-                       ProductPromotionRepository productPromotionRepository) {
+                       OrderedToppingRepository orderedToppingRepository,
+                       AppliedPromotionRepository appliedPromotionRepository) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.variantRepository = variantRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
-        this.cartItemToppingRepository = cartItemToppingRepository;
+        this.selectedToppingRepository = selectedToppingRepository;
         this.toppingRepository = toppingRepository;
-        this.orderItemToppingRepository = orderItemToppingRepository;
-        this.productPromotionRepository = productPromotionRepository;
+        this.orderedToppingRepository = orderedToppingRepository;
+        this.appliedPromotionRepository = appliedPromotionRepository;
     }
 
     @Transactional
@@ -65,7 +65,7 @@ public class CartService {
         
         // Apply active product promotion to base
         BigDecimal basePrice = variant.getPrice();
-        Integer discountPercent = (variant.getProduct() != null) ? productPromotionRepository.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
+        Integer discountPercent = (variant.getProduct() != null) ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
         BigDecimal unitPrice = applyPercent(basePrice, discountPercent);
         
         // Create a fresh cart item
@@ -102,13 +102,13 @@ public class CartService {
                 Topping topping = toppingRepository.findById(tid).orElse(null);
                 if (topping == null) continue;
                 
-                CartItemTopping cit = new CartItemTopping();
+                SelectedTopping cit = new SelectedTopping();
                 cit.setCartItem(item);
                 cit.setTopping(topping);
                 cit.setQuantity(perUnitQty * qty);
                 cit.setUnitPrice(topping.getExtraPrice());
                 cit.setLineTotal(topping.getExtraPrice().multiply(BigDecimal.valueOf(cit.getQuantity())));
-                cartItemToppingRepository.save(cit);
+                selectedToppingRepository.save(cit);
             }
         }
         return item;
@@ -235,21 +235,21 @@ public class CartService {
             oi.setNote(ci.getNote());
             oi = orderItemRepository.save(oi);
             
-            for (CartItemTopping cit : cartItemToppingRepository.findByCartItem(ci)) {
-                OrderItemTopping oit = new OrderItemTopping();
+            for (SelectedTopping cit : selectedToppingRepository.findByCartItem(ci)) {
+                OrderedTopping oit = new OrderedTopping();
                 oit.setOrderLine(oi);
                 oit.setTopping(cit.getTopping());
                 oit.setQuantity(cit.getQuantity());
                 oit.setUnitPrice(cit.getUnitPrice());
                 oit.setLineTotal(cit.getLineTotal());
-                orderItemToppingRepository.save(oit);
+                orderedToppingRepository.save(oit);
             }
         }
         
         // Cleanup cart items
         for (CartItem ci : items) {
-            for (CartItemTopping cit : cartItemToppingRepository.findByCartItem(ci)) {
-                cartItemToppingRepository.delete(cit);
+            for (SelectedTopping cit : selectedToppingRepository.findByCartItem(ci)) {
+                selectedToppingRepository.delete(cit);
             }
             cartItemRepository.delete(ci);
         }
@@ -267,10 +267,10 @@ public class CartService {
         return toppingRepository.findByDeletedAtIsNull();
     }
 
-    public Map<Integer, List<CartItemTopping>> getToppingsForItems(List<CartItem> items) {
-        Map<Integer, List<CartItemTopping>> map = new HashMap<>();
+    public Map<Integer, List<SelectedTopping>> getToppingsForItems(List<CartItem> items) {
+        Map<Integer, List<SelectedTopping>> map = new HashMap<>();
         for (CartItem it : items) {
-            map.put(it.getId(), cartItemToppingRepository.findByCartItem(it));
+            map.put(it.getId(), selectedToppingRepository.findByCartItem(it));
         }
         return map;
     }
@@ -280,8 +280,8 @@ public class CartService {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
         validateOwnership(customer, item);
         
-        List<CartItemTopping> existing = cartItemToppingRepository.findByCartItem(item);
-        Map<Integer, CartItemTopping> existingByTid = existing.stream()
+        List<SelectedTopping> existing = selectedToppingRepository.findByCartItem(item);
+        Map<Integer, SelectedTopping> existingByTid = existing.stream()
                 .collect(Collectors.toMap(t -> t.getTopping().getId(), t -> t));
         
         if (toppingQtyById != null) {
@@ -292,19 +292,19 @@ public class CartService {
                 if (topping == null) continue;
                 
                 if (qty == 0) {
-                    CartItemTopping exist = existingByTid.get(tid);
-                    if (exist != null) cartItemToppingRepository.delete(exist);
+                    SelectedTopping exist = existingByTid.get(tid);
+                    if (exist != null) selectedToppingRepository.delete(exist);
                 } else {
-                    CartItemTopping exist = existingByTid.get(tid);
+                    SelectedTopping exist = existingByTid.get(tid);
                     if (exist == null) {
-                        exist = new CartItemTopping();
+                        exist = new SelectedTopping();
                         exist.setCartItem(item);
                         exist.setTopping(topping);
                     }
                     exist.setQuantity(qty);
                     exist.setUnitPrice(topping.getExtraPrice());
                     exist.setLineTotal(topping.getExtraPrice().multiply(BigDecimal.valueOf(qty)));
-                    cartItemToppingRepository.save(exist);
+                    selectedToppingRepository.save(exist);
                 }
             }
         }
@@ -312,8 +312,8 @@ public class CartService {
     }
 
     private void recomputeLineTotal(CartItem item) {
-        BigDecimal toppingSum = cartItemToppingRepository.findByCartItem(item).stream()
-                .map(CartItemTopping::getLineTotal)
+        BigDecimal toppingSum = selectedToppingRepository.findByCartItem(item).stream()
+                .map(SelectedTopping::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal baseTotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
         item.setLineTotal(baseTotal.add(toppingSum));
@@ -335,7 +335,7 @@ public class CartService {
             throw new IllegalArgumentException("Không thể đổi sang sản phẩm khác");
         }
         
-        Integer discountPercent = productPromotionRepository.findActiveMaxDiscountPercentForProduct(targetProductId);
+        Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(targetProductId);
         BigDecimal newUnitPrice = applyPercent(target.getPrice(), discountPercent);
         item.setVariant(target);
         item.setUnitPrice(newUnitPrice);

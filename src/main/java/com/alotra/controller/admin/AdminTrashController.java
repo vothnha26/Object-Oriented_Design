@@ -6,7 +6,7 @@ import com.alotra.repository.EmployeeRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.service.EmployeeService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -25,7 +25,7 @@ public class AdminTrashController {
     private final EmployeeRepository employeeRepository;
     private final EmployeeService employeeService;
     private final PromotionRepository promotionRepo;
-    private final ProductPromotionRepository productPromotionRepository;
+    private final AppliedPromotionRepository appliedPromotionRepository;
 
     public AdminTrashController(CategoryRepository categoryRepo,
                                 ProductRepository productRepo,
@@ -33,14 +33,14 @@ public class AdminTrashController {
                                 EmployeeRepository employeeRepository,
                                 EmployeeService employeeService,
                                 PromotionRepository promotionRepo,
-                                ProductPromotionRepository productPromotionRepository) {
+                                AppliedPromotionRepository appliedPromotionRepository) {
         this.categoryRepo = categoryRepo;
         this.productRepo = productRepo;
         this.toppingRepo = toppingRepo;
         this.employeeRepository = employeeRepository;
         this.employeeService = employeeService;
         this.promotionRepo = promotionRepo;
-        this.productPromotionRepository = productPromotionRepository;
+        this.appliedPromotionRepository = appliedPromotionRepository;
     }
 
     @GetMapping
@@ -142,7 +142,7 @@ public class AdminTrashController {
             return "redirect:/admin/trash";
         }
         Promotion promo = opt.get();
-        if (!productPromotionRepository.findByPromotion(promo).isEmpty()) {
+        if (!appliedPromotionRepository.findByPromotion(promo).isEmpty()) {
             ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa.");
             return "redirect:/admin/trash";
         }

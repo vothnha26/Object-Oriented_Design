@@ -242,16 +242,16 @@ class Promotion {
     + isActive() : boolean
 }
 
-class ProductPromotion {
-    - ProductPromotionId id
+class AppliedPromotion {
+    - AppliedPromotionId id
     - Integer discountPercent
     + applyDiscount(BigDecimal price) : BigDecimal
     + isValidDiscount() : boolean
 }
 
 Promotion ..> PromotionStatus
-Promotion "1" *-- "many" ProductPromotion : includes
-Product "1" o-- "many" ProductPromotion : is applied to
+Promotion "1" *-- "many" AppliedPromotion : includes
+Product "1" o-- "many" AppliedPromotion : is applied to
 
 ' =============================================
 ' CART GROUP
@@ -269,12 +269,12 @@ Customer "1" o-- "many" Cart : owns
 Cart "1" *-- "many" CartItem : contains
 ProductVariant "1" --> "many" CartItem : references
 
-class CartItemTopping {
+class SelectedTopping {
     - Integer quantity
     - BigDecimal price
 }
-CartItem "1" *-- "many" CartItemTopping : contains
-Topping "1" <-- "many" CartItemTopping : references
+CartItem "1" *-- "many" SelectedTopping : contains
+Topping "1" <-- "many" SelectedTopping : references
 
 ' =============================================
 ' ORDER GROUP
@@ -306,12 +306,12 @@ Promotion "0..1" --> "many" Order : applied to
 Order "1" *-- "many" OrderItem : contains
 ProductVariant "1" --> "many" OrderItem : references
 
-class OrderItemTopping {
+class OrderedTopping {
     - Integer quantity
     - BigDecimal price
 }
-OrderItem "1" *-- "many" OrderItemTopping : contains
-Topping "1" <-- "many" OrderItemTopping : references
+OrderItem "1" *-- "many" OrderedTopping : contains
+Topping "1" <-- "many" OrderedTopping : references
 
 ' =============================================
 ' REVIEW GROUP

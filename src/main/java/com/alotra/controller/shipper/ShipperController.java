@@ -191,7 +191,7 @@ public class ShipperController {
         List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow item : items) {
-            toppings.put(item.id, orderHistoryService.listOrderItemToppings(item.id));
+            toppings.put(item.id, orderHistoryService.listOrderedToppings(item.id));
         }
         
         model.addAttribute("order", order);

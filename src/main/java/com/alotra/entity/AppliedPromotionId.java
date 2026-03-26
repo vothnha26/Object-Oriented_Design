@@ -5,12 +5,12 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
-public class ProductPromotionId implements Serializable {
+public class AppliedPromotionId implements Serializable {
     private Integer promotionId;
     private Integer productId;
 
-    public ProductPromotionId() {}
-    public ProductPromotionId(Integer promotionId, Integer productId) {
+    public AppliedPromotionId() {}
+    public AppliedPromotionId(Integer promotionId, Integer productId) {
         this.promotionId = promotionId;
         this.productId = productId;
     }
@@ -22,7 +22,7 @@ public class ProductPromotionId implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ProductPromotionId that)) return false;
+        if (!(o instanceof AppliedPromotionId that)) return false;
         return Objects.equals(promotionId, that.promotionId) && Objects.equals(productId, that.productId);
     }
     @Override

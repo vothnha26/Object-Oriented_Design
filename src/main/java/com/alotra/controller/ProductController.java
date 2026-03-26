@@ -4,7 +4,7 @@ import com.alotra.entity.*;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
-import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.CartService;
 import com.alotra.service.CustomerService;
@@ -29,7 +29,7 @@ public class ProductController {
     private final ToppingRepository toppingRepo;
     private final CartService cartService;
     private final CustomerService customerService;
-    private final ProductPromotionRepository productPromotionRepository;
+    private final AppliedPromotionRepository appliedPromotionRepository;
     private final ReviewService reviewService;
 
     public ProductController(ProductRepository productRepo,
@@ -37,14 +37,14 @@ public class ProductController {
                              ToppingRepository toppingRepo,
                              CartService cartService,
                              CustomerService customerService,
-                             ProductPromotionRepository productPromotionRepository,
+                             AppliedPromotionRepository appliedPromotionRepository,
                              ReviewService reviewService) {
         this.productRepo = productRepo;
         this.variantRepo = variantRepo;
         this.toppingRepo = toppingRepo;
         this.cartService = cartService;
         this.customerService = customerService;
-        this.productPromotionRepository = productPromotionRepository;
+        this.appliedPromotionRepository = appliedPromotionRepository;
         this.reviewService = reviewService;
     }
 
@@ -57,7 +57,7 @@ public class ProductController {
         List<Topping> toppings = toppingRepo.findByDeletedAtIsNull();
         toppings.removeIf(t -> !t.isAvailable());
 
-        Integer discountPercent = productPromotionRepository.findActiveMaxDiscountPercentForProduct(p.getId());
+        Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(p.getId());
         BigDecimal basePrice = (!variants.isEmpty() ? variants.get(0).getPrice() : BigDecimal.ZERO);
         BigDecimal discountedPrice = applyPercent(basePrice, discountPercent);
 

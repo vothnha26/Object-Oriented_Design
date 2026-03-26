@@ -3,10 +3,10 @@ package com.alotra.entity;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "ProductPromotion")
-public class ProductPromotion {
+@Table(name = "AppliedPromotion")
+public class AppliedPromotion {
     @EmbeddedId
-    private ProductPromotionId id = new ProductPromotionId();
+    private AppliedPromotionId id = new AppliedPromotionId();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("promotionId")
@@ -21,8 +21,8 @@ public class ProductPromotion {
     @Column(name = "PhanTramGiam", nullable = false)
     private Integer discountPercent;
 
-    public ProductPromotionId getId() { return id; }
-    public void setId(ProductPromotionId id) { this.id = id; }
+    public AppliedPromotionId getId() { return id; }
+    public void setId(AppliedPromotionId id) { this.id = id; }
     public Promotion getPromotion() { return promotion; }
     public void setPromotion(Promotion promotion) { this.promotion = promotion; }
     public Product getProduct() { return product; }

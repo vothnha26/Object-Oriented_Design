@@ -68,7 +68,7 @@ public class PaymentController {
         var header = customerOrderService.getOrder(id);
         var items = customerOrderService.listOrderItems(id);
         Map<Integer, List<OrderHistoryService.ItemToppingRow>> toppings = new HashMap<>();
-        for (var it : items) toppings.put(it.id, customerOrderService.listOrderItemToppings(it.id));
+        for (var it : items) toppings.put(it.id, customerOrderService.listOrderedToppings(it.id));
 
         String addInfo = "ALOTRA DH " + id;
         String qrUrl = buildVietQrUrl(BANK_CODE, ACCOUNT_NUMBER, order.getTotalAmount().intValue(), addInfo);

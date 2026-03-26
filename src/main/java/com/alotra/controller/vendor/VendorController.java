@@ -68,7 +68,7 @@ public class VendorController {
         List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow it : items) {
-            toppings.put(it.id, orderHistoryService.listOrderItemToppings(it.id));
+            toppings.put(it.id, orderHistoryService.listOrderedToppings(it.id));
         }
         model.addAttribute("order", order);
         model.addAttribute("items", items);
@@ -86,7 +86,7 @@ public class VendorController {
         List<OrderItemRow> items = orderHistoryService.listOrderItems(id);
         Map<Integer, List<ItemToppingRow>> toppings = new HashMap<>();
         for (OrderItemRow it : items) {
-            toppings.put(it.id, orderHistoryService.listOrderItemToppings(it.id));
+            toppings.put(it.id, orderHistoryService.listOrderedToppings(it.id));
         }
         model.addAttribute("order", order);
         model.addAttribute("items", items);

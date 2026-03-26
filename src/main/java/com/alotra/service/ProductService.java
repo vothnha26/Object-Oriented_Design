@@ -2,7 +2,7 @@ package com.alotra.service;
 
 import com.alotra.dto.ProductDTO;
 import com.alotra.repository.ProductRepository;
-import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.repository.AppliedPromotionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +18,13 @@ public class ProductService {
     private ProductRepository productRepository;
 
     @Autowired
-    private ProductPromotionRepository productPromotionRepository;
+    private AppliedPromotionRepository appliedPromotionRepository;
 
     public List<ProductDTO> findBestSellers() {
         return productRepository.findBestSellersNative().stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? productPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
                     BigDecimal finalPrice = applyPercent(minBase, percent);
                     ProductDTO dto = new ProductDTO(
                             row.getId(),
@@ -43,7 +43,7 @@ public class ProductService {
         return productRepository.findListByCategoryNative(categoryId).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? productPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
                     BigDecimal finalPrice = applyPercent(minBase, percent);
                     ProductDTO dto = new ProductDTO(
                             row.getId(),
@@ -64,7 +64,7 @@ public class ProductService {
         return productRepository.searchByKeywordNative(kw).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? productPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
                     BigDecimal finalPrice = applyPercent(minBase, percent);
                     ProductDTO dto = new ProductDTO(
                             row.getId(),
@@ -88,7 +88,7 @@ public class ProductService {
         return productRepository.searchByCategoryAndKeywordNative(categoryId, kw).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? productPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
                     BigDecimal finalPrice = applyPercent(minBase, percent);
                     ProductDTO dto = new ProductDTO(
                             row.getId(),

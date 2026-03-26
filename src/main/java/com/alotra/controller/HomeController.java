@@ -3,7 +3,7 @@ package com.alotra.controller;
 import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Promotion;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.repository.ProductPromotionRepository;
+import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.service.ProductService;
 import com.alotra.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class HomeController {
     @Autowired 
     private PromotionRepository promotionRepository;
     @Autowired 
-    private ProductPromotionRepository productPromotionRepository;
+    private AppliedPromotionRepository appliedPromotionRepository;
     @Autowired 
     private CategoryService categoryService;
 
@@ -38,7 +38,7 @@ public class HomeController {
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (Promotion p : promos) {
             String eventImg = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : null;
-            String fallbackImg = productPromotionRepository.findByPromotion(p).stream()
+            String fallbackImg = appliedPromotionRepository.findByPromotion(p).stream()
                     .map(l -> l.getProduct())
                     .filter(pr -> pr != null && pr.getImageUrl() != null && !pr.getImageUrl().isBlank())
                     .map(pr -> pr.getImageUrl())

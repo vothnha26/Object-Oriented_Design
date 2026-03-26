@@ -177,7 +177,7 @@ public class AccountController {
         var items = orderService.listOrderItems(id);
         Map<Integer, List<OrderHistoryService.ItemToppingRow>> toppings = new HashMap<>();
         for (var it : items) {
-            toppings.put(it.id, orderService.listOrderItemToppings(it.id));
+            toppings.put(it.id, orderService.listOrderedToppings(it.id));
         }
         List<Integer> lineIds = items.stream().map(it -> it.id).collect(Collectors.toList());
         Map<Integer, Review> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);

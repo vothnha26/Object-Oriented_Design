@@ -1,6 +1,6 @@
 package com.alotra.controller.vendor;
 
-import com.alotra.entity.ProductPromotion;
+import com.alotra.entity.AppliedPromotion;
 import com.alotra.entity.Promotion;
 import com.alotra.entity.Product;
 import com.alotra.service.PromotionService;
@@ -108,7 +108,7 @@ public class VendorPromotionController {
     @GetMapping("/{id}/products")
     public String manageProducts(@PathVariable Integer id, Model model) {
         Promotion promo = promotionService.findById(id).orElseThrow();
-        List<ProductPromotion> assigned = promotionService.listAssignments(id);
+        List<AppliedPromotion> assigned = promotionService.listAssignments(id);
         List<Product> unassigned = promotionService.listUnassignedProducts(id);
         model.addAttribute("pageTitle", "Áp sản phẩm - " + promo.getName());
         model.addAttribute("currentPage", "vendor-promotions");

@@ -4,15 +4,15 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "OrderItemTopping")
-public class OrderItemTopping {
+@Table(name = "SelectedTopping")
+public class SelectedTopping {
     @EmbeddedId
-    private OrderItemToppingId id = new OrderItemToppingId();
+    private SelectedToppingId id = new SelectedToppingId();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("orderItemId")
-    @JoinColumn(name = "MaCT")
-    private OrderItem orderLine;
+    @MapsId("cartItemId") // matches field in SelectedToppingId
+    @JoinColumn(name = "MaCTGH")
+    private CartItem cartItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("toppingId")
@@ -28,10 +28,10 @@ public class OrderItemTopping {
     @Column(name = "ThanhTien", nullable = false)
     private BigDecimal lineTotal;
 
-    public OrderItemToppingId getId() { return id; }
-    public void setId(OrderItemToppingId id) { this.id = id; }
-    public OrderItem getOrderLine() { return orderLine; }
-    public void setOrderLine(OrderItem orderLine) { this.orderLine = orderLine; }
+    public SelectedToppingId getId() { return id; }
+    public void setId(SelectedToppingId id) { this.id = id; }
+    public CartItem getCartItem() { return cartItem; }
+    public void setCartItem(CartItem cartItem) { this.cartItem = cartItem; }
     public Topping getTopping() { return topping; }
     public void setTopping(Topping topping) { this.topping = topping; }
     public Integer getQuantity() { return quantity; }

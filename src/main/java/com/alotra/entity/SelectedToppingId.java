@@ -5,12 +5,12 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
-public class CartItemToppingId implements Serializable {
+public class SelectedToppingId implements Serializable {
     private Integer cartItemId; // renamed from ctghId
     private Integer toppingId;
 
-    public CartItemToppingId() {}
-    public CartItemToppingId(Integer cartItemId, Integer toppingId) {
+    public SelectedToppingId() {}
+    public SelectedToppingId(Integer cartItemId, Integer toppingId) {
         this.cartItemId = cartItemId;
         this.toppingId = toppingId;
     }
@@ -23,7 +23,7 @@ public class CartItemToppingId implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof CartItemToppingId that)) return false;
+        if (!(o instanceof SelectedToppingId that)) return false;
         return Objects.equals(cartItemId, that.cartItemId) && Objects.equals(toppingId, that.toppingId);
     }
 

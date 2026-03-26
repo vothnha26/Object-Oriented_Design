@@ -10,11 +10,11 @@ import java.util.*;
 @Service
 public class PromotionService {
     private final PromotionRepository promotionRepo;
-    private final ProductPromotionRepository linkRepo;
+    private final AppliedPromotionRepository linkRepo;
     private final ProductRepository productRepo;
 
     public PromotionService(PromotionRepository promotionRepo,
-                            ProductPromotionRepository linkRepo,
+                            AppliedPromotionRepository linkRepo,
                             ProductRepository productRepo) {
         this.promotionRepo = promotionRepo;
         this.linkRepo = linkRepo;
@@ -34,7 +34,7 @@ public class PromotionService {
         });
     }
 
-    public List<ProductPromotion> listAssignments(Integer promotionId) {
+    public List<AppliedPromotion> listAssignments(Integer promotionId) {
         Promotion p = promotionRepo.findById(promotionId).orElseThrow();
         return linkRepo.findByPromotion(p);
     }
@@ -48,17 +48,17 @@ public class PromotionService {
         Product product = productRepo.findById(productId).orElseThrow();
         if (linkRepo.existsByPromotionAndProduct(promo, product)) return;
         
-        ProductPromotion link = new ProductPromotion();
+        AppliedPromotion link = new AppliedPromotion();
         link.setPromotion(promo);
         link.setProduct(product);
-        link.setId(new ProductPromotionId(promotionId, productId));
+        link.setId(new AppliedPromotionId(promotionId, productId));
         link.setDiscountPercent(percent);
         linkRepo.save(link);
     }
 
     @Transactional
     public void unassignProduct(Integer promotionId, Integer productId) {
-        ProductPromotionId id = new ProductPromotionId(promotionId, productId);
+        AppliedPromotionId id = new AppliedPromotionId(promotionId, productId);
         linkRepo.findById(id).ifPresent(linkRepo::delete);
     }
 

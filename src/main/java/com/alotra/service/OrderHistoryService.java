@@ -91,14 +91,14 @@ public class OrderHistoryService {
         return out;
     }
 
-    public List<ItemToppingRow> listOrderItemToppings(Integer orderItemId) {
-        TypedQuery<OrderItemTopping> q = em.createQuery(
-                "SELECT t FROM OrderItemTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
-                OrderItemTopping.class);
+    public List<ItemToppingRow> listOrderedToppings(Integer orderItemId) {
+        TypedQuery<OrderedTopping> q = em.createQuery(
+                "SELECT t FROM OrderedTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
+                OrderedTopping.class);
         q.setParameter("lid", orderItemId);
-        List<OrderItemTopping> rows = q.getResultList();
+        List<OrderedTopping> rows = q.getResultList();
         List<ItemToppingRow> out = new ArrayList<>();
-        for (OrderItemTopping t : rows) {
+        for (OrderedTopping t : rows) {
             ItemToppingRow r = new ItemToppingRow();
             Topping tp = t.getTopping();
             r.toppingName = tp != null ? tp.getName() : null;

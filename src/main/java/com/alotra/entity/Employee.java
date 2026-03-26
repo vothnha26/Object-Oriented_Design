@@ -3,7 +3,6 @@ package com.alotra.entity;
 import com.alotra.entity.enums.EmployeeRole;
 import com.alotra.entity.enums.EmployeeStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,24 +29,62 @@ public class Employee extends User {
     private String confirmPassword;
 
     // === Business methods ===
-    public boolean isAdmin() { return role == EmployeeRole.ADMIN; }
-    public boolean isShipper() { return role == EmployeeRole.SHIPPER; }
-    
+    public boolean isAdmin() {
+        return role == EmployeeRole.ADMIN;
+    }
+
+    public boolean isShipper() {
+        return role == EmployeeRole.SHIPPER;
+    }
+
     @Override
-    public boolean isActive() { return status == EmployeeStatus.ACTIVE; }
-    
+    public boolean isActive() {
+        return status == EmployeeStatus.ACTIVE;
+    }
+
     @Override
-    public String getDisplayName() { return fullName; }
+    public String getDisplayName() {
+        return fullName;
+    }
 
     // Getters and setters
-    public EmployeeRole getRole() { return role; }
-    public void setRole(EmployeeRole role) { this.role = role; }
-    public EmployeeStatus getStatus() { return status; }
-    public void setStatus(EmployeeStatus status) { this.status = status; }
-    public String getPlainPassword() { return plainPassword; }
-    public void setPlainPassword(String plainPassword) { this.plainPassword = plainPassword; }
-    public String getConfirmPassword() { return confirmPassword; }
-    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public EmployeeRole getRole() {
+        return role;
+    }
+
+    public void setRole(EmployeeRole role) {
+        this.role = role;
+    }
+
+    public EmployeeStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(EmployeeStatus status) {
+        this.status = status;
+    }
+
+    public String getPlainPassword() {
+        return plainPassword;
+    }
+
+    public void setPlainPassword(String plainPassword) {
+        this.plainPassword = plainPassword;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
+    }
+
+    public void setConfirmPassword(String confirmPassword) {
+        this.confirmPassword = confirmPassword;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 }
