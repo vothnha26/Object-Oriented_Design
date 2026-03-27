@@ -37,9 +37,6 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
             } else if ("ROLE_VENDOR".equals(auth.getAuthority())) {
                 response.sendRedirect(request.getContextPath() + "/vendor/dashboard");
                 return;
-            } else if ("ROLE_SHIPPER".equals(auth.getAuthority())) {
-                response.sendRedirect(request.getContextPath() + "/shipper/dashboard");
-                return;
             }
         }
         // 3) Default for regular users
