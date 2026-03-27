@@ -4,6 +4,7 @@ import com.alotra.entity.*;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.ReceivingMethod;
 import com.alotra.repository.*;
+import com.alotra.service.pricing.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,10 +64,31 @@ public class CartService {
         ProductVariant variant = variantRepository.findById(variantId).orElse(null);
         if (variant == null) throw new IllegalArgumentException("Biến thể không hợp lệ.");
         
-        // Apply active product promotion to base
-        BigDecimal basePrice = variant.getPrice();
+        // 1. Resolve Toppings
+        Map<Topping, Integer> toppingMap = new HashMap<>();
+        if (toppingQty != null) {
+            for (Map.Entry<Integer, Integer> entry : toppingQty.entrySet()) {
+                Integer perUnitQty = entry.getValue();
+                if (perUnitQty == null || perUnitQty <= 0) continue;
+                Topping topping = toppingRepository.findById(entry.getKey()).orElse(null);
+                if (topping != null) toppingMap.put(topping, perUnitQty);
+            }
+        }
+        
+        // 2. Assemble Price Decorators
+        PriceComponent priceComponent = new BasePrice(variant.getPrice());
         Integer discountPercent = (variant.getProduct() != null) ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
-        BigDecimal unitPrice = applyPercent(basePrice, discountPercent);
+        if (discountPercent != null && discountPercent > 0) {
+            priceComponent = new PromotionDecorator(priceComponent, discountPercent);
+        }
+        
+        // 3. Set Unit Price (Base + Promo)
+        BigDecimal unitPrice = priceComponent.calculate();
+        
+        if (!toppingMap.isEmpty()) {
+            priceComponent = new ToppingDecorator(priceComponent, toppingMap);
+        }
+        priceComponent = new QuantityDecorator(priceComponent, qty);
         
         // Create a fresh cart item
         CartItem item = new CartItem();
@@ -75,22 +97,7 @@ public class CartService {
         item.setQuantity(qty);
         item.setUnitPrice(unitPrice);
         item.setNote(note);
-        
-        // Compute toppings per unit
-        BigDecimal toppingPerUnit = BigDecimal.ZERO;
-        if (toppingQty != null) {
-            for (Map.Entry<Integer, Integer> entry : toppingQty.entrySet()) {
-                Integer tid = entry.getKey();
-                Integer perUnitQty = entry.getValue();
-                if (perUnitQty == null || perUnitQty <= 0) continue;
-                Topping topping = toppingRepository.findById(tid).orElse(null);
-                if (topping == null) continue;
-                toppingPerUnit = toppingPerUnit.add(topping.getExtraPrice().multiply(BigDecimal.valueOf(perUnitQty)));
-            }
-        }
-        
-        BigDecimal lineTotal = unitPrice.add(toppingPerUnit).multiply(BigDecimal.valueOf(qty));
-        item.setLineTotal(lineTotal);
+        item.setLineTotal(priceComponent.calculate());
         item = cartItemRepository.save(item);
         
         // Persist topping items
@@ -111,17 +118,13 @@ public class CartService {
                 selectedToppingRepository.save(cit);
             }
         }
+        
+        // Log detailed price calculation via Decorator
+        System.out.println("[Cart Pricing Strategy] " + priceComponent.getDescription() + " = " + item.getLineTotal());
         return item;
     }
 
-    private BigDecimal applyPercent(BigDecimal base, Integer percent) {
-        if (base == null) return null;
-        if (percent == null || percent <= 0) return base;
-        java.math.RoundingMode roundingMode = java.math.RoundingMode.HALF_UP;
-        BigDecimal discountMultiplier = BigDecimal.valueOf(100 - Math.min(100, percent))
-                .divide(BigDecimal.valueOf(100), 4, roundingMode);
-        return base.multiply(discountMultiplier).setScale(0, roundingMode);
-    }
+
 
     public List<CartItem> listItems(Customer customer) {
         Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElse(null);
@@ -312,11 +315,19 @@ public class CartService {
     }
 
     private void recomputeLineTotal(CartItem item) {
-        BigDecimal toppingSum = selectedToppingRepository.findByCartItem(item).stream()
-                .map(SelectedTopping::getLineTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal baseTotal = item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
-        item.setLineTotal(baseTotal.add(toppingSum));
+        PriceComponent priceComponent = new BasePrice(item.getUnitPrice()); // Contains base + promo
+        
+        List<SelectedTopping> selectedToppings = selectedToppingRepository.findByCartItem(item);
+        if (selectedToppings != null && !selectedToppings.isEmpty()) {
+            Map<Topping, Integer> topMap = selectedToppings.stream()
+                .collect(Collectors.toMap(SelectedTopping::getTopping, st -> st.getQuantity() / item.getQuantity()));
+            priceComponent = new ToppingDecorator(priceComponent, topMap);
+        }
+        
+        priceComponent = new QuantityDecorator(priceComponent, item.getQuantity());
+        item.setLineTotal(priceComponent.calculate());
+        
+        System.out.println("[Cart Recompute] " + priceComponent.getDescription() + " = " + item.getLineTotal());
         cartItemRepository.save(item);
     }
 
@@ -336,9 +347,13 @@ public class CartService {
         }
         
         Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(targetProductId);
-        BigDecimal newUnitPrice = applyPercent(target.getPrice(), discountPercent);
+        PriceComponent priceComponent = new BasePrice(target.getPrice());
+        if (discountPercent != null && discountPercent > 0) {
+            priceComponent = new PromotionDecorator(priceComponent, discountPercent);
+        }
+        
         item.setVariant(target);
-        item.setUnitPrice(newUnitPrice);
+        item.setUnitPrice(priceComponent.calculate());
         recomputeLineTotal(item);
     }
 
