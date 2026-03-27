@@ -43,8 +43,8 @@ public class VendorOrderService {
     public List<OrderRow> listOrders(String status, String kw, Integer limit) {
         StringBuilder sb = new StringBuilder();
         // Table: Customer, Column: MaKH, TenKH, SoDienThoai
-        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n"); 
-        sb.append("FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH WHERE 1=1 ");
+        sb.append("SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, tt.Status AS PaymentStatus, tt.Method AS PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n"); 
+        sb.append("FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH LEFT JOIN Payment tt ON tt.OrderId = dh.MaDH WHERE 1=1 ");
         java.util.List<Object> params = new java.util.ArrayList<>();
         if (status != null && !status.isBlank()) {
             sb.append(" AND dh.TrangThaiDonHang = ?");
@@ -115,8 +115,8 @@ public class VendorOrderService {
     }
 
     public List<OrderRow> listTodayOrders() {
-        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
-                "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH\n" +
+        String sql = "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, tt.Status AS PaymentStatus, tt.Method AS PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai\n" +
+            "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH LEFT JOIN Payment tt ON tt.OrderId = dh.MaDH\n" +
                 "WHERE DATE(dh.NgayLap) = CURDATE()\n" +
                 "ORDER BY dh.MaDH DESC";
         return jdbc.query(sql, ORDER_ROW_MAPPER);

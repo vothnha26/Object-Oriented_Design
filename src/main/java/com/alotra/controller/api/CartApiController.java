@@ -2,7 +2,7 @@ package com.alotra.controller.api;
 
 import com.alotra.entity.Customer;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.CartService;
+import com.alotra.service.proxy.CartOperations;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,9 +12,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/cart")
 public class CartApiController {
-    private final CartService cartService;
+    private final CartOperations cartService;
 
-    public CartApiController(CartService cartService) {
+    public CartApiController(CartOperations cartService) {
         this.cartService = cartService;
     }
 

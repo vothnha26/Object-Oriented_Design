@@ -7,6 +7,7 @@ import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.OrderHistoryService;
 import com.alotra.service.CustomerService;
+import com.alotra.service.proxy.ReviewOperations;
 import com.alotra.service.ReviewService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,12 +34,12 @@ public class AccountController {
     private final OrderHistoryService orderService;
     private final CustomerService customerService;
     private final PasswordEncoder passwordEncoder;
-    private final ReviewService reviewService;
+    private final ReviewOperations reviewService;
 
     public AccountController(OrderHistoryService orderService,
                              CustomerService customerService,
                              PasswordEncoder passwordEncoder,
-                             ReviewService reviewService) {
+                             ReviewOperations reviewService) {
         this.orderService = orderService;
         this.customerService = customerService;
         this.passwordEncoder = passwordEncoder;

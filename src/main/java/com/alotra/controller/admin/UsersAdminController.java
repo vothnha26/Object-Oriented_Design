@@ -5,6 +5,7 @@ import com.alotra.entity.Employee;
 import com.alotra.entity.enums.CustomerStatus;
 import com.alotra.entity.enums.EmployeeRole;
 import com.alotra.entity.enums.EmployeeStatus;
+import com.alotra.factory.UserFactory;
 import com.alotra.service.CustomerService;
 import com.alotra.service.EmployeeService;
 import jakarta.validation.Valid;
@@ -22,10 +23,12 @@ import java.util.List;
 public class UsersAdminController {
     private final CustomerService customerService;
     private final EmployeeService employeeService;
+    private final UserFactory userFactory;
 
-    public UsersAdminController(CustomerService customerService, EmployeeService employeeService) {
+    public UsersAdminController(CustomerService customerService, EmployeeService employeeService, UserFactory userFactory) {
         this.customerService = customerService;
         this.employeeService = employeeService;
+        this.userFactory = userFactory;
     }
 
     @GetMapping
@@ -172,7 +175,20 @@ public class UsersAdminController {
             model.addAttribute("currentPage", "users");
             return "admin/users/employee-form";
         }
-        employeeService.saveHandlingPassword(employee);
+        if (isNew) {
+            Employee created = userFactory.createEmployee(
+                    employee.getUsername(),
+                    employee.getEmail(),
+                    employee.getFullName(),
+                    employee.getPhone(),
+                    employee.getRole(),
+                    employee.getStatus(),
+                    employee.getPlainPassword()
+            );
+            employeeService.save(created);
+        } else {
+            employeeService.saveHandlingPassword(employee);
+        }
         ra.addFlashAttribute("msg", isNew ? "Đã thêm nhân viên thành công." : "Đã cập nhật nhân viên thành công.");
         return "redirect:/admin/users?tab=employees";
     }

@@ -4,6 +4,7 @@ import com.alotra.entity.*;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.ReceivingMethod;
 import com.alotra.repository.*;
+import com.alotra.service.proxy.CartOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,8 +12,9 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
-public class CartService {
+@Service("cartOperationsReal")
+public class CartService implements CartOperations {
+
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;
@@ -47,6 +49,7 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public Cart getOrCreateActiveCart(Customer customer) {
         return cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElseGet(() -> {
             Cart cart = new Cart();
@@ -57,6 +60,7 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public CartItem addItemWithOptions(Customer customer, Integer variantId, int qty, Map<Integer, Integer> toppingQty, String note) {
         if (qty <= 0) qty = 1;
         Cart cart = getOrCreateActiveCart(customer);
@@ -123,12 +127,14 @@ public class CartService {
         return base.multiply(discountMultiplier).setScale(0, roundingMode);
     }
 
+    @Override
     public List<CartItem> listItems(Customer customer) {
         Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElse(null);
         if (cart == null) return List.of();
         return cartItemRepository.findByCart(cart);
     }
 
+    @Override
     public int getItemCount(Customer customer) {
         try {
             return listItems(customer).stream().mapToInt(CartItem::getQuantity).sum();
@@ -138,9 +144,9 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public void updateQuantity(Customer customer, Integer itemId, int qty) {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
-        validateOwnership(customer, item);
         if (qty <= 0) {
             cartItemRepository.delete(item);
             return;
@@ -150,23 +156,19 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public void removeItem(Customer customer, Integer itemId) {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
-        validateOwnership(customer, item);
         cartItemRepository.delete(item);
     }
 
-    private void validateOwnership(Customer customer, CartItem item) {
-        if (!java.util.Objects.equals(item.getCart().getCustomer().getId(), customer.getId())) {
-            throw new SecurityException("Không có quyền với mục giỏ hàng này");
-        }
-    }
-
+    @Override
     public BigDecimal calcTotal(List<CartItem> items) {
         return items.stream().map(CartItem::getLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Transactional
+    @Override
     public Order checkoutWithOptions(Customer customer, List<Integer> itemIds, String paymentMethod,
                                      String note, String receivingMethod,
                                      String shipName, String shipPhone, String shipAddress) {
@@ -263,10 +265,12 @@ public class CartService {
         return order;
     }
 
+    @Override
     public List<Topping> listActiveToppings() {
         return toppingRepository.findByDeletedAtIsNull();
     }
 
+    @Override
     public Map<Integer, List<SelectedTopping>> getToppingsForItems(List<CartItem> items) {
         Map<Integer, List<SelectedTopping>> map = new HashMap<>();
         for (CartItem it : items) {
@@ -276,9 +280,9 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public void updateToppings(Customer customer, Integer itemId, Map<Integer, Integer> toppingQtyById) {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
-        validateOwnership(customer, item);
         
         List<SelectedTopping> existing = selectedToppingRepository.findByCartItem(item);
         Map<Integer, SelectedTopping> existingByTid = existing.stream()
@@ -321,9 +325,9 @@ public class CartService {
     }
 
     @Transactional
+    @Override
     public void changeVariant(Customer customer, Integer itemId, Integer newVariantId) {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
-        validateOwnership(customer, item);
         ProductVariant target = variantRepository.findById(newVariantId).orElse(null);
         if (target == null || !target.isActive()) {
             throw new IllegalArgumentException("Biến thể không hợp lệ hoặc đang ngừng bán");
@@ -342,6 +346,7 @@ public class CartService {
         recomputeLineTotal(item);
     }
 
+    @Override
     public List<ProductVariant> listVariantsForProduct(Product product) {
         if (product == null) return List.of();
         return variantRepository.findByProduct(product);

@@ -24,6 +24,7 @@ public class EmployeeService {
 
     public List<Employee> findAll() { return repo.findAll(); }
     public Optional<Employee> findById(Integer id) { return repo.findById(id); }
+    public Employee save(Employee employee) { return repo.save(employee); }
 
     public List<Employee> findActive() { return repo.findByDeletedAtIsNull(); }
 

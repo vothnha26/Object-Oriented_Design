@@ -3,7 +3,7 @@ package com.alotra.controller.account;
 import com.alotra.entity.CartItem;
 import com.alotra.entity.Customer;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.CartService;
+import com.alotra.service.proxy.CartOperations;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.MultiValueMap;
@@ -18,9 +18,9 @@ import java.util.Map;
 @Controller
 @RequestMapping("/cart")
 public class CartController {
-    private final CartService cartService;
+    private final CartOperations cartService;
 
-    public CartController(CartService cartService) {
+    public CartController(CartOperations cartService) {
         this.cartService = cartService;
     }
 

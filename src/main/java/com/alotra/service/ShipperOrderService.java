@@ -8,6 +8,7 @@ import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.repository.OrderRepository;
 import com.alotra.repository.EmployeeRepository;
+import com.alotra.service.proxy.ShipperOrderOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,8 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Service
-public class ShipperOrderService {
+@Service("shipperOrderOperationsReal")
+public class ShipperOrderService implements ShipperOrderOperations {
+
     private final OrderRepository orderRepository;
     private final EmployeeRepository employeeRepository;
 
@@ -29,6 +31,7 @@ public class ShipperOrderService {
         this.employeeRepository = employeeRepository;
     }
 
+    @Override
     public Map<String, Object> getDashboardStats(Integer shipperId) {
         Map<String, Object> stats = new HashMap<>();
 
@@ -59,6 +62,7 @@ public class ShipperOrderService {
         return stats;
     }
 
+    @Override
     public List<OrderDto> getAssignedOrders(Integer shipperId, String status, String keyword, Integer limit) {
         final List<OrderStatus> targetStatuses;
         if (status != null && !status.isBlank()) {
@@ -106,6 +110,7 @@ public class ShipperOrderService {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Override
     public List<OrderDto> getAvailableOrders(String keyword, Integer limit) {
         List<Order> orders = orderRepository.findAll().stream()
                 .filter(o -> o.getStatus() == OrderStatus.PENDING && o.getEmployee() == null)
@@ -134,6 +139,7 @@ public class ShipperOrderService {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    @Override
     public List<OrderDto> getTodayShippingOrders(Integer shipperId) {
         List<Order> orders = orderRepository.findAll().stream()
             .filter(o -> o.getStatus() == OrderStatus.DELIVERING)
@@ -145,13 +151,10 @@ public class ShipperOrderService {
     }
 
     @Transactional
+    @Override
     public boolean markAsDelivered(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
-        
-        if (order.getEmployee() == null || !java.util.Objects.equals(order.getEmployee().getId(), shipperId)) {
-            return false;
-        }
         
         if (order.getStatus() != OrderStatus.DELIVERING) {
             return false;
@@ -163,6 +166,7 @@ public class ShipperOrderService {
     }
 
     @Transactional
+    @Override
     public boolean acceptOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
@@ -177,13 +181,10 @@ public class ShipperOrderService {
     }
 
     @Transactional
+    @Override
     public boolean advanceOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
-        
-        if (order.getEmployee() == null || !java.util.Objects.equals(shipperId, order.getEmployee().getId())) {
-            return false;
-        }
         
         if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
                 && order.getPayment().getStatus() != PaymentStatus.PAID) {
@@ -202,6 +203,7 @@ public class ShipperOrderService {
     }
 
     @Transactional
+    @Override
     public boolean advanceOrderSimple(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
@@ -230,13 +232,10 @@ public class ShipperOrderService {
     }
 
     @Transactional
+    @Override
     public boolean cancelOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
-        
-        if (order.getEmployee() == null || !order.getEmployee().getId().equals(shipperId)) {
-            return false;
-        }
         
         OrderStatus currentStatus = order.getStatus();
         if (canCancel(currentStatus)) {
@@ -261,10 +260,27 @@ public class ShipperOrderService {
         return status == OrderStatus.PENDING || status == OrderStatus.PREPARING;
     }
 
+    @Override
     public boolean isOrderAssignedToShipper(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
-        return order.getEmployee() != null && order.getEmployee().getId().equals(shipperId);
+        return order.getEmployee() != null && java.util.Objects.equals(order.getEmployee().getId(), shipperId);
+    }
+
+    @Transactional
+    @Override
+    public boolean confirmPayment(Integer orderId, Integer shipperId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null || order.getPayment() == null) {
+            return false;
+        }
+        if (order.getPayment().getStatus() == PaymentStatus.PAID) {
+            return false;
+        }
+        order.getPayment().setStatus(PaymentStatus.PAID);
+        order.getPayment().setPaidAt(LocalDateTime.now());
+        orderRepository.save(order);
+        return true;
     }
 
     private OrderDto toDto(Order o) {

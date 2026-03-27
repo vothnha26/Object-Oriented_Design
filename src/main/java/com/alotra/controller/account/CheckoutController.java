@@ -3,7 +3,7 @@ package com.alotra.controller.account;
 import com.alotra.entity.CartItem;
 import com.alotra.entity.Customer;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.CartService;
+import com.alotra.service.proxy.CartOperations;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -15,9 +15,9 @@ import java.util.List;
 @Controller
 @RequestMapping("/checkout")
 public class CheckoutController {
-    private final CartService cartService;
+    private final CartOperations cartService;
 
-    public CheckoutController(CartService cartService) {
+    public CheckoutController(CartOperations cartService) {
         this.cartService = cartService;
     }
 

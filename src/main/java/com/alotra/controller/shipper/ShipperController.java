@@ -1,15 +1,11 @@
 package com.alotra.controller.shipper;
 
-import com.alotra.entity.Order;
-import com.alotra.entity.Employee;
-import com.alotra.entity.enums.OrderStatus;
-import com.alotra.entity.enums.PaymentStatus;
-import com.alotra.repository.OrderRepository;
 import com.alotra.security.EmployeeUserDetails;
 import com.alotra.service.OrderHistoryService;
 import com.alotra.service.OrderHistoryService.ItemToppingRow;
 import com.alotra.service.OrderHistoryService.OrderItemRow;
 import com.alotra.service.OrderHistoryService.OrderRow;
+import com.alotra.service.proxy.ShipperOrderOperations;
 import com.alotra.service.ShipperOrderService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -24,16 +20,13 @@ import java.util.Map;
 @Controller
 @RequestMapping("/shipper")
 public class ShipperController {
-    private final ShipperOrderService shipperOrderService;
+    private final ShipperOrderOperations shipperOrderService;
     private final OrderHistoryService orderHistoryService;
-    private final OrderRepository orderRepository;
 
-    public ShipperController(ShipperOrderService shipperOrderService,
-                            OrderHistoryService orderHistoryService,
-                            OrderRepository orderRepository) {
+    public ShipperController(ShipperOrderOperations shipperOrderService,
+                             OrderHistoryService orderHistoryService) {
         this.shipperOrderService = shipperOrderService;
         this.orderHistoryService = orderHistoryService;
-        this.orderRepository = orderRepository;
     }
 
     @GetMapping({"", "/", "/dashboard"})
@@ -214,15 +207,8 @@ public class ShipperController {
             return "redirect:/shipper/orders";
         }
         
-        Order order = orderRepository.findById(id).orElse(null);
-        if (order != null && order.getStatus() == OrderStatus.DELIVERING) {
-            if (order.getEmployee() == null) {
-                Employee e = new Employee();
-                e.setId(shipperId);
-                order.setEmployee(e);
-            }
-            order.setStatus(OrderStatus.DELIVERED);
-            orderRepository.save(order);
+        boolean success = shipperOrderService.markAsDelivered(id, shipperId);
+        if (success) {
             ra.addFlashAttribute("message", "Đã cập nhật trạng thái đơn hàng thành công!");
         } else {
             ra.addFlashAttribute("error", "Không thể cập nhật trạng thái đơn hàng.");
@@ -242,17 +228,11 @@ public class ShipperController {
             return "redirect:/shipper/orders";
         }
         
-        Order order = orderRepository.findById(id).orElse(null);
-        if (order == null) {
-            ra.addFlashAttribute("error", "Không tìm thấy đơn hàng.");
-            return "redirect:/shipper/orders";
-        }
-        
-        if (order.getPayment().getStatus() != PaymentStatus.PAID) {
-            order.getPayment().setStatus(PaymentStatus.PAID);
-            order.getPayment().setPaidAt(java.time.LocalDateTime.now());
-            orderRepository.save(order);
+        boolean success = shipperOrderService.confirmPayment(id, shipperId);
+        if (success) {
             ra.addFlashAttribute("message", "Đã xác nhận thu tiền từ khách.");
+        } else {
+            ra.addFlashAttribute("error", "Không thể xác nhận thanh toán cho đơn hàng này.");
         }
         
         return redirectFrom(id, from);

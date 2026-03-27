@@ -2,7 +2,7 @@ package com.alotra.controller.account;
 
 import com.alotra.entity.Customer;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.ReviewService;
+import com.alotra.service.proxy.ReviewOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -12,9 +12,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/account")
 public class AccountReviewController {
-    private final ReviewService reviewService;
+    private final ReviewOperations reviewService;
 
-    public AccountReviewController(ReviewService reviewService) {
+    public AccountReviewController(ReviewOperations reviewService) {
         this.reviewService = reviewService;
     }
 
