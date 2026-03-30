@@ -6,7 +6,7 @@ import com.alotra.entity.enums.ToppingStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
-import com.alotra.service.CloudinaryService;
+import com.alotra.storage.ImageStorageService;
 import com.alotra.service.StatsService;
 
 import org.springframework.stereotype.Controller;
@@ -24,18 +24,18 @@ import java.util.Optional;
 public class AdminController {
     private final CategoryRepository categoryRepository;
     private final ToppingRepository toppingRepository;
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService storageService;
     private final ProductRepository productRepository;
     private final StatsService statsService;
 
     public AdminController(CategoryRepository categoryRepository, 
                            ToppingRepository toppingRepository, 
-                           CloudinaryService cloudinaryService, 
+                           ImageStorageService storageService, 
                            ProductRepository productRepository, 
                            StatsService statsService) {
         this.categoryRepository = categoryRepository;
         this.toppingRepository = toppingRepository;
-        this.cloudinaryService = cloudinaryService;
+        this.storageService = storageService;
         this.productRepository = productRepository;
         this.statsService = statsService;
     }
@@ -164,7 +164,7 @@ public class AdminController {
                 return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
             }
             if (imageFile != null && !imageFile.isEmpty()) {
-                String url = cloudinaryService.uploadFile(imageFile);
+                String url = storageService.uploadImage(imageFile);
                 topping.setImageUrl(url);
             }
             toppingRepository.save(topping);

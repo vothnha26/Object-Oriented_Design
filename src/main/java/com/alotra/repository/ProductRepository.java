@@ -1,16 +1,17 @@
 // 📁 com/alotra/repository/ProductRepository.java
 package com.alotra.repository;
 
-import com.alotra.entity.Product;
-import com.alotra.entity.Category;
-import com.alotra.entity.enums.ProductStatus;
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.util.List;
+import com.alotra.entity.Category;
+import com.alotra.entity.Product;
+import com.alotra.entity.enums.ProductStatus;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
@@ -25,11 +26,12 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
 
     // Top 20 best sellers by total quantity sold (paid orders only). Includes products with zero sales.
     @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, " +
-            " MIN(b.Price) AS price, COALESCE(SUM(CASE WHEN dh.PaymentStatus='PAID' THEN ct.SoLuong ELSE 0 END),0) AS soldQty " +
+            " MIN(b.Price) AS price, COALESCE(SUM(CASE WHEN p.Status='PAID' THEN ct.SoLuong ELSE 0 END),0) AS soldQty " +
             "FROM Product sp " +
             "LEFT JOIN ProductVariant b ON b.ProductId = sp.MaSP " +
             "LEFT JOIN OrderItem ct ON ct.MaBT = b.Id " +
             "LEFT JOIN Orders dh ON dh.MaDH = ct.MaDH " +
+            "LEFT JOIN Payment p ON p.OrderId = dh.MaDH " +
             "WHERE sp.TrangThai = 'ACTIVE' AND sp.DeletedAt IS NULL " +
             "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
             "ORDER BY soldQty DESC, sp.MaSP DESC LIMIT 20", nativeQuery = true)

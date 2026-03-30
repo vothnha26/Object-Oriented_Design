@@ -4,7 +4,7 @@ import com.alotra.entity.AppliedPromotion;
 import com.alotra.entity.Promotion;
 import com.alotra.entity.Product;
 import com.alotra.service.PromotionService;
-import com.alotra.service.CloudinaryService;
+import com.alotra.storage.ImageStorageService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,11 +20,11 @@ import java.util.List;
 @RequestMapping("/admin/promotions")
 public class AdminPromotionController {
     private final PromotionService promotionService;
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService storageService;
 
-    public AdminPromotionController(PromotionService promotionService, CloudinaryService cloudinaryService) {
+    public AdminPromotionController(PromotionService promotionService, ImageStorageService storageService) {
         this.promotionService = promotionService;
-        this.cloudinaryService = cloudinaryService;
+        this.storageService = storageService;
     }
 
     @GetMapping
@@ -70,7 +70,7 @@ public class AdminPromotionController {
         }
         try {
             if (imageFile != null && !imageFile.isEmpty()) {
-                String url = cloudinaryService.uploadFile(imageFile);
+                String url = storageService.uploadImage(imageFile);
                 item.setImageUrl(url);
             } else if (item.getId() != null) {
                 promotionService.findById(item.getId()).ifPresent(old -> item.setImageUrl(old.getImageUrl()));

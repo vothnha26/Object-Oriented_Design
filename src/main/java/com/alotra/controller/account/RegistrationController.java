@@ -1,21 +1,26 @@
 package com.alotra.controller.account;
 
-import com.alotra.entity.Customer;
-import com.alotra.entity.enums.CustomerStatus;
-import com.alotra.repository.CustomerRepository;
-import com.alotra.service.OtpService;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
+import com.alotra.entity.Customer;
+import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.repository.CustomerRepository;
+import com.alotra.service.OtpService;
+
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 @Controller
 public class RegistrationController {
@@ -94,17 +99,17 @@ public class RegistrationController {
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        if (customerRepository.findByUsername(form.getUsername()) != null) {
+        if (customerRepository.findByUsername(form.getUsername()).isPresent()) {
             ra.addFlashAttribute("error", "Tên đăng nhập đã tồn tại");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        if (customerRepository.findByEmail(form.getEmail()) != null) {
+        if (customerRepository.findByEmail(form.getEmail()).isPresent()) {
             ra.addFlashAttribute("error", "Email đã được sử dụng");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
         }
-        if (form.getPhone() != null && !form.getPhone().isBlank() && customerRepository.findByPhone(form.getPhone()) != null) {
+        if (form.getPhone() != null && !form.getPhone().isBlank() && customerRepository.findByPhone(form.getPhone()).isPresent()) {
             ra.addFlashAttribute("error", "Số điện thoại đã được sử dụng");
             ra.addFlashAttribute("registerForm", form);
             return "redirect:/register";
@@ -153,7 +158,7 @@ public class RegistrationController {
             ra.addFlashAttribute("error", "Mã OTP không đúng");
             return "redirect:/register/verify";
         }
-        if (customerRepository.findByUsername(pr.getUsername()) != null || customerRepository.findByEmail(pr.getEmail()) != null) {
+        if (customerRepository.findByUsername(pr.getUsername()).isPresent() || customerRepository.findByEmail(pr.getEmail()).isPresent()) {
             session.removeAttribute("pendingReg");
             ra.addFlashAttribute("error", "Tài khoản/Email đã tồn tại. Vui lòng đăng ký lại bằng thông tin khác.");
             return "redirect:/register";

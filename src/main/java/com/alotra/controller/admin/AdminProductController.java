@@ -1,27 +1,40 @@
 package com.alotra.controller.admin;
 
-import com.alotra.entity.Category;
-import com.alotra.entity.Product;
-import com.alotra.entity.ProductVariant;
-import com.alotra.entity.ProductSize;
-import com.alotra.entity.enums.ProductStatus;
-import com.alotra.repository.CategoryRepository;
-import com.alotra.repository.ProductRepository;
-import com.alotra.repository.ProductVariantRepository;
-import com.alotra.repository.ProductSizeRepository;
-import com.alotra.repository.OrderItemRepository;
-import com.alotra.service.CloudinaryService;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.*;
+import com.alotra.entity.Category;
+import com.alotra.entity.Product;
+import com.alotra.entity.ProductSize;
+import com.alotra.entity.ProductVariant;
+import com.alotra.entity.enums.ProductStatus;
+import com.alotra.repository.CategoryRepository;
+import com.alotra.repository.OrderItemRepository;
+import com.alotra.repository.ProductRepository;
+import com.alotra.repository.ProductSizeRepository;
+import com.alotra.repository.ProductVariantRepository;
+import com.alotra.storage.ImageStorageService;
 
 @Controller
 @RequestMapping("/admin/products")
@@ -30,20 +43,20 @@ public class AdminProductController {
     private final CategoryRepository categoryRepository;
     private final ProductSizeRepository sizeRepository;
     private final ProductVariantRepository variantRepository;
-    private final CloudinaryService cloudinaryService;
+    private final ImageStorageService storageService;
     private final OrderItemRepository orderItemRepository;
 
     public AdminProductController(ProductRepository productRepository,
                                   CategoryRepository categoryRepository,
                                   ProductSizeRepository sizeRepository,
                                   ProductVariantRepository variantRepository,
-                                  CloudinaryService cloudinaryService,
+                                  ImageStorageService storageService,
                                   OrderItemRepository orderItemRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.sizeRepository = sizeRepository;
         this.variantRepository = variantRepository;
-        this.cloudinaryService = cloudinaryService;
+        this.storageService = storageService;
         this.orderItemRepository = orderItemRepository;
     }
 
@@ -141,7 +154,7 @@ public class AdminProductController {
             product.setStatus(ProductStatus.ACTIVE);
         }
         if (imageFile != null && !imageFile.isEmpty()) {
-            String url = cloudinaryService.uploadFile(imageFile);
+            String url = storageService.uploadImage(imageFile);
             product.setImageUrl(url);
         }
         product = productRepository.save(product);

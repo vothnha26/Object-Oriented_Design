@@ -1,16 +1,5 @@
 package com.alotra.service;
 
-import com.alotra.entity.Order;
-import com.alotra.entity.Employee;
-import com.alotra.entity.ShippingInfo;
-import com.alotra.entity.enums.OrderStatus;
-import com.alotra.entity.enums.PaymentMethod;
-import com.alotra.entity.enums.PaymentStatus;
-import com.alotra.repository.OrderRepository;
-import com.alotra.repository.EmployeeRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -19,14 +8,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.alotra.entity.Employee;
+import com.alotra.entity.Order;
+import com.alotra.entity.ShippingInfo;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.payment.PaymentStrategy;
+import com.alotra.payment.PaymentStrategyFactory;
+import com.alotra.repository.EmployeeRepository;
+import com.alotra.repository.OrderRepository;
+
 @Service
 public class ShipperOrderService {
     private final OrderRepository orderRepository;
     private final EmployeeRepository employeeRepository;
+    private final PaymentStrategyFactory paymentStrategyFactory;
 
-    public ShipperOrderService(OrderRepository orderRepository, EmployeeRepository employeeRepository) {
+    public ShipperOrderService(OrderRepository orderRepository, 
+                              EmployeeRepository employeeRepository,
+                              PaymentStrategyFactory paymentStrategyFactory) {
         this.orderRepository = orderRepository;
         this.employeeRepository = employeeRepository;
+        this.paymentStrategyFactory = paymentStrategyFactory;
     }
 
     public Map<String, Object> getDashboardStats(Integer shipperId) {
@@ -185,8 +191,9 @@ public class ShipperOrderService {
             return false;
         }
         
-        if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
-                && order.getPayment().getStatus() != PaymentStatus.PAID) {
+        // Use PaymentStrategy instead of if/else (OCP principle)
+        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(order.getPayment().getMethod());
+        if (!paymentStrategy.validatePayment(order)) {
             return false;
         }
         
@@ -213,8 +220,9 @@ public class ShipperOrderService {
             }
         }
         
-        if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
-                && order.getPayment().getStatus() != PaymentStatus.PAID) {
+        // Use PaymentStrategy instead of if/else (OCP principle)
+        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(order.getPayment().getMethod());
+        if (!paymentStrategy.validatePayment(order)) {
             return false;
         }
         
