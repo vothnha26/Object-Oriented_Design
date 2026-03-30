@@ -17,7 +17,7 @@ public class StatsService {
         DashboardStats s = new DashboardStats();
         // Revenue: only count orders with PAID status
         // Table: Orders, Column: TongThanhToan, PaymentStatus
-        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(TongThanhToan) FROM Orders WHERE PaymentStatus='PAID'"));
+        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(dh.TongThanhToan) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE p.Status='PAID'"));
         s.totalOrders = nnLong(queryLong("SELECT COUNT(*) FROM Orders"));
         s.totalCustomers = nnLong(queryLong("SELECT COUNT(*) FROM Customer"));
         s.totalProducts = nnLong(queryLong("SELECT COUNT(*) FROM Product WHERE DeletedAt IS NULL"));
@@ -52,10 +52,11 @@ public class StatsService {
 
     private List<Map<String,Object>> revenueDaily(int days){
         // MySQL syntax: DATE(NgayLap), CURDATE() - INTERVAL ? DAY
-        String sql = "SELECT DATE(NgayLap) d, SUM(TongThanhToan) total FROM Orders " +
-                "WHERE NgayLap >= CURDATE() - INTERVAL ? DAY " +
-                "AND PaymentStatus='PAID' " +
-                "GROUP BY DATE(NgayLap) ORDER BY d";
+        String sql = "SELECT DATE(dh.NgayLap) d, SUM(dh.TongThanhToan) total FROM Orders dh " +
+                "JOIN Payment p ON p.OrderId = dh.MaDH " +
+                "WHERE dh.NgayLap >= CURDATE() - INTERVAL ? DAY " +
+                "AND p.Status='PAID' " +
+                "GROUP BY DATE(dh.NgayLap) ORDER BY d";
         return jdbc.query(sql, ps -> ps.setInt(1, days-1), (rs,i)-> Map.of(
                 "date", rs.getDate("d").toLocalDate().toString(),
                 "total", rs.getBigDecimal("total") == null ? BigDecimal.ZERO : rs.getBigDecimal("total")
@@ -77,9 +78,10 @@ public class StatsService {
         // Product: MaSP, TenSP
         String sql = "SELECT sp.MaSP id, sp.TenSP name, SUM(ct.SoLuong) qty, SUM(ct.ThanhTien) amount " +
                 "FROM OrderItem ct JOIN Orders dh ON dh.MaDH = ct.MaDH " +
+                "JOIN Payment p ON p.OrderId = dh.MaDH " +
                 "JOIN ProductVariant bt ON bt.Id = ct.MaBT " +
                 "JOIN Product sp ON sp.MaSP = bt.ProductId " +
-                "WHERE dh.PaymentStatus='PAID' " +
+                "WHERE p.Status='PAID' " +
                 "GROUP BY sp.MaSP, sp.TenSP ORDER BY qty DESC " +
                 "LIMIT " + limit;
         return jdbc.query(sql, (rs,i)-> Map.of(
@@ -94,10 +96,11 @@ public class StatsService {
         // Category: MaDM, TenDM
         String sql = "SELECT dm.TenDM name, SUM(ct.SoLuong) qty, SUM(ct.ThanhTien) amount " +
                 "FROM OrderItem ct JOIN Orders dh ON dh.MaDH = ct.MaDH " +
+                "JOIN Payment p ON p.OrderId = dh.MaDH " +
                 "JOIN ProductVariant bt ON bt.Id = ct.MaBT " +
                 "JOIN Product sp ON sp.MaSP = bt.ProductId " +
                 "LEFT JOIN Category dm ON dm.MaDM = sp.MaDM " +
-                "WHERE dh.PaymentStatus='PAID' " +
+                "WHERE p.Status='PAID' " +
                 "GROUP BY dm.TenDM ORDER BY amount DESC";
         return jdbc.query(sql, (rs,i)-> Map.of(
                 "name", rs.getString("name") == null ? "Không xác định" : rs.getString("name"),
@@ -110,7 +113,8 @@ public class StatsService {
         // Customer: MaKH, TenKH
         String sql = "SELECT kh.MaKH id, kh.TenKH name, COUNT(dh.MaDH) orders, SUM(dh.TongThanhToan) spend " +
                 "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH " +
-                "WHERE dh.PaymentStatus='PAID' " +
+                "JOIN Payment p ON p.OrderId = dh.MaDH " +
+                "WHERE p.Status='PAID' " +
                 "GROUP BY kh.MaKH, kh.TenKH ORDER BY spend DESC " +
                 "LIMIT " + limit;
         return jdbc.query(sql, (rs,i)-> Map.of(

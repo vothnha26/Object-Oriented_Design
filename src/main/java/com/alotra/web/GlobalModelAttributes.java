@@ -4,7 +4,6 @@ import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Category;
 import com.alotra.service.CategoryService;
 import com.alotra.service.ProductService;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -44,11 +43,28 @@ public class GlobalModelAttributes {
         private String name;
         private List<ProductDTO> products;
 
-        public Integer getId() { return id; }
-        public void setId(Integer id) { this.id = id; }
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
-        public List<ProductDTO> getProducts() { return products; }
-        public void setProducts(List<ProductDTO> products) { this.products = products; }
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public List<ProductDTO> getProducts() {
+            return products;
+        }
+
+        public void setProducts(List<ProductDTO> products) {
+            this.products = products;
+        }
     }
 }

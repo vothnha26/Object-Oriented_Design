@@ -63,8 +63,6 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Allow both VENDOR and ADMIN to access vendor pages
                 .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "ADMIN")
-                // Allow both SHIPPER and ADMIN to access shipper pages
-                .requestMatchers("/shipper/**").hasAnyRole("SHIPPER", "ADMIN")
                 .requestMatchers("/account/**", "/checkout/**", "/cart/**").authenticated()
                 .anyRequest().permitAll()
             )

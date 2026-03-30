@@ -18,8 +18,6 @@ public class EmployeeUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (employee.getRole() == EmployeeRole.ADMIN) {
             return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        } else if (employee.getRole() == EmployeeRole.SHIPPER) {
-            return List.of(new SimpleGrantedAuthority("ROLE_SHIPPER"));
         }
         return List.of(new SimpleGrantedAuthority("ROLE_VENDOR"));
     }
@@ -49,7 +47,6 @@ public class EmployeeUserDetails implements UserDetails {
 
     public RoleView getRole() {
         if (employee.isAdmin()) return new RoleView("Quản trị viên");
-        if (employee.isShipper()) return new RoleView("Nhân viên giao hàng");
         return new RoleView("Nhân viên");
     }
 

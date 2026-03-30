@@ -1,0 +1,61 @@
+@startuml
+title Sequence Diagram for Task 3: Order Query Pipeline (Template Method & Strategy)
+autonumber
+
+actor User
+participant ":OrderHistoryService" as OHS
+participant "query:ConcreteOrderQuery" as COQ
+participant "repository:OrderRepository" as REPO
+participant "filter:OrderFilterStrategy" as STRAT
+participant "kwFilter:KeywordFilter" as KW
+
+User -> OHS : getOrderHistory(customerId)
+activate OHS
+
+OHS -> COQ** : create anonymous class extending AbstractOrderQuery
+note right: Override fetchOrders() and getFilter()
+
+OHS -> COQ : execute(keyword, limit)
+activate COQ
+
+COQ -> REPO : fetchOrders()
+activate REPO
+REPO --> COQ : allOrders
+deactivate REPO
+
+COQ -> COQ : getFilter()
+activate COQ
+COQ --> COQ : filterStrategy
+deactivate COQ
+
+loop for each Order in allOrders
+    COQ -> STRAT : filterStrategy.matches(order)
+    activate STRAT
+    STRAT --> COQ : boolean
+    deactivate STRAT
+end
+
+alt if keyword is present
+    COQ -> KW** : new KeywordFilter(keyword)
+    loop for each filtered Order
+        COQ -> KW : matches(order)
+        activate KW
+        KW --> COQ : boolean
+        deactivate KW
+    end
+end
+
+COQ -> COQ : sort(comparator)
+COQ -> COQ : subList(0, limit)
+
+loop for each final Order
+    COQ -> COQ : toDto(order)
+end
+
+COQ --> OHS : List<OrderDto>
+deactivate COQ
+
+OHS --> User : return order list
+deactivate OHS
+
+@enduml

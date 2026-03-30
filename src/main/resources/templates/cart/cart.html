@@ -18,8 +18,23 @@
             .cart-top-item .price { font-size:.85rem; color:#6c757d; }
             @media (max-width: 576px){ .cart-top-item .input-group { width: 120px; } }
         </style>
-        <h3 class="mb-3">Giỏ hàng của bạn</h3>
-        <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Giỏ hàng của bạn</h3>
+            <div class="undo-redo-controls" th:if="${canUndo or canRedo}">
+                <span class="text-muted small me-2" th:if="${lastAction}" th:text="'Thao tác cuối: ' + ${lastAction}"></span>
+                <a th:if="${canUndo}" th:href="@{/cart/undo}" class="btn btn-outline-secondary btn-sm" title="Hoàn tác">
+                    <i class="bi bi-arrow-counterclockwise"></i> Hoàn tác
+                </a>
+                <a th:if="${canRedo}" th:href="@{/cart/redo}" class="btn btn-outline-secondary btn-sm" title="Làm lại">
+                    <i class="bi bi-arrow-clockwise"></i> Làm lại
+                </a>
+            </div>
+        </div>
+        
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${message}">Thông báo</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
         <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
         <div class="table-responsive">
             <table id="cartTable" class="table table-hover align-middle">

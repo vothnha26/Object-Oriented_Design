@@ -247,8 +247,10 @@
                 var baseDisc = currentVariantPrice();
                 var baseRaw = currentVariantBasePrice();
                 var topsPer = toppingTotalPerDrink();
-                var qty = Number((document.getElementById('qty')||{}).value || 1);
+                var qtyInput = document.getElementById('qty');
+                var qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
                 var line = (baseDisc + topsPer) * qty;
+                
                 var pt = document.getElementById('priceText'); if (pt) pt.textContent = formatVND(baseDisc);
                 var tt = document.getElementById('totalText'); if (tt) tt.textContent = formatVND(line);
 
@@ -266,26 +268,62 @@
                     if (savingEl) { savingEl.style.display = 'none'; }
                 }
             }
-            document.addEventListener('change', function(e){
-                if(e.target.matches('input[name="variantId"], .top-qty, #qty')) recalc();
-            });
+            function initListeners() {
+                var inputs = document.querySelectorAll('input[name="variantId"], .top-qty, #qty');
+                inputs.forEach(function(el) {
+                    el.addEventListener('change', recalc);
+                    el.addEventListener('input', recalc);
+                });
+            }
+            initListeners();
+
             document.addEventListener('click', function(e){
-                if(e.target && e.target.id==='qtyMinus'){ var i=document.getElementById('qty'); if(i){ i.value=Math.max(1, (Number(i.value||1)-1)); recalc(); } }
-                if(e.target && e.target.id==='qtyPlus'){ var j=document.getElementById('qty'); if(j){ j.value=Number(j.value||1)+1; recalc(); } }
-                if(e.target && e.target.classList && e.target.classList.contains('btn-top-minus')){ var m=e.target.parentElement.querySelector('.top-qty'); if(m){ m.value=Math.max(0, (Number(m.value||0)-1)); recalc(); } }
-                if(e.target && e.target.classList && e.target.classList.contains('btn-top-plus')){ var p=e.target.parentElement.querySelector('.top-qty'); if(p){ p.value=Number(p.value||0)+1; recalc(); } }
+                if(e.target && e.target.id==='qtyMinus'){ 
+                    var i=document.getElementById('qty'); 
+                    if(i){ 
+                        i.value=Math.max(1, (parseInt(i.value)||1)-1); 
+                        recalc();
+                    } 
+                }
+                if(e.target && e.target.id==='qtyPlus'){ 
+                    var j=document.getElementById('qty'); 
+                    if(j){ 
+                        j.value=(parseInt(j.value)||1)+1; 
+                        recalc();
+                    } 
+                }
+                if(e.target && e.target.classList && e.target.classList.contains('btn-top-minus')){ 
+                    var m=e.target.parentElement.querySelector('.top-qty'); 
+                    if(m){ 
+                        m.value=Math.max(0, (parseInt(m.value)||0)-1); 
+                        recalc();
+                    } 
+                }
+                if(e.target && e.target.classList && e.target.classList.contains('btn-top-plus')){ 
+                    var p=e.target.parentElement.querySelector('.top-qty'); 
+                    if(p){ 
+                        p.value=(parseInt(p.value)||0)+1; 
+                        recalc();
+                    } 
+                }
                 var clickedLabel = e.target.closest('.option-group label.btn');
                 if(clickedLabel){
                     var group = clickedLabel.closest('.option-group');
                     if (group) group.querySelectorAll('label.btn').forEach(function(b){ b.classList.remove('active'); });
                     clickedLabel.classList.add('active');
                     var input = clickedLabel.querySelector('input[type="radio"]');
-                    if(input){ input.checked = true; }
+                    if(input){ 
+                        input.checked = true; 
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
                     recalc();
                 }
             });
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', recalc);
+                document.addEventListener('DOMContentLoaded', function() {
+                    initListeners();
+                    recalc();
+                });
             } else { recalc(); }
 
             // Fetch rating summary for this product

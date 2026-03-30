@@ -44,6 +44,18 @@
     <!-- Main Content -->
     <main class="flex-grow-1">
         <div class="container">
+            <!-- Global Alerts -->
+            <div th:if="${success != null or message != null or msg != null}" class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${success ?: (message ?: msg)}">Thành công!</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${error}">Lỗi!</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
             <!-- Inject page-specific content here -->
             <div th:replace="${content}"></div>
         </div>

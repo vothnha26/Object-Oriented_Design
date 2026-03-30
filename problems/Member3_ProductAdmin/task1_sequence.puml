@@ -1,0 +1,80 @@
+@startuml
+title Sequence Diagram for Task 1: Product Pricing (Decorator + Command)
+autonumber
+
+actor Client
+participant "UI:Browser" as UI
+participant "CartController" as CC
+participant "UpdTopCmd:UpdateToppingsCommand" as UTC
+participant ":CartHistoryManager" as CHM
+participant ":CartService" as CS
+participant "NewChain:PriceComponent" as PC
+database DB
+
+== Phase 1: Cập nhật Topping (Command Execution) ==
+Client -> UI : Thay đổi số lượng topping & Submit
+activate UI
+UI -> CC : updateItemToppings(itemId, toppingsMap)
+activate CC
+
+CC -> CS : getCurrentToppingQtys(itemId)
+activate CS
+CS --> CC : oldToppingMap
+deactivate CS
+
+CC -> UTC** : new UpdateToppingsCommand(cs, user, itemId, newMap, oldMap)
+CC -> CHM : executeCommand(cmd)
+activate CHM
+
+CHM -> UTC : execute()
+activate UTC
+UTC -> CS : updateToppings(itemId, newMap)
+activate CS
+
+CS -> DB : Clear old SelectedToppings
+CS -> DB : Insert new SelectedToppings
+CS -> CS : recomputeLineTotal(itemId)
+activate CS
+CS -> PC** : Rebuild Decorator Chain
+CS -> PC : calculate()
+PC --> CS : newTotal
+CS -> DB : Update CartItem lineTotal
+deactivate CS
+
+CS --> UTC : done
+deactivate CS
+UTC --> CHM : done
+deactivate UTC
+CHM --> CC : success
+deactivate CHM
+
+CC --> UI : Redirect to /cart
+deactivate CC
+UI --> Client : Hiển thị giá đã cập nhật
+deactivate UI
+
+== Phase 2: Hoàn tác (Undo) ==
+Client -> UI : Click [Hoàn tác]
+activate UI
+UI -> CC : undo()
+activate CC
+CC -> CHM : undo()
+activate CHM
+CHM -> UTC : undo()
+activate UTC
+UTC -> CS : updateToppings(itemId, oldMap)
+activate CS
+CS -> DB : Restore previous Toppings state
+CS -> CS : recomputeLineTotal(itemId)
+CS --> UTC : done
+deactivate CS
+UTC --> CHM : done
+deactivate UTC
+CHM --> CC : success
+deactivate CHM
+CC --> UI : Redirect to /cart
+deactivate CC
+UI --> Client : Trạng thái & Giá quay về ban đầu
+deactivate UI
+
+@enduml

@@ -1,5 +1,7 @@
 package com.alotra.controller.account;
 
+import com.alotra.command.CartHistoryManager;
+import com.alotra.command.UpdateToppingsCommand;
 import com.alotra.entity.CartItem;
 import com.alotra.entity.Customer;
 import com.alotra.security.CustomerUserDetails;
@@ -19,9 +21,11 @@ import java.util.Map;
 @RequestMapping("/cart")
 public class CartController {
     private final CartService cartService;
+    private final CartHistoryManager historyManager;
 
-    public CartController(CartService cartService) {
+    public CartController(CartService cartService, CartHistoryManager historyManager) {
         this.cartService = cartService;
+        this.historyManager = historyManager;
     }
 
     @GetMapping
@@ -35,12 +39,20 @@ public class CartController {
         model.addAttribute("itemToppingsMap", cartService.getToppingsForItems(items));
         model.addAttribute("toppingsCatalog", cartService.listActiveToppings());
         
+        // Data for Undo/Redo UI
+        model.addAttribute("canUndo", historyManager.canUndo());
+        model.addAttribute("canRedo", historyManager.canRedo());
+        model.addAttribute("lastAction", historyManager.getLastActionDescription());
+        
         Map<Integer, Map<Integer,Integer>> qtyMap = new HashMap<>();
-        cartService.getToppingsForItems(items).forEach((itemId, list) -> {
+        for (CartItem it : items) {
             Map<Integer,Integer> inner = new HashMap<>();
-            list.forEach(t -> inner.put(t.getTopping().getId(), t.getQuantity()));
-            qtyMap.put(itemId, inner);
-        });
+            int itemQty = it.getQuantity() > 0 ? it.getQuantity() : 1;
+            cartService.getToppingsForItems(List.of(it)).get(it.getId()).forEach(st -> {
+                inner.put(st.getTopping().getId(), st.getQuantity() / itemQty);
+            });
+            qtyMap.put(it.getId(), inner);
+        }
         model.addAttribute("itemTopQtyMap", qtyMap);
         
         Map<Integer, List<com.alotra.entity.ProductVariant>> itemVariantsMap = new HashMap<>();
@@ -54,6 +66,30 @@ public class CartController {
         if (msg != null) model.addAttribute("message", msg);
         if (error != null) model.addAttribute("error", error);
         return "cart/cart";
+    }
+
+    @GetMapping("/undo")
+    public String undo(RedirectAttributes ra) {
+        if (historyManager.canUndo()) {
+            historyManager.undo();
+            ra.addFlashAttribute("message", "Đã hoàn tác thao tác vừa rồi.");
+        }
+        return "redirect:/cart";
+    }
+
+    @GetMapping("/redo")
+    public String redo(RedirectAttributes ra) {
+        if (historyManager.canRedo()) {
+            historyManager.redo();
+            ra.addFlashAttribute("message", "Đã thực hiện lại thao tác.");
+        }
+        return "redirect:/cart";
+    }
+
+    @GetMapping("/clear-history")
+    public String clearHistory(RedirectAttributes ra) {
+        historyManager.clearHistory();
+        return "redirect:/cart";
     }
 
     @PostMapping("/update")
@@ -86,26 +122,33 @@ public class CartController {
     @PostMapping("/item/{id}/toppings")
     public String updateItemToppings(@AuthenticationPrincipal CustomerUserDetails principal,
                                      @PathVariable("id") Integer itemId,
-                                     @RequestParam MultiValueMap<String, String> params,
+                                     @RequestParam MultiValueMap<String, String> allParams,
                                      RedirectAttributes ra) {
         try {
-            Map<Integer,Integer> map = new HashMap<>();
-            for (String key : params.keySet()) {
+            System.out.println("[CartController] Updating toppings for item " + itemId);
+            Map<Integer,Integer> toppingQtyMap = new HashMap<>();
+            allParams.forEach((key, values) -> {
                 if (key.startsWith("toppings[") && key.endsWith("]")) {
-                    String idStr = key.substring(9, key.length() - 1);
                     try {
-                        Integer tid = Integer.valueOf(idStr);
-                        String raw = params.getFirst(key);
-                        Integer q;
-                        try { q = (raw == null || raw.isBlank()) ? 0 : Integer.valueOf(raw); }
-                        catch (NumberFormatException nfe) { q = 0; }
-                        map.put(tid, Math.max(0, q));
+                        String idPart = key.substring(9, key.length() - 1);
+                        Integer tid = Integer.parseInt(idPart);
+                        String value = (values != null && !values.isEmpty()) ? values.get(0) : "0";
+                        Integer q = (value == null || value.isBlank()) ? 0 : Math.max(0, Integer.parseInt(value));
+                        toppingQtyMap.put(tid, q);
+                        System.out.println("  - Topping " + tid + ": " + q);
                     } catch (NumberFormatException ignored) {}
                 }
-            }
-            cartService.updateToppings(principal.getCustomer(), itemId, map);
-            ra.addFlashAttribute("message", "Đã cập nhật topping.");
+            });
+            
+            // COMMAND PATTERN for Undo support
+            UpdateToppingsCommand cmd = new UpdateToppingsCommand(
+                cartService, principal.getCustomer(), itemId, toppingQtyMap, "Cập nhật topping"
+            );
+            historyManager.executeCommand(cmd);
+            
+            ra.addFlashAttribute("message", "Đã cập nhật topping (Hỗ trợ Undo).");
         } catch (RuntimeException ex) {
+            System.err.println("[CartController] Error: " + ex.getMessage());
             ra.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/cart";

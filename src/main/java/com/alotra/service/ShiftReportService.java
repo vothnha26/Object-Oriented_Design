@@ -37,10 +37,10 @@ public class ShiftReportService {
         r.canceled = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND TrangThaiDonHang = 'CANCELLED' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
         r.inProgress = r.totalOrders - r.delivered - r.canceled;
 
-        r.paidTotal = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.cashPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND PaymentMethod = 'CASH' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.bankPaid = nnBig(queryBig("SELECT SUM(TongThanhToan) FROM Orders WHERE MaNV = ? AND PaymentStatus = 'PAID' AND PaymentMethod = 'BANK_TRANSFER' AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
-        r.unpaidCount = nn(queryLong("SELECT COUNT(*) FROM Orders WHERE MaNV = ? AND (PaymentStatus IS NULL OR PaymentStatus <> 'PAID') AND NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.paidTotal = nnBig(queryBig("SELECT SUM(dh.TongThanhToan) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE dh.MaNV = ? AND p.Status = 'PAID' AND dh.NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.cashPaid = nnBig(queryBig("SELECT SUM(dh.TongThanhToan) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE dh.MaNV = ? AND p.Status = 'PAID' AND p.Method = 'CASH' AND dh.NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.bankPaid = nnBig(queryBig("SELECT SUM(dh.TongThanhToan) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE dh.MaNV = ? AND p.Status = 'PAID' AND (p.Method = 'BANK_TRANSFER' OR p.Method = 'VNPAY') AND dh.NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
+        r.unpaidCount = nn(queryLong("SELECT COUNT(*) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE dh.MaNV = ? AND p.Status <> 'PAID' AND dh.NgayLap BETWEEN ? AND ?", employeeId, fromTs, toTs));
 
         // Drinks made: OrderItem table joined with Orders table
         r.drinksMade = nn(queryLong(
@@ -56,8 +56,9 @@ public class ShiftReportService {
 
         // Recent orders
         r.orders = jdbc.query(
-                "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, dh.PaymentStatus, dh.PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai " +
+                "SELECT dh.MaDH, dh.NgayLap, dh.TrangThaiDonHang, p.Status AS PaymentStatus, p.Method AS PaymentMethod, dh.TongThanhToan, kh.TenKH, kh.SoDienThoai " +
                         "FROM Orders dh JOIN Customer kh ON kh.MaKH = dh.MaKH " +
+                        "JOIN Payment p ON p.OrderId = dh.MaDH " +
                         "WHERE dh.MaNV = ? AND dh.NgayLap BETWEEN ? AND ? ORDER BY dh.MaDH DESC",
                 ps -> { ps.setInt(1, employeeId); ps.setTimestamp(2, fromTs); ps.setTimestamp(3, toTs); },
                 (rs, i) -> {

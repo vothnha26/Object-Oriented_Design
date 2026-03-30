@@ -27,24 +27,26 @@ enum EmployeeStatus {
 enum EmployeeRole {
     ADMIN
     STAFF
-    SHIPPER
 }
 
 enum ProductStatus {
     ACTIVE
     INACTIVE
-    OUT_OF_STOCK
+    DELETED
 }
 
 enum PromotionStatus {
     ACTIVE
     INACTIVE
+    DELETED
+    UPCOMING
     EXPIRED
 }
 
 enum ToppingStatus {
-    ACTIVE
-    INACTIVE
+    AVAILABLE
+    UNAVAILABLE
+    DELETED
 }
 
 enum OrderStatus {
@@ -58,7 +60,6 @@ enum OrderStatus {
 enum PaymentStatus {
     UNPAID
     PAID
-    REFUNDED
 }
 
 enum PaymentMethod {
@@ -72,7 +73,11 @@ enum ReceivingMethod {
     PICKUP
 }
 
-
+enum CartStatus {
+    ACTIVE
+    CHECKED_OUT
+    CANCELLED
+}
 
 ' =============================================
 ' ABSTRACT BASE
@@ -98,7 +103,6 @@ class Employee {
     - EmployeeRole role
     - LocalDateTime deletedAt
     + isAdmin() : boolean
-    + isShipper() : boolean
 }
 
 User <|-- Customer
@@ -124,7 +128,6 @@ class Payment {
     - PaymentMethod method
     - BigDecimal amount
     - LocalDateTime paidAt
-    - String transactionRef
 }
 
 ShippingInfo ..> ReceivingMethod
@@ -139,19 +142,14 @@ abstract class OrderLineItem {
     - BigDecimal unitPrice
     - BigDecimal lineTotal
     - String note
-    + {abstract} calculateTotal() : BigDecimal
 }
 
 class CartItem {
     - Integer id
-    + calculateTotal() : BigDecimal
 }
 
 class OrderItem {
     - Integer id
-    - BigDecimal lineDiscount
-    + calculateTotal() : BigDecimal
-    + getNetTotal() : BigDecimal
 }
 
 OrderLineItem <|-- CartItem
@@ -180,7 +178,6 @@ class Product {
 class ProductSize {
     - Integer id
     - String name
-    - ProductStatus status
 }
 
 class ProductVariant {
@@ -204,7 +201,6 @@ Product "1" *-- "many" ProductVariant : has variants
 ProductSize "1" --> "many" ProductVariant : applies to
 Product ..> ProductStatus
 ProductVariant ..> ProductStatus
-ProductSize ..> ProductStatus
 Topping ..> ToppingStatus
 
 ' =============================================
@@ -216,7 +212,6 @@ class OtpCode {
     - String code
     - LocalDateTime expiresAt
     - boolean used
-    + isValid() : boolean
 }
 Customer "1" o-- "many" OtpCode : requests
 
@@ -245,8 +240,6 @@ class Promotion {
 class AppliedPromotion {
     - AppliedPromotionId id
     - Integer discountPercent
-    + applyDiscount(BigDecimal price) : BigDecimal
-    + isValidDiscount() : boolean
 }
 
 Promotion ..> PromotionStatus
@@ -258,7 +251,7 @@ Product "1" o-- "many" AppliedPromotion : is applied to
 ' =============================================
 class Cart {
     - Integer id
-    - String status
+    - CartStatus status
     - LocalDateTime createdAt
     - LocalDateTime updatedAt
     + getItemCount() : int
@@ -268,10 +261,12 @@ class Cart {
 Customer "1" o-- "many" Cart : owns
 Cart "1" *-- "many" CartItem : contains
 ProductVariant "1" --> "many" CartItem : references
+Cart ..> CartStatus
 
 class SelectedTopping {
     - Integer quantity
-    - BigDecimal price
+    - BigDecimal unitPrice
+    - BigDecimal lineTotal
 }
 CartItem "1" *-- "many" SelectedTopping : contains
 Topping "1" <-- "many" SelectedTopping : references
@@ -292,8 +287,6 @@ class Order {
     - Payment payment
     + canCancel() : boolean
     + isDone() : boolean
-    + calcFinalTotal() : BigDecimal
-    + syncTotal() : void
 }
 
 Order *-- ShippingInfo : contains
@@ -302,13 +295,13 @@ Order ..> OrderStatus
 
 Customer "1" o-- "many" Order : places
 Employee "1" --> "many" Order : handles
-Promotion "0..1" --> "many" Order : applied to
 Order "1" *-- "many" OrderItem : contains
 ProductVariant "1" --> "many" OrderItem : references
 
 class OrderedTopping {
     - Integer quantity
-    - BigDecimal price
+    - BigDecimal unitPrice
+    - BigDecimal lineTotal
 }
 OrderItem "1" *-- "many" OrderedTopping : contains
 Topping "1" <-- "many" OrderedTopping : references
@@ -323,11 +316,13 @@ class Review {
     - LocalDateTime createdAt
     - String adminReply
     - LocalDateTime adminRepliedAt
+    - Employee repliedBy
     + hasReply() : boolean
 }
 
 Customer "1" o-- "many" Review : writes
 OrderItem "1" *-- "0..1" Review : is reviewed
 Employee "0..1" --> "many" Review : replies to
+Review --> Employee : repliedBy
 
 @enduml

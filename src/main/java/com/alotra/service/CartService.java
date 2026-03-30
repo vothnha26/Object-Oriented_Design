@@ -1,6 +1,7 @@
 package com.alotra.service;
 
 import com.alotra.entity.*;
+import com.alotra.entity.enums.CartStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.ReceivingMethod;
 import com.alotra.repository.*;
@@ -17,7 +18,6 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;
-    private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final SelectedToppingRepository selectedToppingRepository;
@@ -25,20 +25,18 @@ public class CartService {
     private final OrderedToppingRepository orderedToppingRepository;
     private final AppliedPromotionRepository appliedPromotionRepository;
 
-    public CartService(CartRepository cartRepository, 
-                       CartItemRepository cartItemRepository,
-                       ProductVariantRepository variantRepository, 
-                       ProductRepository productRepository,
-                       OrderRepository orderRepository, 
-                       OrderItemRepository orderItemRepository,
-                       SelectedToppingRepository selectedToppingRepository, 
-                       ToppingRepository toppingRepository,
-                       OrderedToppingRepository orderedToppingRepository,
-                       AppliedPromotionRepository appliedPromotionRepository) {
+    public CartService(CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
+            ProductVariantRepository variantRepository,
+            OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository,
+            SelectedToppingRepository selectedToppingRepository,
+            ToppingRepository toppingRepository,
+            OrderedToppingRepository orderedToppingRepository,
+            AppliedPromotionRepository appliedPromotionRepository) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.variantRepository = variantRepository;
-        this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.selectedToppingRepository = selectedToppingRepository;
@@ -49,47 +47,54 @@ public class CartService {
 
     @Transactional
     public Cart getOrCreateActiveCart(Customer customer) {
-        return cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElseGet(() -> {
+        return cartRepository.findFirstByCustomerAndStatus(customer, CartStatus.ACTIVE).orElseGet(() -> {
             Cart cart = new Cart();
             cart.setCustomer(customer);
-            cart.setStatus("ACTIVE");
+            cart.setStatus(CartStatus.ACTIVE);
             return cartRepository.save(cart);
         });
     }
 
     @Transactional
-    public CartItem addItemWithOptions(Customer customer, Integer variantId, int qty, Map<Integer, Integer> toppingQty, String note) {
-        if (qty <= 0) qty = 1;
+    public CartItem addItemWithOptions(Customer customer, Integer variantId, int qty, Map<Integer, Integer> toppingQty,
+            String note) {
+        if (qty <= 0)
+            qty = 1;
         Cart cart = getOrCreateActiveCart(customer);
         ProductVariant variant = variantRepository.findById(variantId).orElse(null);
-        if (variant == null) throw new IllegalArgumentException("Biến thể không hợp lệ.");
-        
+        if (variant == null)
+            throw new IllegalArgumentException("Biến thể không hợp lệ.");
+
         // 1. Resolve Toppings
         Map<Topping, Integer> toppingMap = new HashMap<>();
         if (toppingQty != null) {
             for (Map.Entry<Integer, Integer> entry : toppingQty.entrySet()) {
                 Integer perUnitQty = entry.getValue();
-                if (perUnitQty == null || perUnitQty <= 0) continue;
+                if (perUnitQty == null || perUnitQty <= 0)
+                    continue;
                 Topping topping = toppingRepository.findById(entry.getKey()).orElse(null);
-                if (topping != null) toppingMap.put(topping, perUnitQty);
+                if (topping != null)
+                    toppingMap.put(topping, perUnitQty);
             }
         }
-        
+
         // 2. Assemble Price Decorators
         PriceComponent priceComponent = new BasePrice(variant.getPrice());
-        Integer discountPercent = (variant.getProduct() != null) ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId()) : null;
+        Integer discountPercent = (variant.getProduct() != null)
+                ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId())
+                : null;
         if (discountPercent != null && discountPercent > 0) {
             priceComponent = new PromotionDecorator(priceComponent, discountPercent);
         }
-        
+
         // 3. Set Unit Price (Base + Promo)
         BigDecimal unitPrice = priceComponent.calculate();
-        
+
         if (!toppingMap.isEmpty()) {
             priceComponent = new ToppingDecorator(priceComponent, toppingMap);
         }
         priceComponent = new QuantityDecorator(priceComponent, qty);
-        
+
         // Create a fresh cart item
         CartItem item = new CartItem();
         item.setCart(cart);
@@ -99,16 +104,18 @@ public class CartService {
         item.setNote(note);
         item.setLineTotal(priceComponent.calculate());
         item = cartItemRepository.save(item);
-        
+
         // Persist topping items
         if (toppingQty != null) {
             for (Map.Entry<Integer, Integer> entry : toppingQty.entrySet()) {
                 Integer tid = entry.getKey();
                 Integer perUnitQty = entry.getValue();
-                if (perUnitQty == null || perUnitQty <= 0) continue;
+                if (perUnitQty == null || perUnitQty <= 0)
+                    continue;
                 Topping topping = toppingRepository.findById(tid).orElse(null);
-                if (topping == null) continue;
-                
+                if (topping == null)
+                    continue;
+
                 SelectedTopping cit = new SelectedTopping();
                 cit.setCartItem(item);
                 cit.setTopping(topping);
@@ -118,17 +125,16 @@ public class CartService {
                 selectedToppingRepository.save(cit);
             }
         }
-        
+
         // Log detailed price calculation via Decorator
         System.out.println("[Cart Pricing Strategy] " + priceComponent.getDescription() + " = " + item.getLineTotal());
         return item;
     }
 
-
-
     public List<CartItem> listItems(Customer customer) {
-        Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElse(null);
-        if (cart == null) return List.of();
+        Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, CartStatus.ACTIVE).orElse(null);
+        if (cart == null)
+            return List.of();
         return cartItemRepository.findByCart(cart);
     }
 
@@ -141,6 +147,41 @@ public class CartService {
     }
 
     @Transactional
+    public void updateToppings(Customer customer, Integer itemId, Map<Integer, Integer> toppingQtyById) {
+        CartItem item = cartItemRepository.findById(itemId).orElseThrow();
+        validateOwnership(customer, item);
+
+        // 1. Clear existing toppings for a clean slate
+        selectedToppingRepository.deleteByCartItem(item);
+        selectedToppingRepository.flush();
+
+        // 2. Add new/restored toppings
+        if (toppingQtyById != null) {
+            for (Map.Entry<Integer, Integer> entry : toppingQtyById.entrySet()) {
+                Integer tid = entry.getKey();
+                Integer qty = entry.getValue() == null ? 0 : Math.max(0, entry.getValue());
+                if (qty <= 0) continue;
+
+                Topping topping = toppingRepository.findById(tid).orElse(null);
+                if (topping != null) {
+                    SelectedTopping cit = new SelectedTopping();
+                    cit.setCartItem(item);
+                    cit.setTopping(topping);
+                    cit.setQuantity(qty * item.getQuantity());
+                    cit.setUnitPrice(topping.getExtraPrice());
+                    cit.setLineTotal(topping.getExtraPrice().multiply(BigDecimal.valueOf(cit.getQuantity())));
+                    selectedToppingRepository.save(cit);
+                }
+            }
+        }
+        selectedToppingRepository.flush();
+
+        // 3. Recalculate everything
+        recomputeLineTotal(item);
+        cartItemRepository.flush();
+    }
+
+    @Transactional
     public void updateQuantity(Customer customer, Integer itemId, int qty) {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
         validateOwnership(customer, item);
@@ -148,7 +189,18 @@ public class CartService {
             cartItemRepository.delete(item);
             return;
         }
+        int oldQty = item.getQuantity();
         item.setQuantity(qty);
+        
+        // Sync topping totals
+        List<SelectedTopping> selected = selectedToppingRepository.findByCartItem(item);
+        for (SelectedTopping st : selected) {
+            int qtyPerItem = st.getQuantity() / oldQty;
+            st.setQuantity(qtyPerItem * qty);
+            st.setLineTotal(st.getUnitPrice().multiply(BigDecimal.valueOf(st.getQuantity())));
+            selectedToppingRepository.save(st);
+        }
+        
         recomputeLineTotal(item);
     }
 
@@ -166,42 +218,51 @@ public class CartService {
     }
 
     public BigDecimal calcTotal(List<CartItem> items) {
-        return items.stream().map(CartItem::getLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal total = items.stream().map(CartItem::getLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        System.out.println("[CartService] Calculated total for " + items.size() + " items: " + total);
+        return total;
     }
 
     @Transactional
     public Order checkoutWithOptions(Customer customer, List<Integer> itemIds, String paymentMethod,
-                                     String note, String receivingMethod,
-                                     String shipName, String shipPhone, String shipAddress) {
+            String note, String receivingMethod,
+            String shipName, String shipPhone, String shipAddress) {
         if (itemIds == null || itemIds.isEmpty()) {
             throw new IllegalArgumentException("Chưa chọn sản phẩm để đặt hàng");
         }
         Cart activeCart = getOrCreateActiveCart(customer);
         List<CartItem> items = cartItemRepository.findAllById(new HashSet<>(itemIds)).stream()
-                .filter(it -> it.getCart() != null && java.util.Objects.equals(it.getCart().getId(), activeCart.getId()))
+                .filter(it -> it.getCart() != null
+                        && java.util.Objects.equals(it.getCart().getId(), activeCart.getId()))
                 .collect(Collectors.toList());
         if (items.isEmpty()) {
             throw new IllegalArgumentException("Không có sản phẩm hợp lệ để đặt hàng");
         }
-        
+
         Order order = new Order();
         order.setCustomer(customer);
-        
+
         Payment payment = new Payment();
         if (paymentMethod != null) {
-            try { payment.setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase())); } catch (Exception ignored) {}
+            try {
+                payment.setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase()));
+            } catch (Exception ignored) {
+            }
         }
         order.setPayment(payment);
-        
+
         // Build ShippingInfo
         ShippingInfo shipping = new ShippingInfo();
         StringBuilder orderNote = new StringBuilder();
-        if (note != null && !note.isBlank()) orderNote.append(note.trim());
+        if (note != null && !note.isBlank())
+            orderNote.append(note.trim());
         boolean isDelivery = "Ship".equalsIgnoreCase(receivingMethod);
         if (isDelivery) {
             shipping.setMethod(ReceivingMethod.DELIVERY);
-            String recvName = (shipName != null && !shipName.isBlank()) ? shipName.trim() : (customer.getFullName() != null ? customer.getFullName().trim() : null);
-            String recvPhone = (shipPhone != null && !shipPhone.isBlank()) ? shipPhone.trim() : (customer.getPhone() != null ? customer.getPhone().trim() : null);
+            String recvName = (shipName != null && !shipName.isBlank()) ? shipName.trim()
+                    : (customer.getFullName() != null ? customer.getFullName().trim() : null);
+            String recvPhone = (shipPhone != null && !shipPhone.isBlank()) ? shipPhone.trim()
+                    : (customer.getPhone() != null ? customer.getPhone().trim() : null);
             String recvAddr = (shipAddress != null && !shipAddress.isBlank()) ? shipAddress.trim() : null;
             if (recvPhone == null || recvPhone.isBlank() || recvAddr == null || recvAddr.isBlank()) {
                 throw new IllegalArgumentException("Vui lòng nhập đầy đủ SĐT và Địa chỉ khi chọn Ship tận nơi");
@@ -209,16 +270,19 @@ public class CartService {
             shipping.setReceiverName(recvName);
             shipping.setReceiverPhone(recvPhone);
             shipping.setShippingAddress(recvAddr);
-            if (orderNote.length() > 0) orderNote.append(" | ");
+            if (orderNote.length() > 0)
+                orderNote.append(" | ");
             orderNote.append("Ship to: ");
-            if (recvName != null && !recvName.isBlank()) orderNote.append(recvName).append(", ");
+            if (recvName != null && !recvName.isBlank())
+                orderNote.append(recvName).append(", ");
             orderNote.append(recvPhone).append(", ").append(recvAddr);
         } else {
             shipping.setMethod(ReceivingMethod.PICKUP);
         }
         order.setShippingInfo(shipping);
-        if (orderNote.length() > 0) order.setNote(orderNote.toString());
-        
+        if (orderNote.length() > 0)
+            order.setNote(orderNote.toString());
+
         // Compute totals
         BigDecimal subtotal = calcTotal(items);
         order.setSubtotal(subtotal);
@@ -226,7 +290,7 @@ public class CartService {
         order.setShippingFee(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.add(order.getShippingFee()).subtract(order.getDiscount()));
         order = orderRepository.save(order);
-        
+
         // Persist lines and toppings
         for (CartItem ci : items) {
             OrderItem oi = new OrderItem();
@@ -237,7 +301,7 @@ public class CartService {
             oi.setLineTotal(ci.getLineTotal());
             oi.setNote(ci.getNote());
             oi = orderItemRepository.save(oi);
-            
+
             for (SelectedTopping cit : selectedToppingRepository.findByCartItem(ci)) {
                 OrderedTopping oit = new OrderedTopping();
                 oit.setOrderLine(oi);
@@ -248,7 +312,7 @@ public class CartService {
                 orderedToppingRepository.save(oit);
             }
         }
-        
+
         // Cleanup cart items
         for (CartItem ci : items) {
             for (SelectedTopping cit : selectedToppingRepository.findByCartItem(ci)) {
@@ -256,10 +320,10 @@ public class CartService {
             }
             cartItemRepository.delete(ci);
         }
-        
+
         boolean noMoreItems = cartItemRepository.findByCart(activeCart).isEmpty();
         if (noMoreItems) {
-            activeCart.setStatus("CHECKED_OUT");
+            activeCart.setStatus(CartStatus.CHECKED_OUT);
             cartRepository.save(activeCart);
             getOrCreateActiveCart(customer);
         }
@@ -278,57 +342,47 @@ public class CartService {
         return map;
     }
 
-    @Transactional
-    public void updateToppings(Customer customer, Integer itemId, Map<Integer, Integer> toppingQtyById) {
-        CartItem item = cartItemRepository.findById(itemId).orElseThrow();
-        validateOwnership(customer, item);
-        
-        List<SelectedTopping> existing = selectedToppingRepository.findByCartItem(item);
-        Map<Integer, SelectedTopping> existingByTid = existing.stream()
-                .collect(Collectors.toMap(t -> t.getTopping().getId(), t -> t));
-        
-        if (toppingQtyById != null) {
-            for (Map.Entry<Integer, Integer> entry : toppingQtyById.entrySet()) {
-                Integer tid = entry.getKey();
-                Integer qty = entry.getValue() == null ? 0 : Math.max(0, entry.getValue());
-                Topping topping = toppingRepository.findById(tid).orElse(null);
-                if (topping == null) continue;
+
+    private void recomputeLineTotal(CartItem item) {
+        // 1. Core unit price (Base + Promo)
+        BigDecimal basePrice = item.getVariant().getPrice();
+        Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(item.getVariant().getProduct().getId());
+        PriceComponent unitComp = new BasePrice(basePrice);
+        if (discountPercent != null && discountPercent > 0) {
+            unitComp = new PromotionDecorator(unitComp, discountPercent);
+        }
+        item.setUnitPrice(unitComp.calculate());
+
+        // 2. Sync SelectedToppings and build Map for Decorator
+        List<SelectedTopping> selected = selectedToppingRepository.findByCartItem(item);
+        Map<Topping, Integer> toppingMap = new HashMap<>();
+        int itemQty = Math.max(1, item.getQuantity());
+
+        if (selected != null) {
+            for (SelectedTopping st : selected) {
+                // Ensure record consistency
+                st.setLineTotal(st.getUnitPrice().multiply(BigDecimal.valueOf(st.getQuantity())));
+                selectedToppingRepository.save(st);
                 
-                if (qty == 0) {
-                    SelectedTopping exist = existingByTid.get(tid);
-                    if (exist != null) selectedToppingRepository.delete(exist);
-                } else {
-                    SelectedTopping exist = existingByTid.get(tid);
-                    if (exist == null) {
-                        exist = new SelectedTopping();
-                        exist.setCartItem(item);
-                        exist.setTopping(topping);
-                    }
-                    exist.setQuantity(qty);
-                    exist.setUnitPrice(topping.getExtraPrice());
-                    exist.setLineTotal(topping.getExtraPrice().multiply(BigDecimal.valueOf(qty)));
-                    selectedToppingRepository.save(exist);
+                // Derive unit quantity for Decorator logic
+                int perItem = st.getQuantity() / itemQty;
+                if (perItem > 0) {
+                    toppingMap.put(st.getTopping(), perItem);
                 }
             }
         }
-        recomputeLineTotal(item);
-    }
 
-    private void recomputeLineTotal(CartItem item) {
-        PriceComponent priceComponent = new BasePrice(item.getUnitPrice()); // Contains base + promo
-        
-        List<SelectedTopping> selectedToppings = selectedToppingRepository.findByCartItem(item);
-        if (selectedToppings != null && !selectedToppings.isEmpty()) {
-            Map<Topping, Integer> topMap = selectedToppings.stream()
-                .collect(Collectors.toMap(SelectedTopping::getTopping, st -> st.getQuantity() / item.getQuantity()));
-            priceComponent = new ToppingDecorator(priceComponent, topMap);
+        // 3. Chain Decorators for full line total
+        PriceComponent priceComponent = new BasePrice(item.getUnitPrice());
+        if (!toppingMap.isEmpty()) {
+            priceComponent = new ToppingDecorator(priceComponent, toppingMap);
         }
+        priceComponent = new QuantityDecorator(priceComponent, itemQty);
         
-        priceComponent = new QuantityDecorator(priceComponent, item.getQuantity());
         item.setLineTotal(priceComponent.calculate());
-        
-        System.out.println("[Cart Recompute] " + priceComponent.getDescription() + " = " + item.getLineTotal());
         cartItemRepository.save(item);
+        
+        System.out.println("[Cart Recompute] Item=" + item.getId() + " Qty=" + itemQty + " Total=" + item.getLineTotal());
     }
 
     @Transactional
@@ -339,26 +393,36 @@ public class CartService {
         if (target == null || !target.isActive()) {
             throw new IllegalArgumentException("Biến thể không hợp lệ hoặc đang ngừng bán");
         }
-        
+
         Integer curProductId = item.getVariant().getProduct().getId();
         Integer targetProductId = target.getProduct().getId();
         if (!Objects.equals(curProductId, targetProductId)) {
             throw new IllegalArgumentException("Không thể đổi sang sản phẩm khác");
         }
-        
+
         Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(targetProductId);
         PriceComponent priceComponent = new BasePrice(target.getPrice());
         if (discountPercent != null && discountPercent > 0) {
             priceComponent = new PromotionDecorator(priceComponent, discountPercent);
         }
-        
+
         item.setVariant(target);
         item.setUnitPrice(priceComponent.calculate());
         recomputeLineTotal(item);
     }
 
+    public Map<Integer, Integer> getCurrentToppingQtys(Integer itemId) {
+        CartItem item = cartItemRepository.findById(itemId).orElseThrow();
+        List<SelectedTopping> selected = selectedToppingRepository.findByCartItem(item);
+        return selected.stream().collect(Collectors.toMap(
+            t -> t.getTopping().getId(), 
+            t -> t.getQuantity() / item.getQuantity()
+        ));
+    }
+
     public List<ProductVariant> listVariantsForProduct(Product product) {
-        if (product == null) return List.of();
+        if (product == null)
+            return List.of();
         return variantRepository.findByProduct(product);
     }
 }

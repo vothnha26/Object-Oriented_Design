@@ -1,66 +1,80 @@
 package com.alotra.service;
 
+import com.alotra.dto.OrderDto;
 import com.alotra.entity.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
+import com.alotra.repository.OrderRepository;
+import com.alotra.service.query.*;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.util.*;
 
 @Service
 public class OrderHistoryService {
-    private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     @PersistenceContext
     private EntityManager em;
+    
+    private final OrderRepository orderRepository;
+ 
+    public OrderHistoryService(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
 
-    public OrderHistoryService() {}
-
-    public List<OrderRow> listOrdersByCustomer(Integer customerId, String status) {
+    public List<OrderDto> listOrdersByCustomer(Integer customerId, String status) {
         return listOrdersByCustomer(customerId, status, null, null, null);
     }
-
-    public List<OrderRow> listOrdersByCustomer(Integer customerId, String status, Integer orderId,
-                                               LocalDateTime from, LocalDateTime to) {
-        StringBuilder jpql = new StringBuilder("SELECT dh FROM Order dh WHERE dh.customer.id = :cid");
-        Map<String, Object> params = new HashMap<>();
-        params.put("cid", customerId);
-        if (status != null && !status.isBlank()) {
-            jpql.append(" AND CAST(dh.status AS string) = :st");
-            params.put("st", status);
-        }
-        if (orderId != null) {
-            jpql.append(" AND dh.id = :oid");
-            params.put("oid", orderId);
-        }
-        if (from != null) {
-            jpql.append(" AND dh.createdAt >= :from");
-            params.put("from", from);
-        }
-        if (to != null) {
-            jpql.append(" AND dh.createdAt <= :to");
-            params.put("to", to);
-        }
-        jpql.append(" ORDER BY dh.id DESC");
-        TypedQuery<Order> q = em.createQuery(jpql.toString(), Order.class);
-        params.forEach(q::setParameter);
-        List<Order> list = q.getResultList();
-        List<OrderRow> out = new ArrayList<>();
-        for (Order dh : list) out.add(mapOrderRow(dh));
-        return out;
+ 
+    public List<OrderDto> listOrdersByCustomer(final Integer customerId, final String status, final Integer orderId,
+                                                final LocalDateTime from, final LocalDateTime to) {
+        AbstractOrderQuery query = new AbstractOrderQuery(orderRepository) {
+            @Override
+            protected OrderFilterStrategy getFilter() {
+                List<OrderFilterStrategy> filters = new ArrayList<>();
+                filters.add(new CustomerOrderFilter(customerId));
+                
+                if (status != null && !status.isBlank()) {
+                    try {
+                        filters.add(new StatusOrderFilter(com.alotra.entity.enums.OrderStatus.valueOf(status)));
+                    } catch (Exception ignored) {}
+                }
+                
+                if (orderId != null) {
+                    filters.add(new OrderIdFilter(orderId));
+                }
+                
+                if (from != null || to != null) {
+                    filters.add(new DateRangeFilter(from, to));
+                }
+                
+                return o -> filters.stream().allMatch(f -> f.matches(o));
+            }
+            
+            @Override
+            protected List<Order> fetchOrders() {
+                // Optimization: fetch only customer orders
+                return repository.findByCustomerId(customerId);
+            }
+        };
+        
+        return query.execute(null, null);
     }
 
-    public OrderRow getOrderOfCustomer(Integer orderId, Integer customerId) {
+    public OrderDto getOrderOfCustomer(Integer orderId, Integer customerId) {
         TypedQuery<Order> q = em.createQuery(
                 "SELECT dh FROM Order dh WHERE dh.id = :id AND dh.customer.id = :cid", Order.class);
         q.setParameter("id", orderId);
         q.setParameter("cid", customerId);
         List<Order> list = q.getResultList();
-        return list.isEmpty() ? null : mapOrderRow(list.get(0));
+        if (list.isEmpty()) return null;
+        
+        // Use AbstractOrderQuery logic for mapping
+        return new AbstractOrderQuery(orderRepository) {
+            @Override protected OrderFilterStrategy getFilter() { return o -> true; }
+        }.toDto(list.get(0));
     }
 
     public List<OrderItemRow> listOrderItems(Integer orderId) {
@@ -92,15 +106,15 @@ public class OrderHistoryService {
     }
 
     public List<ItemToppingRow> listOrderedToppings(Integer orderItemId) {
-        TypedQuery<OrderedTopping> q = em.createQuery(
+        TypedQuery<com.alotra.entity.OrderedTopping> q = em.createQuery(
                 "SELECT t FROM OrderedTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
-                OrderedTopping.class);
+                com.alotra.entity.OrderedTopping.class);
         q.setParameter("lid", orderItemId);
-        List<OrderedTopping> rows = q.getResultList();
+        List<com.alotra.entity.OrderedTopping> rows = q.getResultList();
         List<ItemToppingRow> out = new ArrayList<>();
-        for (OrderedTopping t : rows) {
+        for (com.alotra.entity.OrderedTopping t : rows) {
             ItemToppingRow r = new ItemToppingRow();
-            Topping tp = t.getTopping();
+            com.alotra.entity.Topping tp = t.getTopping();
             r.toppingName = tp != null ? tp.getName() : null;
             r.quantity = t.getQuantity();
             r.unitPrice = t.getUnitPrice();
@@ -110,47 +124,16 @@ public class OrderHistoryService {
         return out;
     }
 
-    public OrderRow getOrder(Integer orderId) {
+    public OrderDto getOrder(Integer orderId) {
         TypedQuery<Order> q = em.createQuery(
                 "SELECT dh FROM Order dh LEFT JOIN FETCH dh.employee WHERE dh.id = :id", Order.class);
         q.setParameter("id", orderId);
         List<Order> list = q.getResultList();
-        Order dh = list.isEmpty() ? null : list.get(0);
-        return dh == null ? null : mapOrderRow(dh);
-    }
-
-    private OrderRow mapOrderRow(Order dh) {
-        OrderRow r = new OrderRow();
-        r.id = dh.getId();
-        LocalDateTime ts = dh.getCreatedAt();
-        r.createdAt = ts != null ? OffsetDateTime.of(ts, HCM_ZONE.getRules().getOffset(ts)) : null;
-        r.status = dh.getStatus() != null ? dh.getStatus().name() : null;
-        r.paymentStatus = dh.getPayment().getStatus() != null ? dh.getPayment().getStatus().name() : null;
-        r.paymentMethod = dh.getPayment().getMethod() != null ? dh.getPayment().getMethod().name() : null;
-        r.total = dh.getTotalAmount();
-        ShippingInfo si = dh.getShippingInfo();
-        if (si != null) {
-            r.receivingMethod = si.getMethod() != null ? si.getMethod().name() : null;
-            r.receiverName = si.getReceiverName();
-            r.receiverPhone = si.getReceiverPhone();
-            r.shippingAddress = si.getShippingAddress();
-        }
-        r.employee = dh.getEmployee();
-        return r;
-    }
-
-    public static class OrderRow {
-        public Integer id;
-        public java.time.OffsetDateTime createdAt;
-        public String status;
-        public String paymentStatus;
-        public String paymentMethod;
-        public java.math.BigDecimal total;
-        public String receivingMethod;
-        public String receiverName;
-        public String receiverPhone;
-        public String shippingAddress;
-        public Employee employee;
+        if (list.isEmpty()) return null;
+        
+        return new AbstractOrderQuery(orderRepository) {
+            @Override protected OrderFilterStrategy getFilter() { return o -> true; }
+        }.toDto(list.get(0));
     }
 
     public static class OrderItemRow {

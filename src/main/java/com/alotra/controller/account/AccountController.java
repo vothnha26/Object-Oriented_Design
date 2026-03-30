@@ -1,5 +1,6 @@
 package com.alotra.controller.account;
 
+import com.alotra.dto.OrderDto;
 import com.alotra.entity.Customer;
 import com.alotra.entity.Review;
 import com.alotra.entity.enums.OrderStatus;
@@ -150,7 +151,7 @@ public class AccountController {
                 LocalDateTime tmp = fromDt; fromDt = toDt; toDt = tmp;
             }
         }
-        List<OrderHistoryService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
+        List<OrderDto> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
         model.addAttribute("items", list);
         model.addAttribute("status", status);
         model.addAttribute("code", code);
@@ -182,8 +183,8 @@ public class AccountController {
         List<Integer> lineIds = items.stream().map(it -> it.id).collect(Collectors.toList());
         Map<Integer, Review> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);
         boolean eligibleForReview = reviewService.isOrderEligibleForReview(
-            order.status != null ? OrderStatus.valueOf(order.status) : null,
-            order.paymentStatus != null ? PaymentStatus.valueOf(order.paymentStatus) : null
+            order.getStatus() != null ? OrderStatus.valueOf(order.getStatus()) : null,
+            order.getPaymentStatus() != null ? PaymentStatus.valueOf(order.getPaymentStatus()) : null
         );
         Map<Integer, Boolean> reviewEditableByLine = new HashMap<>();
         reviewsByLine.forEach((lineId, rv) -> reviewEditableByLine.put(lineId, reviewService.canEdit(rv)));
