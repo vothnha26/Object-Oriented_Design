@@ -6,9 +6,15 @@ import com.alotra.entity.ShippingInfo;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
+<<<<<<< HEAD
 import com.alotra.repository.OrderRepository;
 import com.alotra.repository.EmployeeRepository;
 import com.alotra.service.proxy.ShipperOrderOperations;
+=======
+import com.alotra.entity.state.OrderContext;
+import com.alotra.repository.OrderRepository;
+import com.alotra.repository.EmployeeRepository;
+>>>>>>> feature/builder-pattern
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,9 +26,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+<<<<<<< HEAD
 @Service("shipperOrderOperationsReal")
 public class ShipperOrderService implements ShipperOrderOperations {
 
+=======
+@Service
+public class ShipperOrderService {
+>>>>>>> feature/builder-pattern
     private final OrderRepository orderRepository;
     private final EmployeeRepository employeeRepository;
 
@@ -31,7 +42,10 @@ public class ShipperOrderService implements ShipperOrderOperations {
         this.employeeRepository = employeeRepository;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public Map<String, Object> getDashboardStats(Integer shipperId) {
         Map<String, Object> stats = new HashMap<>();
 
@@ -62,7 +76,10 @@ public class ShipperOrderService implements ShipperOrderOperations {
         return stats;
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public List<OrderDto> getAssignedOrders(Integer shipperId, String status, String keyword, Integer limit) {
         final List<OrderStatus> targetStatuses;
         if (status != null && !status.isBlank()) {
@@ -110,7 +127,10 @@ public class ShipperOrderService implements ShipperOrderOperations {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public List<OrderDto> getAvailableOrders(String keyword, Integer limit) {
         List<Order> orders = orderRepository.findAll().stream()
                 .filter(o -> o.getStatus() == OrderStatus.PENDING && o.getEmployee() == null)
@@ -139,7 +159,10 @@ public class ShipperOrderService implements ShipperOrderOperations {
         return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public List<OrderDto> getTodayShippingOrders(Integer shipperId) {
         List<Order> orders = orderRepository.findAll().stream()
             .filter(o -> o.getStatus() == OrderStatus.DELIVERING)
@@ -151,11 +174,21 @@ public class ShipperOrderService implements ShipperOrderOperations {
     }
 
     @Transactional
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public boolean markAsDelivered(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
+<<<<<<< HEAD
+=======
+        if (order.getEmployee() == null || !java.util.Objects.equals(order.getEmployee().getId(), shipperId)) {
+            return false;
+        }
+        
+>>>>>>> feature/builder-pattern
         if (order.getStatus() != OrderStatus.DELIVERING) {
             return false;
         }
@@ -166,7 +199,10 @@ public class ShipperOrderService implements ShipperOrderOperations {
     }
 
     @Transactional
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public boolean acceptOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
@@ -181,16 +217,27 @@ public class ShipperOrderService implements ShipperOrderOperations {
     }
 
     @Transactional
+<<<<<<< HEAD
     @Override
+=======
+>>>>>>> feature/builder-pattern
     public boolean advanceOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
+<<<<<<< HEAD
+=======
+        if (order.getEmployee() == null || !java.util.Objects.equals(shipperId, order.getEmployee().getId())) {
+            return false;
+        }
+        
+>>>>>>> feature/builder-pattern
         if (order.getPayment().getMethod() == PaymentMethod.BANK_TRANSFER
                 && order.getPayment().getStatus() != PaymentStatus.PAID) {
             return false;
         }
         
+<<<<<<< HEAD
         OrderStatus currentStatus = order.getStatus();
         OrderStatus nextStatus = getNextStatus(currentStatus);
 
@@ -204,6 +251,19 @@ public class ShipperOrderService implements ShipperOrderOperations {
 
     @Transactional
     @Override
+=======
+        try {
+            OrderContext ctx = new OrderContext(order);
+            ctx.advance();
+            orderRepository.save(order);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    @Transactional
+>>>>>>> feature/builder-pattern
     public boolean advanceOrderSimple(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
@@ -220,6 +280,7 @@ public class ShipperOrderService implements ShipperOrderOperations {
             return false;
         }
         
+<<<<<<< HEAD
         OrderStatus currentStatus = order.getStatus();
         OrderStatus nextStatus = getNextStatus(currentStatus);
         
@@ -233,19 +294,43 @@ public class ShipperOrderService implements ShipperOrderOperations {
 
     @Transactional
     @Override
+=======
+        try {
+            OrderContext ctx = new OrderContext(order);
+            ctx.advance();
+            orderRepository.save(order);
+            return true;
+        } catch (IllegalStateException e) {
+            return false;
+        }
+    }
+
+    @Transactional
+>>>>>>> feature/builder-pattern
     public boolean cancelOrder(Integer orderId, Integer shipperId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if (order == null) return false;
         
+<<<<<<< HEAD
         OrderStatus currentStatus = order.getStatus();
         if (canCancel(currentStatus)) {
             order.setStatus(OrderStatus.CANCELLED);
+=======
+        if (order.getEmployee() == null || !order.getEmployee().getId().equals(shipperId)) {
+            return false;
+        }
+        
+        OrderContext ctx = new OrderContext(order);
+        if (ctx.canCancel()) {
+            ctx.cancel();
+>>>>>>> feature/builder-pattern
             orderRepository.save(order);
             return true;
         }
         return false;
     }
 
+<<<<<<< HEAD
     private OrderStatus getNextStatus(OrderStatus currentStatus) {
         if (currentStatus == null) return null;
         return switch (currentStatus) {
@@ -281,6 +366,12 @@ public class ShipperOrderService implements ShipperOrderOperations {
         order.getPayment().setPaidAt(LocalDateTime.now());
         orderRepository.save(order);
         return true;
+=======
+    public boolean isOrderAssignedToShipper(Integer orderId, Integer shipperId) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) return false;
+        return order.getEmployee() != null && order.getEmployee().getId().equals(shipperId);
+>>>>>>> feature/builder-pattern
     }
 
     private OrderDto toDto(Order o) {
