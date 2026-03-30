@@ -1,0 +1,82 @@
+@startuml
+title Sequence Diagram for Task 2: Admin Operations (Command Pattern & Undo)
+autonumber
+
+actor Admin
+participant ":AdminProductController" as APC
+participant "cmd:SoftDeleteProductCommand" as CMD
+participant ":AdminCommandInvoker" as INV
+participant ":ProductRepository" as REPO
+database DB
+
+== Execute Soft Delete ==
+Admin -> APC : delete(id)
+activate APC
+
+APC -> REPO : findById(id)
+activate REPO
+REPO --> APC : product
+deactivate REPO
+
+APC -> CMD** : new SoftDeleteProductCommand(repo, id)
+APC -> INV : execute(cmd)
+activate INV
+
+INV -> CMD : execute()
+activate CMD
+
+CMD -> REPO : findById(id)
+activate REPO
+REPO --> CMD : p
+deactivate REPO
+
+CMD -> CMD : Save previous state\n(deletedAt, status)
+CMD -> REPO : save(p)
+activate REPO
+REPO -> DB : UPDATE Product\nSET deletedAt=now, status=INACTIVE
+REPO --> CMD : saved
+deactivate REPO
+
+CMD --> INV : done
+deactivate CMD
+
+INV -> INV : push(cmd) to history stack
+INV --> APC : success
+deactivate INV
+
+APC --> Admin : Redirect with success message
+deactivate APC
+
+== Undo Last Action ==
+Admin -> APC : undoLastAction()
+activate APC
+
+APC -> INV : undo()
+activate INV
+
+INV -> INV : cmd = history.pop()
+INV -> CMD : undo()
+activate CMD
+
+CMD -> REPO : findById(id)
+activate REPO
+REPO --> CMD : p
+deactivate REPO
+
+CMD -> CMD : Restore previous state
+CMD -> REPO : save(p)
+activate REPO
+REPO -> DB : UPDATE Product\nSET deletedAt=oldVal, status=oldVal
+REPO --> CMD : saved
+deactivate REPO
+
+CMD --> INV : done
+deactivate CMD
+
+INV --> APC : true
+deactivate INV
+
+APC --> Admin : Redirect with undo success message
+deactivate APC
+
+@enduml

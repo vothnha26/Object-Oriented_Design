@@ -1,6 +1,5 @@
 package com.alotra.config;
 
-import com.alotra.security.LegacyPasswordEncoderAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +7,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -23,7 +23,26 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new LegacyPasswordEncoderAdapter();
+        // Legacy-aware encoder: supports bcrypt and plaintext/noop without extra files
+        return new PasswordEncoder() {
+            private final BCryptPasswordEncoder bcrypt = new BCryptPasswordEncoder();
+            @Override public String encode(CharSequence rawPassword) { return bcrypt.encode(rawPassword); }
+            @Override public boolean matches(CharSequence rawPassword, String encodedPassword) {
+                if (encodedPassword == null) return false;
+                String stored = encodedPassword.trim();
+                String raw = rawPassword == null ? "" : rawPassword.toString();
+                if (stored.startsWith("{bcrypt}")) {
+                    return bcrypt.matches(raw, stored.substring("{bcrypt}".length()));
+                }
+                if (stored.startsWith("{noop}")) {
+                    return raw.equals(stored.substring("{noop}".length()));
+                }
+                if (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$")) {
+                    return bcrypt.matches(raw, stored);
+                }
+                return raw.equals(stored); // legacy/plaintext
+            }
+        };
     }
 
     @Bean
@@ -44,8 +63,6 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Allow both VENDOR and ADMIN to access vendor pages
                 .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "ADMIN")
-                // Allow both SHIPPER and ADMIN to access shipper pages
-                .requestMatchers("/shipper/**").hasAnyRole("SHIPPER", "ADMIN")
                 .requestMatchers("/account/**", "/checkout/**", "/cart/**").authenticated()
                 .anyRequest().permitAll()
             )

@@ -1,5 +1,6 @@
 package com.alotra.entity;
 
+import com.alotra.entity.enums.CartStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -16,8 +17,9 @@ public class Cart {
     @JoinColumn(name = "MaKH", nullable = false)
     private Customer customer;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "TrangThai", nullable = false)
-    private String status; // ACTIVE, CHECKED_OUT, CANCELLED
+    private CartStatus status = CartStatus.ACTIVE;
 
     @Column(name = "CreatedAt", nullable = false)
     private LocalDateTime createdAt;
@@ -41,7 +43,7 @@ public class Cart {
 
     @PrePersist
     public void prePersist() {
-        if (status == null || status.isBlank()) status = "ACTIVE";
+        if (status == null) status = CartStatus.ACTIVE;
         LocalDateTime now = LocalDateTime.now();
         if (createdAt == null) createdAt = now;
         if (updatedAt == null) updatedAt = now;
@@ -56,8 +58,8 @@ public class Cart {
     public void setId(Integer id) { this.id = id; }
     public Customer getCustomer() { return customer; }
     public void setCustomer(Customer customer) { this.customer = customer; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public CartStatus getStatus() { return status; }
+    public void setStatus(CartStatus status) { this.status = status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

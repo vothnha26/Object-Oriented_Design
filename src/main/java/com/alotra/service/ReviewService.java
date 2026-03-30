@@ -8,7 +8,6 @@ import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.repository.OrderItemRepository;
 import com.alotra.repository.ReviewRepository;
-import com.alotra.service.proxy.ReviewOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +16,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service("reviewOperationsReal")
-public class ReviewService implements ReviewOperations {
+@Service
+public class ReviewService {
     public static final Duration EDIT_WINDOW = Duration.ofMinutes(15);
 
     private final ReviewRepository reviewRepo;
@@ -29,31 +28,26 @@ public class ReviewService implements ReviewOperations {
         this.orderLineRepo = orderLineRepo;
     }
 
-    @Override
     public Map<Integer, Review> findByCustomerAndLineIds(Integer customerId, List<Integer> lineIds) {
         if (customerId == null || lineIds == null || lineIds.isEmpty()) return Map.of();
         return reviewRepo.findByCustomer_IdAndOrderLine_IdIn(customerId, lineIds).stream()
                 .collect(Collectors.toMap(d -> d.getOrderLine().getId(), d -> d));
     }
 
-    @Override
     public Map<Integer, Review> findExistingByCustomerAndLines(Integer customerId, List<Integer> lineIds) {
         return findByCustomerAndLineIds(customerId, lineIds);
     }
 
-    @Override
     public boolean canEdit(Review r) {
         if (r == null || r.getCreatedAt() == null) return false;
         return Duration.between(r.getCreatedAt(), LocalDateTime.now()).compareTo(EDIT_WINDOW) <= 0;
     }
 
-    @Override
     public boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus) {
         return orderStatus == OrderStatus.DELIVERED && paymentStatus == PaymentStatus.PAID;
     }
 
     @Transactional
-    @Override
     public void submitReview(Customer customer, Integer orderLineId, int stars, String comment) {
         if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1 đến 5");
         OrderItem line = orderLineRepo.findById(orderLineId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dòng đơn hàng"));
@@ -79,9 +73,11 @@ public class ReviewService implements ReviewOperations {
     }
     
     @Transactional
-    @Override
     public Review updateIfAllowed(Customer customer, Integer reviewId, int stars, String comment) {
         Review r = reviewRepo.findById(reviewId).orElseThrow();
+        if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
+            throw new SecurityException("Không thể sửa đánh giá của người khác");
+        }
         if (!canEdit(r)) throw new IllegalStateException("Hết thời gian cho phép chỉnh sửa");
         if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1..5");
         r.setStars(stars);
@@ -90,21 +86,21 @@ public class ReviewService implements ReviewOperations {
     }
 
     @Transactional
-    @Override
     public void deleteIfAllowed(Customer customer, Integer reviewId) {
         Review r = reviewRepo.findById(reviewId).orElseThrow();
+        if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
+            throw new SecurityException("Không thể xóa đánh giá của người khác");
+        }
         if (!canEdit(r)) throw new IllegalStateException("Hết thời gian cho phép xóa");
         reviewRepo.delete(r);
     }
 
-    @Override
     public ReviewRepository.ProductRatingStats statsForProduct(Integer productId) {
         return reviewRepo.findStatsByProductId(productId);
     }
 
-    @Override
-    public List<Review> listByProduct(Integer productId, Integer limit) {
-        List<Review> list = reviewRepo.findByProductIdOrderByCreatedAtDesc(productId);
+    public java.util.List<Review> listByProduct(Integer productId, Integer limit) {
+        java.util.List<Review> list = reviewRepo.findByProductIdOrderByCreatedAtDesc(productId);
         if (limit != null && limit > 0 && list.size() > limit) return list.subList(0, limit);
         return list;
     }

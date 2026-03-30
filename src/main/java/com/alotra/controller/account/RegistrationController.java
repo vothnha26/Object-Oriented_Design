@@ -2,7 +2,6 @@ package com.alotra.controller.account;
 
 import com.alotra.entity.Customer;
 import com.alotra.entity.enums.CustomerStatus;
-import com.alotra.factory.UserFactory;
 import com.alotra.repository.CustomerRepository;
 import com.alotra.service.OtpService;
 import jakarta.servlet.http.HttpSession;
@@ -21,12 +20,12 @@ import java.time.LocalDateTime;
 @Controller
 public class RegistrationController {
     private final CustomerRepository customerRepository;
-    private final UserFactory userFactory;
+    private final PasswordEncoder encoder;
     private final OtpService otpService;
 
-    public RegistrationController(CustomerRepository customerRepository, UserFactory userFactory, OtpService otpService) {
+    public RegistrationController(CustomerRepository customerRepository, PasswordEncoder encoder, OtpService otpService) {
         this.customerRepository = customerRepository;
-        this.userFactory = userFactory;
+        this.encoder = encoder;
         this.otpService = otpService;
     }
 
@@ -56,7 +55,7 @@ public class RegistrationController {
         private String fullName;
         private String email;
         private String phone;
-        private String plainPassword;
+        private String passwordHash;
         private String otp;
         private LocalDateTime expiresAt;
         public String getUsername() { return username; }
@@ -67,8 +66,8 @@ public class RegistrationController {
         public void setEmail(String email) { this.email = email; }
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
-        public String getPlainPassword() { return plainPassword; }
-        public void setPlainPassword(String plainPassword) { this.plainPassword = plainPassword; }
+        public String getPasswordHash() { return passwordHash; }
+        public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
         public String getOtp() { return otp; }
         public void setOtp(String otp) { this.otp = otp; }
         public LocalDateTime getExpiresAt() { return expiresAt; }
@@ -116,7 +115,7 @@ public class RegistrationController {
         pr.setFullName(form.getFullName().trim());
         pr.setEmail(form.getEmail().trim());
         pr.setPhone(form.getPhone() != null ? form.getPhone().trim() : null);
-        pr.setPlainPassword(form.getPassword());
+        pr.setPasswordHash(encoder.encode(form.getPassword()));
         pr.setOtp(otpService.generateOtp());
         pr.setExpiresAt(LocalDateTime.now().plusMinutes(10));
         session.setAttribute("pendingReg", pr);
@@ -160,14 +159,13 @@ public class RegistrationController {
             return "redirect:/register";
         }
         
-        Customer customer = userFactory.createCustomer(
-            pr.getUsername(),
-            pr.getEmail(),
-            pr.getFullName(),
-            pr.getPhone(),
-            pr.getPlainPassword(),
-            CustomerStatus.ACTIVE
-        );
+        Customer customer = new Customer();
+        customer.setUsername(pr.getUsername());
+        customer.setFullName(pr.getFullName());
+        customer.setEmail(pr.getEmail());
+        customer.setPhone(pr.getPhone());
+        customer.setPasswordHash(pr.getPasswordHash());
+        customer.setStatus(CustomerStatus.ACTIVE);
         customerRepository.save(customer);
         session.removeAttribute("pendingReg");
         return "redirect:/login?activated";

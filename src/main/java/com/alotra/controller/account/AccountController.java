@@ -1,5 +1,6 @@
 package com.alotra.controller.account;
 
+import com.alotra.dto.OrderDto;
 import com.alotra.entity.Customer;
 import com.alotra.entity.Review;
 import com.alotra.entity.enums.OrderStatus;
@@ -7,7 +8,6 @@ import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.OrderHistoryService;
 import com.alotra.service.CustomerService;
-import com.alotra.service.proxy.ReviewOperations;
 import com.alotra.service.ReviewService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,12 +34,12 @@ public class AccountController {
     private final OrderHistoryService orderService;
     private final CustomerService customerService;
     private final PasswordEncoder passwordEncoder;
-    private final ReviewOperations reviewService;
+    private final ReviewService reviewService;
 
     public AccountController(OrderHistoryService orderService,
                              CustomerService customerService,
                              PasswordEncoder passwordEncoder,
-                             ReviewOperations reviewService) {
+                             ReviewService reviewService) {
         this.orderService = orderService;
         this.customerService = customerService;
         this.passwordEncoder = passwordEncoder;
@@ -151,7 +151,7 @@ public class AccountController {
                 LocalDateTime tmp = fromDt; fromDt = toDt; toDt = tmp;
             }
         }
-        List<OrderHistoryService.OrderRow> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
+        List<OrderDto> list = orderService.listOrdersByCustomer(current.getId(), status, orderId, fromDt, toDt);
         model.addAttribute("items", list);
         model.addAttribute("status", status);
         model.addAttribute("code", code);
@@ -183,8 +183,8 @@ public class AccountController {
         List<Integer> lineIds = items.stream().map(it -> it.id).collect(Collectors.toList());
         Map<Integer, Review> reviewsByLine = reviewService.findExistingByCustomerAndLines(current.getId(), lineIds);
         boolean eligibleForReview = reviewService.isOrderEligibleForReview(
-            order.status != null ? OrderStatus.valueOf(order.status) : null,
-            order.paymentStatus != null ? PaymentStatus.valueOf(order.paymentStatus) : null
+            order.getStatus() != null ? OrderStatus.valueOf(order.getStatus()) : null,
+            order.getPaymentStatus() != null ? PaymentStatus.valueOf(order.getPaymentStatus()) : null
         );
         Map<Integer, Boolean> reviewEditableByLine = new HashMap<>();
         reviewsByLine.forEach((lineId, rv) -> reviewEditableByLine.put(lineId, reviewService.canEdit(rv)));

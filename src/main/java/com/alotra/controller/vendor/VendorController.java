@@ -1,5 +1,6 @@
 package com.alotra.controller.vendor;
 
+import com.alotra.dto.OrderDto;
 import com.alotra.entity.Order;
 import com.alotra.entity.Employee;
 import com.alotra.entity.enums.OrderStatus;
@@ -10,7 +11,6 @@ import com.alotra.service.OrderHistoryService;
 import com.alotra.service.VendorOrderService;
 import com.alotra.service.OrderHistoryService.OrderItemRow;
 import com.alotra.service.OrderHistoryService.ItemToppingRow;
-import com.alotra.service.OrderHistoryService.OrderRow;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -61,7 +61,7 @@ public class VendorController {
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Integer id, Model model) {
-        OrderRow order = orderHistoryService.getOrder(id);
+        OrderDto order = orderHistoryService.getOrder(id);
         if (order == null) {
             return "redirect:/vendor/orders";
         }
@@ -79,7 +79,7 @@ public class VendorController {
 
     @GetMapping("/orders/{id}/invoice")
     public String invoice(@PathVariable Integer id, Model model) {
-        OrderRow order = orderHistoryService.getOrder(id);
+        OrderDto order = orderHistoryService.getOrder(id);
         if (order == null) {
             return "redirect:/vendor/orders";
         }

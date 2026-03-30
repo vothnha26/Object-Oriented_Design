@@ -6,9 +6,9 @@ import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
 import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.proxy.CartOperations;
+import com.alotra.service.CartService;
 import com.alotra.service.CustomerService;
-import com.alotra.service.proxy.ReviewOperations;
+import com.alotra.service.ReviewService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,18 +27,18 @@ public class ProductController {
     private final ProductRepository productRepo;
     private final ProductVariantRepository variantRepo;
     private final ToppingRepository toppingRepo;
-    private final CartOperations cartService;
+    private final CartService cartService;
     private final CustomerService customerService;
     private final AppliedPromotionRepository appliedPromotionRepository;
-    private final ReviewOperations reviewService;
+    private final ReviewService reviewService;
 
     public ProductController(ProductRepository productRepo,
                              ProductVariantRepository variantRepo,
                              ToppingRepository toppingRepo,
-                             CartOperations cartService,
+                             CartService cartService,
                              CustomerService customerService,
                              AppliedPromotionRepository appliedPromotionRepository,
-                             ReviewOperations reviewService) {
+                             ReviewService reviewService) {
         this.productRepo = productRepo;
         this.variantRepo = variantRepo;
         this.toppingRepo = toppingRepo;

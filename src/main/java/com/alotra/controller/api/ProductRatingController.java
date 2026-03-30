@@ -1,7 +1,7 @@
 package com.alotra.controller.api;
 
 import com.alotra.repository.ReviewRepository;
-import com.alotra.service.proxy.ReviewOperations;
+import com.alotra.service.ReviewService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,9 +10,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/products")
 public class ProductRatingController {
-    private final ReviewOperations reviewService;
+    private final ReviewService reviewService;
 
-    public ProductRatingController(ReviewOperations reviewService) { this.reviewService = reviewService; }
+    public ProductRatingController(ReviewService reviewService) { this.reviewService = reviewService; }
 
     @GetMapping("/{id}/rating")
     public ResponseEntity<?> rating(@PathVariable("id") Integer productId) {

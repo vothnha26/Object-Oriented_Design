@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.alotra.service.command.AdminCommand;
+import com.alotra.service.command.AdminCommandInvoker;
+import com.alotra.service.command.SoftDeleteProductCommand;
+
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -32,32 +35,36 @@ public class AdminProductController {
     private final ProductVariantRepository variantRepository;
     private final CloudinaryService cloudinaryService;
     private final OrderItemRepository orderItemRepository;
+    private final AdminCommandInvoker commandInvoker;
 
     public AdminProductController(ProductRepository productRepository,
-                                  CategoryRepository categoryRepository,
-                                  ProductSizeRepository sizeRepository,
-                                  ProductVariantRepository variantRepository,
-                                  CloudinaryService cloudinaryService,
-                                  OrderItemRepository orderItemRepository) {
+            CategoryRepository categoryRepository,
+            ProductSizeRepository sizeRepository,
+            ProductVariantRepository variantRepository,
+            CloudinaryService cloudinaryService,
+            OrderItemRepository orderItemRepository,
+            AdminCommandInvoker commandInvoker) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.sizeRepository = sizeRepository;
         this.variantRepository = variantRepository;
         this.cloudinaryService = cloudinaryService;
         this.orderItemRepository = orderItemRepository;
+        this.commandInvoker = commandInvoker;
     }
 
     @GetMapping
     public String list(Model model,
-                       @RequestParam(value = "kw", required = false) String kw,
-                       @RequestParam(value = "categoryId", required = false) Integer categoryId,
-                       @RequestParam(value = "status", required = false) Integer status) {
+            @RequestParam(value = "kw", required = false) String kw,
+            @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "status", required = false) Integer status) {
         String keyword = (kw != null && !kw.isBlank()) ? kw.trim() : null;
         ProductStatus statusEnum = null;
         if (status != null) {
             try {
                 statusEnum = ProductStatus.fromValue(status);
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+            }
         }
         List<Product> items = productRepository.adminSearch(keyword, categoryId, statusEnum);
         model.addAttribute("pageTitle", "Sản phẩm");
@@ -74,7 +81,8 @@ public class AdminProductController {
     @ResponseBody
     public ResponseEntity<?> getVariantsJson(@PathVariable Integer id) {
         Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isEmpty()) return ResponseEntity.notFound().build();
+        if (productOpt.isEmpty())
+            return ResponseEntity.notFound().build();
         List<ProductVariant> list = variantRepository.findByProductFetchingSize(productOpt.get());
         List<Map<String, Object>> data = new ArrayList<>();
         for (ProductVariant v : list) {
@@ -117,22 +125,24 @@ public class AdminProductController {
 
     @PostMapping("/save")
     public String save(@ModelAttribute Product product,
-                       @RequestParam("categoryId") Integer categoryId,
-                       @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                       @RequestParam(value = "variantSizeId", required = false) List<Integer> variantSizeIds,
-                       @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
-                       @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
-                       RedirectAttributes ra) {
+            @RequestParam("categoryId") Integer categoryId,
+            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
+            @RequestParam(value = "variantSizeId", required = false) List<Integer> variantSizeIds,
+            @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
+            @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
+            RedirectAttributes ra) {
         String name = product.getName() != null ? product.getName().trim() : null;
         product.setName(name);
         if (name == null || name.isBlank()) {
             ra.addFlashAttribute("error", "Tên sản phẩm không được để trống.");
-            return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
+            return product.getId() == null ? "redirect:/admin/products/add"
+                    : ("redirect:/admin/products/edit/" + product.getId());
         }
         var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
         if (dup != null && (product.getId() == null || !java.util.Objects.equals(dup.getId(), product.getId()))) {
             ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
-            return product.getId() == null ? "redirect:/admin/products/add" : ("redirect:/admin/products/edit/" + product.getId());
+            return product.getId() == null ? "redirect:/admin/products/add"
+                    : ("redirect:/admin/products/edit/" + product.getId());
         }
         Category cat = new Category();
         cat.setId(categoryId);
@@ -155,10 +165,14 @@ public class AdminProductController {
             for (int i = 0; i < limit; i++) {
                 Integer sizeId = variantSizeIds.get(i);
                 BigDecimal price = (variantPrices != null && i < variantPrices.size()) ? variantPrices.get(i) : null;
-                Integer statusVal = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : 1;
-                if (sizeId == null || price == null) continue;
-                if (price.signum() < 0) continue;
-                if (!seenSizeIds.add(sizeId)) continue;
+                Integer statusVal = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i)
+                        : 1;
+                if (sizeId == null || price == null)
+                    continue;
+                if (price.signum() < 0)
+                    continue;
+                if (!seenSizeIds.add(sizeId))
+                    continue;
                 ProductVariant v = new ProductVariant();
                 v.setProduct(product);
                 ProductSize sz = new ProductSize();
@@ -185,24 +199,38 @@ public class AdminProductController {
         long usedInOrders = 0L;
         try {
             usedInOrders = orderItemRepository.countByVariant_Product_Id(p.getId());
-        } catch (Exception ignored) { }
+        } catch (Exception ignored) {
+        }
         if (usedInOrders > 0) {
             ra.addFlashAttribute("error", "Không thể xóa sản phẩm vì đã phát sinh đơn hàng.");
             return "redirect:/admin/products";
         }
-        p.setDeletedAt(LocalDateTime.now());
-        p.setStatus(ProductStatus.INACTIVE);
-        productRepository.save(p);
-        ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
+
+        // Use Command Pattern to support Undo
+        AdminCommand cmd = new SoftDeleteProductCommand(productRepository, p.getId());
+        commandInvoker.execute(cmd);
+
+        ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác. (Có thể Hoàn tác)");
+        return "redirect:/admin/products";
+    }
+
+    @PostMapping("/undo")
+    public String undoLastAction(RedirectAttributes ra) {
+        boolean success = commandInvoker.undo();
+        if (success) {
+            ra.addFlashAttribute("message", "Đã hoàn tác thao tác quản trị gần nhất thành công.");
+        } else {
+            ra.addFlashAttribute("error", "Không có thao tác nào để hoàn tác.");
+        }
         return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/variants")
     public String addVariant(@PathVariable Integer id,
-                             @RequestParam("sizeId") Integer sizeId,
-                             @RequestParam("price") BigDecimal price,
-                             @RequestParam(value = "status", defaultValue = "1") Integer status,
-                             RedirectAttributes ra) {
+            @RequestParam("sizeId") Integer sizeId,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam(value = "status", defaultValue = "1") Integer status,
+            RedirectAttributes ra) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {
             ra.addFlashAttribute("error", "Không tìm thấy sản phẩm.");

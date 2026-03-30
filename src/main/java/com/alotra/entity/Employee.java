@@ -33,10 +33,6 @@ public class Employee extends User {
         return role == EmployeeRole.ADMIN;
     }
 
-    public boolean isShipper() {
-        return role == EmployeeRole.SHIPPER;
-    }
-
     @Override
     public boolean isActive() {
         return status == EmployeeStatus.ACTIVE;

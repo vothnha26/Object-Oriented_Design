@@ -1,38 +1,32 @@
 package com.alotra.auth;
 
-import com.alotra.entity.Customer;
 import com.alotra.repository.CustomerRepository;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
-public class PasswordHashNormalizer extends AbstractPasswordHashNormalizer<Customer> {
+public class PasswordHashNormalizer implements ApplicationRunner {
     private final CustomerRepository repo;
+    private final PasswordEncoder encoder;
 
     public PasswordHashNormalizer(CustomerRepository repo, PasswordEncoder encoder) {
-        super(encoder);
         this.repo = repo;
+        this.encoder = encoder;
     }
 
     @Override
-    protected List<Customer> findAll() {
-        return repo.findAll();
-    }
-
-    @Override
-    protected String getPasswordHash(Customer entity) {
-        return entity.getPasswordHash();
-    }
-
-    @Override
-    protected void setPasswordHash(Customer entity, String hash) {
-        entity.setPasswordHash(hash);
-    }
-
-    @Override
-    protected void save(Customer entity) {
-        repo.save(entity);
+    public void run(ApplicationArguments args) {
+        repo.findAll().forEach(kh -> {
+            String hash = kh.getPasswordHash();
+            if (hash == null)
+                return;
+            // If not BCrypt (doesn't start with $2) then encode once
+            if (!hash.startsWith("$2a$") && !hash.startsWith("$2b$") && !hash.startsWith("$2y$")) {
+                kh.setPasswordHash(encoder.encode(hash));
+                repo.save(kh);
+            }
+        });
     }
 }
