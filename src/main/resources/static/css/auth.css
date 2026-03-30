@@ -1,0 +1,132 @@
+/* Auth pages modern styles */
+:root {
+  --alotra-green: #198754;
+  --alotra-green-hover: #157347;
+  --alotra-pink: #ff4d88; /* cherry blossom accent */
+  --ring-color: rgba(25, 135, 84, 0.35);
+}
+
+html, body {
+  height: 100%;
+}
+
+body.auth-bg {
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(255, 77, 136, 0.18), transparent 60%),
+              radial-gradient(1200px 600px at 110% 110%, rgba(25, 135, 84, 0.18), transparent 60%),
+              linear-gradient(180deg, #f7fafc, #eef2f7);
+}
+
+[data-bs-theme="dark"] body.auth-bg {
+  background: radial-gradient(1200px 600px at 10% -10%, rgba(255, 77, 136, 0.2), transparent 60%),
+              radial-gradient(1200px 600px at 110% 110%, rgba(25, 135, 84, 0.2), transparent 60%),
+              linear-gradient(180deg, #0b1220, #0f172a);
+}
+
+.auth-wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+[data-bs-theme="dark"] .auth-card {
+  background: rgba(17, 24, 39, 0.6);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.auth-header {
+  padding: 24px 24px 8px 24px;
+  text-align: center;
+}
+
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--alotra-green);
+}
+
+.auth-brand i {
+  color: var(--alotra-pink);
+}
+
+.auth-title {
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.auth-body {
+  padding: 8px 24px 20px 24px;
+}
+
+.auth-footer {
+  padding: 16px 24px 24px 24px;
+  text-align: center;
+}
+
+/* Inputs */
+.auth-form .form-floating > .form-control {
+  border-radius: 12px;
+}
+
+.auth-form .form-control:focus {
+  border-color: var(--alotra-green);
+  box-shadow: 0 0 0 0.25rem var(--ring-color);
+}
+
+/* Buttons */
+.btn-alotra {
+  background: var(--alotra-green);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  border: none;
+}
+
+.btn-alotra:hover, .btn-alotra:focus {
+  background: var(--alotra-green-hover);
+  color: #fff;
+}
+
+.link-alotra {
+  color: var(--alotra-green);
+  text-decoration: none;
+}
+
+.link-alotra:hover { color: var(--alotra-green-hover); }
+
+/* Alerts spacing */
+.auth-alerts > .alert { margin-bottom: 12px; }
+
+/* Small utilities */
+.muted { color: #6c757d; }
+[data-bs-theme="dark"] .muted { color: #9aa4b2; }
+
+/* Optional: subtle divider */
+.divider { position: relative; text-align: center; margin: 12px 0 0 0; }
+.divider:before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,0.08); }
+[data-bs-theme="dark"] .divider:before { background: rgba(255,255,255,0.08); }
+.divider span { position: relative; padding: 0 10px; background: transparent; }
+
+/* Dark mode helpers for cards/alerts */
+[data-bs-theme="dark"] .card { background-color: rgba(17, 24, 39, 0.65); }
+[data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select {
+  background-color: #0b1220; color: #e5e7eb; border-color: rgba(255,255,255,0.12);
+}
+[data-bs-theme="dark"] .form-control::placeholder { color: #94a3b8; }
+[data-bs-theme="dark"] .form-control:focus { border-color: var(--alotra-green); }

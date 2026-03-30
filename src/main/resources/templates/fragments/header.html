@@ -1,0 +1,136 @@
+<!-- Header Fragment -->
+<th:block th:fragment="header" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <!-- Hamburger Menu Button -->
+    <button id="sidebarToggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Overlay -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside id="mainSidebar" class="main-sidebar">
+        <div class="sidebar-header">
+            <a th:href="@{/}">
+                <img th:src="@{/images/logo.jpg}" alt="AloTra Logo" class="sidebar-logo">
+            </a>
+            <button id="sidebarClose" class="sidebar-close-btn" aria-label="Close Sidebar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- Search Section -->
+            <div class="sidebar-section">
+                <form id="siteSearchForm" class="sidebar-search" role="search" th:action="@{/products}" method="get">
+                    <div class="input-group">
+                        <input id="siteSearchInput" name="search" class="form-control" type="search" placeholder="Tìm kiếm sản phẩm..." aria-label="Search" autocomplete="off">
+                        <button class="btn btn-search" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div id="siteSearchSuggest" class="search-suggest" style="display:none;"></div>
+                </form>
+            </div>
+
+            <!-- User Section -->
+            <div class="sidebar-section user-section">
+                <!-- Authenticated User -->
+                <div sec:authorize="isAuthenticated()" class="user-info">
+                    <div class="user-greeting">
+                        <i class="fas fa-user-circle"></i>
+                        <span>Xin chào, <strong sec:authentication="name"></strong></span>
+                    </div>
+                    <div class="user-actions-list">
+                        <a th:href="@{/account/profile}" class="sidebar-link">
+                            <i class="fas fa-id-card"></i> Thông tin cá nhân
+                        </a>
+                        <a th:href="@{/account/orders}" class="sidebar-link">
+                            <i class="fas fa-receipt"></i> Lịch sử đơn hàng
+                        </a>
+                        <a href="#" id="notifLink" class="sidebar-link position-relative">
+                            <i class="fas fa-envelope"></i> Thông báo
+                            <span id="notif-count-badge" class="badge bg-danger ms-2" style="min-width:20px; display:none;">0</span>
+                        </a>
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="sidebar-link btn-logout">
+                                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Anonymous User -->
+                <div sec:authorize="isAnonymous()" class="user-info">
+                    <a th:href="@{/login}" class="sidebar-link login-link">
+                        <i class="fas fa-user"></i> Đăng nhập / Đăng ký
+                    </a>
+                </div>
+            </div>
+
+            <!-- Cart Section -->
+            <div class="sidebar-section">
+                <a id="cartLink" th:href="@{/cart}" class="sidebar-link cart-link">
+                    <i class="fas fa-shopping-cart"></i> Giỏ hàng
+                    <span id="cart-count-badge" class="badge bg-danger ms-2" style="min-width:22px;">0</span>
+                </a>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="sidebar-nav">
+                <h6 class="sidebar-nav-title">DANH MỤC</h6>
+                <ul class="nav-list">
+                    <li><a th:href="@{/}" class="sidebar-link"><i class="fas fa-home"></i> Trang chủ</a></li>
+                    <li><a th:href="@{/products}" class="sidebar-link"><i class="fas fa-shopping-bag"></i> Menu sản phẩm</a></li>
+                    <li><a th:href="@{/about}" class="sidebar-link"><i class="fas fa-info-circle"></i> Về chúng tôi</a></li>
+                    <li><a th:href="@{/promotions}" class="sidebar-link"><i class="fas fa-gift"></i> Khuyến mãi</a></li>
+                </ul>
+
+                <!-- Product Categories -->
+                <div th:if="${!#lists.isEmpty(megaMenuCategories)}" class="categories-section">
+                    <h6 class="sidebar-nav-title">SẢN PHẨM THEO DANH MỤC</h6>
+                    <div class="accordion" id="categoryAccordion">
+                        <div class="accordion-item" th:each="cat, iterStat : ${megaMenuCategories}">
+                            <h2 class="accordion-header" th:id="'heading' + ${cat.id}">
+                                <button class="accordion-button collapsed" type="button" 
+                                        data-bs-toggle="collapse" 
+                                        th:data-bs-target="'#collapse' + ${cat.id}" 
+                                        aria-expanded="false" 
+                                        th:aria-controls="'collapse' + ${cat.id}">
+                                    <span th:text="${cat.name}">Danh mục</span>
+                                </button>
+                            </h2>
+                            <div th:id="'collapse' + ${cat.id}" 
+                                 class="accordion-collapse collapse" 
+                                 th:aria-labelledby="'heading' + ${cat.id}" 
+                                 data-bs-parent="#categoryAccordion">
+                                <div class="accordion-body">
+                                    <a th:href="@{'/products'(categoryId=${cat.id})}" class="view-all-link">
+                                        <i class="fas fa-eye"></i> Xem tất cả
+                                    </a>
+                                    <ul class="product-list">
+                                        <li th:each="p : ${cat.products}">
+                                            <a th:href="@{'/products/' + ${p.id}}" th:text="${p.name}">Sản phẩm</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Notification Dropdown (hidden by default) -->
+            <div id="notifDropdown" class="notif-dropdown" style="display:none;">
+                <div class="notif-header">Thông báo</div>
+                <div id="notifList" class="notif-list">
+                    <div class="p-3 text-center text-muted">Đang tải...</div>
+                </div>
+                <div class="notif-footer">
+                    <a th:href="@{/account/orders}">Xem đơn hàng</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+</th:block>
+<!-- End of Header Fragment -->

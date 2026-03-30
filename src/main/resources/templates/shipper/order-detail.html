@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{layouts/shipper-layout :: layout(pageTitle=${pageTitle}, pageContent=~{::pageContent})}">
+<body>
+	<div class="page-content" th:fragment="pageContent"
+		th:with="currentPage='shipper-orders'">
+		<div class="d-flex justify-content-between align-items-center mb-3">
+			<h4 class="mb-0">
+				<i class="fas fa-box me-2 text-info"></i> Chi tiết đơn hàng #<span
+					th:text="${order.id}">123</span>
+			</h4>
+			<a th:href="@{/shipper/orders}" class="btn btn-outline-secondary">
+				<i class="fas fa-arrow-left me-1"></i> Quay lại
+			</a>
+		</div>
+
+		<!-- Order Status & Actions -->
+		<div class="card mb-3"
+			th:with="isDangGiao=${order.status == 'DangGiao'}, isDaGiao=${order.status == 'DaGiao'}, isChoXuLy=${order.status == 'ChoXuLy'}, isDangPhaChe=${order.status == 'DangPhaChe'}">
+			<div class="card-body">
+				<div class="row align-items-center">
+					<div class="col-md-6">
+						<h5>Trạng thái đơn hàng</h5>
+						<span class="badge fs-6"
+							th:classappend="${isChoXuLy?'bg-warning':(isDangPhaChe?'bg-info':(isDangGiao?'bg-primary':(isDaGiao?'bg-success':'bg-secondary')))}"
+							th:text="${order.status}"> Đang giao </span> <span
+							class="badge fs-6 ms-2"
+							th:classappend="${order.paymentStatus=='DaThanhToan'?'bg-success':'bg-warning'}"
+							th:text="${order.paymentStatus}"> Chưa thanh toán </span>
+					</div>
+					<div class="col-md-6 text-md-end">
+
+						<form
+							th:if="${order.status == 'ChoXuLy' && order.employee == null}"
+							th:action="@{/shipper/orders/{id}/accept(id=${order.id})}"
+							method="post" class="d-inline"
+							onsubmit="return confirm('Bạn muốn nhận đơn hàng này?');">
+							<input type="hidden" name="from" value="detail">
+							<button class="btn btn-success" type="submit">
+								<i class="fas fa-hand-paper me-1"></i> Nhận Đơn
+							</button>
+						</form>
+						<!-- da bo dong ỏ duoi && order.status != 'ChoXuLy' -->
+						<form
+							th:if="${order.status != 'DaGiao' && order.status != 'DaHuy'}" 
+							th:action="@{'/shipper/orders/' + ${order.id} + '/advance'}"
+							method="post" class="d-inline ms-2"
+							onsubmit="return confirm('Chuyển sang bước tiếp theo?');">
+							<input type="hidden" name="from" value="detail">
+							<button class="btn btn-primary" type="submit"
+								th:disabled="${order.paymentMethod=='ChuyenKhoan' && order.paymentStatus!='DaThanhToan'}">
+								<i class="fas fa-arrow-right me-1"></i> Chuyển bước tiếp theo
+							</button>
+						</form>
+
+						<form
+							th:if="${order.paymentStatus != 'DaThanhToan' && order.paymentMethod == 'TienMat'}"... >
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<!-- Thông tin giao hàng -->
+			<div class="col-md-6 mb-3">
+				<div class="card h-100">
+					<div class="card-header bg-info text-white">
+						<h5 class="mb-0">
+							<i class="fas fa-map-marker-alt me-2"></i>Thông tin giao hàng
+						</h5>
+					</div>
+					<div class="card-body">
+						<table class="table table-borderless mb-0">
+							<tr>
+								<td class="text-muted" style="width: 35%;">Người nhận:</td>
+								<td class="fw-semibold" th:text="${order.receiverName}">Nguyễn
+									Văn A</td>
+							</tr>
+							<tr>
+								<td class="text-muted">Điện thoại:</td>
+								<td><a th:href="'tel:' + ${order.receiverPhone}"
+									class="text-decoration-none"> <i
+										class="fas fa-phone text-success me-1"></i> <span
+										class="fw-semibold" th:text="${order.receiverPhone}">0123456789</span>
+								</a></td>
+							</tr>
+							<tr>
+								<td class="text-muted">Địa chỉ:</td>
+								<td class="fw-semibold" th:text="${order.shippingAddress}">123
+									Đường ABC, Quận 1, TP.HCM</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<!-- Thông tin thanh toán -->
+			<div class="col-md-6 mb-3">
+				<div class="card h-100">
+					<div class="card-header bg-success text-white">
+						<h5 class="mb-0">
+							<i class="fas fa-credit-card me-2"></i>Thông tin thanh toán
+						</h5>
+					</div>
+					<div class="card-body">
+						<table class="table table-borderless mb-0">
+							<tr>
+								<td class="text-muted" style="width: 40%;">Phương thức:</td>
+								<td><span class="badge"
+									th:classappend="${order.paymentMethod=='ChuyenKhoan'?'bg-primary':'bg-warning'}"
+									th:text="${order.paymentMethod == 'ChuyenKhoan' ? 'Chuyển khoản' : 'Tiền mặt (COD)'}">
+										COD </span></td>
+							</tr>
+							<tr>
+								<td class="text-muted">Trạng thái:</td>
+								<td><span class="badge"
+									th:classappend="${order.paymentStatus=='DaThanhToan'?'bg-success':'bg-secondary'}"
+									th:text="${order.paymentStatus}"> Chưa thanh toán </span></td>
+							</tr>
+							<tr class="border-top">
+								<td class="fw-bold text-danger fs-5">Tổng thanh toán:</td>
+								<td class="fw-bold text-danger fs-5"
+									th:text="${#numbers.formatDecimal(order.total,0,'COMMA',0,'POINT')} + ' ₫'">105.000
+									₫</td>
+							</tr>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Chi tiết sản phẩm -->
+		<div class="card">
+			<div class="card-header">
+				<h5 class="mb-0">
+					<i class="fas fa-shopping-bag me-2"></i>Chi tiết sản phẩm
+				</h5>
+			</div>
+			<div class="card-body">
+				<div class="table-responsive">
+					<table class="table table-hover align-middle">
+						<thead class="table-light">
+							<tr>
+								<th>Sản phẩm</th>
+								<th>Size</th>
+								<th>Topping</th>
+								<th class="text-center">Số lượng</th>
+								<th class="text-end">Đơn giá</th>
+								<th class="text-end">Thành tiền</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item : ${items}">
+								<td>
+									<div class="fw-semibold" th:text="${item.productName}">Trà
+										sữa truyền thống</div>
+									<div class="small text-muted" th:if="${item.note}"
+										th:text="${item.note}">Đường: 50%, Đá: 100%</div>
+								</td>
+								<td><span class="badge bg-secondary"
+									th:text="${item.sizeName}">M</span></td>
+								<td>
+									<div
+										th:if="${toppings[item.id] != null && !#lists.isEmpty(toppings[item.id])}">
+										<span th:each="t, iterStat : ${toppings[item.id]}"
+											class="badge bg-light text-dark me-1"> <span
+											th:text="${t.toppingName}">Trân châu</span> <span
+											th:if="${!iterStat.last}">,</span>
+										</span>
+									</div> <span
+									th:if="${toppings[item.id] == null || #lists.isEmpty(toppings[item.id])}"
+									class="text-muted">-</span>
+								</td>
+								<td class="text-center"><span class="badge bg-info"
+									th:text="${item.quantity}">1</span></td>
+								<td class="text-end"
+									th:text="${#numbers.formatDecimal(item.unitPrice,0,'COMMA',0,'POINT')} + ' ₫'">25.000
+									₫</td>
+								<td class="text-end fw-semibold"
+									th:text="${#numbers.formatDecimal(item.lineTotal,0,'COMMA',0,'POINT')} + ' ₫'">25.000
+									₫</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<!-- Thông tin đơn hàng -->
+		<div class="card mt-3">
+			<div class="card-header">
+				<h6 class="mb-0">
+					<i class="fas fa-info-circle me-2"></i>Thông tin bổ sung
+				</h6>
+			</div>
+			<div class="card-body">
+				<div class="row">
+					<div class="col-md-6">
+						<small class="text-muted">Người nhận:</small>
+						<div class="fw-semibold" th:text="${order.receiverName}">Nguyễn
+							Văn A</div>
+					</div>
+					<div class="col-md-6">
+						<small class="text-muted">Thời gian đặt hàng:</small>
+						<div class="fw-semibold"
+							th:text="${#temporals.format(order.createdAt, 'HH:mm dd/MM/yyyy')}">10:30
+							27/10/2025</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

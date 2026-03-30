@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layouts/vendor-layout :: layout(pageTitle=${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}, pageContent=~{::pageContent})}">
+
+<body>
+<div class="page-content" th:fragment="pageContent">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0" th:text="${product.id == null ? 'Thêm sản phẩm' : 'Sửa sản phẩm'}"></h5>
+        </div>
+        <div class="card-body">
+            <form th:action="@{/vendor/products/save}" th:object="${product}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:field="*{id}" />
+                <!-- Preserve current image when not uploading -->
+                <input type="hidden" th:field="*{imageUrl}" />
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" th:field="*{name}" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" th:field="*{description}" rows="4"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Danh mục</label>
+                            <select class="form-select" name="categoryId" required>
+                                <option value="" disabled selected>-- Chọn danh mục --</option>
+                                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}" th:selected="${product.category != null and product.category.id == c.id}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trạng thái</label>
+                            <select class="form-select" th:field="*{status}">
+                                <option th:value="1">Đang bán</option>
+                                <option th:value="0">Ngừng bán</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Ảnh sản phẩm</label>
+                        <div class="mb-2">
+                            <img id="previewImg" th:src="${product.imageUrl != null ? product.imageUrl : '/images/placeholder.png'}" alt="Xem trước" class="img-thumbnail" style="max-height: 180px; object-fit: cover;">
+                        </div>
+                        <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="previewImage(event)" />
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="fw-semibold">Biến thể theo Size</h6>
+                    <div class="table-responsive">
+                        <table class="table table-modern table-sm align-middle">
+                            <thead><tr><th>Size</th><th>Giá</th><th>Trạng thái</th><th></th></tr></thead>
+                            <tbody id="variantRows">
+                                <tr th:each="v : ${variants}">
+                                    <td th:text="${v.size != null ? v.size.name : '—'}"></td>
+                                    <td th:text="${#numbers.formatDecimal(v.price,0,'COMMA',0,'POINT')} + ' ₫'"></td>
+                                    <td><span class="badge" th:text="${v.status==1?'Đang bán':'Ngừng bán'}" th:classappend="${v.status==1?'bg-success':'bg-secondary'}"></span></td>
+                                    <td class="text-end"><a th:href="@{'/vendor/products/' + ${product.id} + '/variants/' + ${v.id} + '/delete'}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa biến thể này?')">Xóa</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label mb-0 small">Thêm size</label>
+                            <select class="form-select" name="sizeId">
+                                <option value="" disabled selected>-- Chọn size --</option>
+                                <option th:each="s : ${sizes}" th:value="${s.id}" th:text="${s.name}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label mb-0 small">Giá</label>
+                            <input class="form-control" name="price" type="number" min="0" step="1000">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label mb-0 small">Trạng thái</label>
+                            <select class="form-select" name="status">
+                                <option value="1">Đang bán</option>
+                                <option value="0">Ngừng bán</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-soft-success w-100" 
+                                    th:formaction="@{'/vendor/products/' + ${product.id} + '/variants'}" 
+                                    formmethod="post" 
+                                    type="submit"
+                                    th:disabled="${product.id == null}">
+                                <span th:if="${product.id != null}">Thêm</span>
+                                <span th:if="${product.id == null}" class="text-muted">Lưu SP trước</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Lưu lại</button>
+                    <a th:href="@{/vendor/products}" class="btn btn-secondary">Hủy</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const [file] = event.target.files;
+            if (file) {
+                const img = document.getElementById('previewImg');
+                img.src = URL.createObjectURL(file);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

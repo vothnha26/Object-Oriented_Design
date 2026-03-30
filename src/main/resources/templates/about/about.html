@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{layouts/default_layout :: body(~{::content}, null, ~{::additionalJs})}">
+
+<body>
+
+	<th:block th:fragment="content">
+		<!-- Hero Section -->
+		<section class="hero-about py-5" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 50%, #f48fb1 100%); position: relative; overflow: hidden;">
+			<div class="cherry-blossom-bg"></div>
+			<div class="container position-relative">
+				<div class="row align-items-center">
+					<div class="col-lg-6" data-aos="fade-right">
+						<h1 class="display-4 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.1);">
+							🌸 Về AloTra
+						</h1>
+						<p class="lead text-white mb-4" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.1);">
+							Hành trình mang đến hương vị trà sữa tuyệt vời nhất cho mọi người
+						</p>
+						<nav aria-label="breadcrumb">
+							<ol class="breadcrumb bg-white bg-opacity-25 p-3 rounded-pill shadow-sm">
+								<li class="breadcrumb-item"><a th:href="@{/}" class="text-white text-decoration-none fw-semibold">🏠 Trang chủ</a></li>
+								<li class="breadcrumb-item active text-white fw-semibold" aria-current="page">Về chúng tôi</li>
+							</ol>
+						</nav>
+					</div>
+					<div class="col-lg-6 text-center" data-aos="fade-left">
+						<div class="about-illustration">
+							<i class="fas fa-store fa-10x text-white opacity-75"></i>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<div class="container my-5">
+			<div class="row">
+				<!-- Sidebar Navigation -->
+				<div class="col-lg-3 mb-4">
+					<div class="about-nav sticky-top" style="top: 100px;" id="about-sidebar">
+						<div class="nav-card p-4 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); border: 2px solid #f48fb1;">
+							<h5 class="fw-bold text-center mb-4" style="color: #ad1457;">📋 Mục lục</h5>
+							<div class="nav flex-column nav-pills">
+								<a class="nav-link active rounded-pill mb-2" data-section="story" href="#story">
+									<i class="fas fa-book-open me-2"></i>Câu chuyện của chúng tôi
+								</a>
+								<a class="nav-link rounded-pill mb-2" data-section="mission" href="#mission">
+									<i class="fas fa-bullseye me-2"></i>Sứ mệnh & Tầm nhìn
+								</a>
+								<a class="nav-link rounded-pill mb-2" data-section="values" href="#values">
+									<i class="fas fa-heart me-2"></i>Giá trị cốt lõi
+								</a>
+								<a class="nav-link rounded-pill mb-2" data-section="team" href="#team">
+									<i class="fas fa-users me-2"></i>Đội ngũ
+								</a>
+								<a class="nav-link rounded-pill mb-2" data-section="contact" href="#contact">
+									<i class="fas fa-phone me-2"></i>Liên hệ
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Main Content -->
+				<div class="col-lg-9">
+					<div class="content-sections">
+						
+						<!-- Câu chuyện của chúng tôi -->
+						<section id="story" class="content-section mb-5" data-aos="fade-up">
+							<div class="section-card p-5 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #ffffff, #fce4ec); border-left: 6px solid #f48fb1;">
+								<div class="d-flex align-items-center mb-4">
+									<div class="icon-circle me-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+										<i class="fas fa-book-open text-white fa-lg"></i>
+									</div>
+									<h2 class="section-title mb-0" style="color: #ad1457;">🌸 Câu chuyện của chúng tôi</h2>
+								</div>
+								
+								<div class="story-content">
+									<p class="lead text-muted mb-4">
+										Năm 2020, từ tình yêu dành cho hương vị trà sữa truyền thống và mong muốn mang đến những trải nghiệm tuyệt vời, AloTra ra đời như một bông hoa anh đào nở rộ.
+									</p>
+									
+									<div class="row g-4">
+										<div class="col-md-6">
+											<div class="story-milestone p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<h5 class="fw-bold mb-3" style="color: #ad1457;">🎯 Khởi đầu</h5>
+												<p class="mb-0">Bắt đầu từ một cửa hàng nhỏ với niềm đam mê làm trà sữa thủ công, chúng tôi quyết tâm tạo ra những ly trà sữa hoàn hảo nhất.</p>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="story-milestone p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<h5 class="fw-bold mb-3" style="color: #ad1457;">🚀 Phát triển</h5>
+												<p class="mb-0">Với sự yêu mến của khách hàng, AloTra nhanh chóng mở rộng hệ thống cửa hàng và xây dựng nền tảng đặt hàng trực tuyến.</p>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="story-milestone p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<h5 class="fw-bold mb-3" style="color: #ad1457;">💫 Hiện tại</h5>
+												<p class="mb-0">Hôm nay, AloTra tự hào phục vụ hàng ngàn khách hàng mỗi ngày với hơn 50 loại đồ uống đa dạng và phong phú.</p>
+											</div>
+										</div>
+										<div class="col-md-6">
+											<div class="story-milestone p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<h5 class="fw-bold mb-3" style="color: #ad1457;">🌟 Tương lai</h5>
+												<p class="mb-0">Chúng tôi tiếp tục đổi mới, sáng tạo để mang đến những trải nghiệm tuyệt vời nhất cho cộng đồng yêu trà sữa.</p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<!-- Sứ mệnh & Tầm nhìn -->
+						<section id="mission" class="content-section mb-5" data-aos="fade-up" data-aos-delay="100">
+							<div class="section-card p-5 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #ffffff, #fce4ec); border-left: 6px solid #f48fb1;">
+								<div class="d-flex align-items-center mb-4">
+									<div class="icon-circle me-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+										<i class="fas fa-bullseye text-white fa-lg"></i>
+									</div>
+									<h2 class="section-title mb-0" style="color: #ad1457;">🎯 Sứ mệnh & Tầm nhìn</h2>
+								</div>
+								
+								<div class="row g-4">
+									<div class="col-lg-6">
+										<div class="mission-card h-100 p-4 rounded-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); color: white;">
+											<div class="text-center mb-3">
+												<i class="fas fa-rocket fa-3x mb-3"></i>
+												<h4 class="fw-bold">Sứ mệnh</h4>
+											</div>
+											<ul class="list-unstyled">
+												<li class="mb-3"><i class="fas fa-check-circle me-2"></i>Mang đến hương vị trà sữa tuyệt vời nhất</li>
+												<li class="mb-3"><i class="fas fa-check-circle me-2"></i>Tạo những khoảnh khắc vui vẻ cho khách hàng</li>
+												<li class="mb-3"><i class="fas fa-check-circle me-2"></i>Phục vụ tận tâm với chất lượng cao nhất</li>
+											</ul>
+										</div>
+									</div>
+									<div class="col-lg-6">
+										<div class="vision-card h-100 p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); border: 2px solid #f48fb1;">
+											<div class="text-center mb-3">
+												<i class="fas fa-eye fa-3x mb-3" style="color: #ad1457;"></i>
+												<h4 class="fw-bold" style="color: #ad1457;">Tầm nhìn</h4>
+											</div>
+											<ul class="list-unstyled" style="color: #ad1457;">
+												<li class="mb-3"><i class="fas fa-star me-2"></i>Trở thành thương hiệu trà sữa số 1 Việt Nam</li>
+												<li class="mb-3"><i class="fas fa-star me-2"></i>Xây dựng cộng đồng yêu trà sữa lớn mạnh</li>
+												<li class="mb-3"><i class="fas fa-star me-2"></i>Mở rộng ra thị trường quốc tế</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<!-- Giá trị cốt lõi -->
+						<section id="values" class="content-section mb-5" data-aos="fade-up" data-aos-delay="200">
+							<div class="section-card p-5 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #ffffff, #fce4ec); border-left: 6px solid #f48fb1;">
+								<div class="d-flex align-items-center mb-4">
+									<div class="icon-circle me-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+										<i class="fas fa-heart text-white fa-lg"></i>
+									</div>
+									<h2 class="section-title mb-0" style="color: #ad1457;">💖 Giá trị cốt lõi</h2>
+								</div>
+								
+								<div class="row g-4">
+									<div class="col-md-4">
+										<div class="value-card text-center p-4 h-100 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); transition: transform 0.3s ease;">
+											<div class="value-icon mb-3">
+												<i class="fas fa-users fa-3x" style="color: #ad1457;"></i>
+											</div>
+											<h5 class="fw-bold mb-3" style="color: #ad1457;">Khách hàng là trung tâm</h5>
+											<p class="text-muted">Luôn lắng nghe và đặt nhu cầu khách hàng lên hàng đầu trong mọi quyết định kinh doanh.</p>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="value-card text-center p-4 h-100 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); transition: transform 0.3s ease;">
+											<div class="value-icon mb-3">
+												<i class="fas fa-leaf fa-3x" style="color: #ad1457;"></i>
+											</div>
+											<h5 class="fw-bold mb-3" style="color: #ad1457;">Chất lượng tự nhiên</h5>
+											<p class="text-muted">Cam kết sử dụng nguyên liệu tươi ngon, tự nhiên để tạo nên hương vị đậm đà, tinh túy.</p>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="value-card text-center p-4 h-100 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); transition: transform 0.3s ease;">
+											<div class="value-icon mb-3">
+												<i class="fas fa-lightbulb fa-3x" style="color: #ad1457;"></i>
+											</div>
+											<h5 class="fw-bold mb-3" style="color: #ad1457;">Sáng tạo không ngừng</h5>
+											<p class="text-muted">Liên tục đổi mới, phát triển sản phẩm và dịch vụ để mang đến trải nghiệm tốt nhất.</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<!-- Đội ngũ -->
+						<section id="team" class="content-section mb-5" data-aos="fade-up" data-aos-delay="300">
+							<div class="section-card p-5 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #ffffff, #fce4ec); border-left: 6px solid #f48fb1;">
+								<div class="d-flex align-items-center mb-4">
+									<div class="icon-circle me-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+										<i class="fas fa-users text-white fa-lg"></i>
+									</div>
+									<h2 class="section-title mb-0" style="color: #ad1457;">👥 Đội ngũ AloTra</h2>
+								</div>
+								
+								<div class="team-content">
+									<p class="lead text-muted mb-4">
+										Đằng sau mỗi ly trà sữa thơm ngon là một đội ngũ nhân viên tâm huyết, chuyên nghiệp và luôn nỗ lực để mang đến những trải nghiệm tuyệt vời nhất.
+									</p>
+									
+									<div class="row g-4">
+										<div class="col-lg-6">
+											<div class="team-stats p-4 rounded-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); color: white;">
+												<div class="d-flex align-items-center">
+													<i class="fas fa-user-tie fa-3x me-4"></i>
+													<div>
+														<h4 class="fw-bold mb-1">50+</h4>
+														<p class="mb-0">Nhân viên giàu kinh nghiệm</p>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="col-lg-6">
+											<div class="team-stats p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); border: 2px solid #f48fb1; color: #ad1457;">
+												<div class="d-flex align-items-center">
+													<i class="fas fa-graduation-cap fa-3x me-4"></i>
+													<div>
+														<h4 class="fw-bold mb-1">100%</h4>
+														<p class="mb-0">Được đào tạo chuyên nghiệp</p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									
+									<div class="team-values mt-4 p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9); border: 2px solid #f48fb1;">
+										<h5 class="fw-bold mb-3" style="color: #ad1457;">🌟 Tinh thần làm việc</h5>
+										<div class="row">
+											<div class="col-md-6">
+												<ul class="list-unstyled" style="color: #ad1457;">
+													<li class="mb-2"><i class="fas fa-check-circle me-2"></i>Nhiệt tình, thân thiện</li>
+													<li class="mb-2"><i class="fas fa-check-circle me-2"></i>Chuyên nghiệp, tỉ mỉ</li>
+												</ul>
+											</div>
+											<div class="col-md-6">
+												<ul class="list-unstyled" style="color: #ad1457;">
+													<li class="mb-2"><i class="fas fa-check-circle me-2"></i>Sáng tạo, năng động</li>
+													<li class="mb-2"><i class="fas fa-check-circle me-2"></i>Đồng đội, hỗ trợ lẫn nhau</li>
+												</ul>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+
+						<!-- Liên hệ -->
+						<section id="contact" class="content-section mb-5" data-aos="fade-up" data-aos-delay="400">
+							<div class="section-card p-5 rounded-4 shadow-lg" style="background: linear-gradient(135deg, #ffffff, #fce4ec); border-left: 6px solid #f48fb1;">
+								<div class="d-flex align-items-center mb-4">
+									<div class="icon-circle me-3" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+										<i class="fas fa-phone text-white fa-lg"></i>
+									</div>
+									<h2 class="section-title mb-0" style="color: #ad1457;">📞 Liên hệ với chúng tôi</h2>
+								</div>
+								
+								<div class="row g-4">
+									<div class="col-lg-6">
+										<div class="contact-info">
+											<div class="contact-item mb-4 p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<div class="d-flex align-items-center">
+													<i class="fas fa-map-marker-alt fa-2x me-3" style="color: #ad1457;"></i>
+													<div>
+														<h6 class="fw-bold mb-1" style="color: #ad1457;">Địa chỉ</h6>
+														<p class="mb-0 text-muted">Số 1, Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh</p>
+													</div>
+												</div>
+											</div>
+											
+											<div class="contact-item mb-4 p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<div class="d-flex align-items-center">
+													<i class="fas fa-phone-alt fa-2x me-3" style="color: #ad1457;"></i>
+													<div>
+														<h6 class="fw-bold mb-1" style="color: #ad1457;">Hotline</h6>
+														<p class="mb-0 text-muted">1900 1234 (24/7)</p>
+													</div>
+												</div>
+											</div>
+											
+											<div class="contact-item mb-4 p-4 rounded-3" style="background: linear-gradient(135deg, #fce4ec, #f8bbd9);">
+												<div class="d-flex align-items-center">
+													<i class="fas fa-envelope fa-2x me-3" style="color: #ad1457;"></i>
+													<div>
+														<h6 class="fw-bold mb-1" style="color: #ad1457;">Email</h6>
+														<p class="mb-0 text-muted">info@alotra.vn</p>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									
+									<div class="col-lg-6">
+										<div class="contact-hours p-4 rounded-3 h-100" style="background: linear-gradient(135deg, #f48fb1, #f8bbd9); color: white;">
+											<h5 class="fw-bold mb-4 text-center">⏰ Giờ hoạt động</h5>
+											<div class="hours-list">
+												<div class="d-flex justify-content-between mb-3">
+													<span>Thứ 2 - Thứ 6:</span>
+													<span class="fw-bold">8:00 - 22:00</span>
+												</div>
+												<div class="d-flex justify-content-between mb-3">
+													<span>Thứ 7 - Chủ nhật:</span>
+													<span class="fw-bold">8:00 - 23:00</span>
+												</div>
+												<hr class="my-3">
+												<div class="text-center">
+													<h6 class="fw-bold mb-3">🚚 Giao hàng</h6>
+													<p class="mb-0">Phục vụ giao hàng 24/7</p>
+													<small>Thời gian giao hàng: 15-30 phút</small>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<div class="social-links mt-4 text-center">
+									<h5 class="fw-bold mb-3" style="color: #ad1457;">🌟 Kết nối với chúng tôi</h5>
+									<div class="d-flex justify-content-center gap-3">
+										<a href="#" class="btn btn-outline-danger rounded-circle p-3" style="width: 50px; height: 50px; border-color: #f48fb1; color: #f48fb1;">
+											<i class="fab fa-facebook-f"></i>
+										</a>
+										<a href="#" class="btn btn-outline-danger rounded-circle p-3" style="width: 50px; height: 50px; border-color: #f48fb1; color: #f48fb1;">
+											<i class="fab fa-instagram"></i>
+										</a>
+										<a href="#" class="btn btn-outline-danger rounded-circle p-3" style="width: 50px; height: 50px; border-color: #f48fb1; color: #f48fb1;">
+											<i class="fab fa-youtube"></i>
+										</a>
+										<a href="#" class="btn btn-outline-danger rounded-circle p-3" style="width: 50px; height: 50px; border-color: #f48fb1; color: #f48fb1;">
+											<i class="fab fa-tiktok"></i>
+										</a>
+									</div>
+								</div>
+							</div>
+						</section>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</th:block>
+
+	<th:block th:fragment="additionalJs">
+		<style>
+			/* Cherry Blossom Background Animation */
+			.cherry-blossom-bg {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background-image: 
+					radial-gradient(circle at 20% 20%, rgba(248, 187, 217, 0.3) 0%, transparent 50%),
+					radial-gradient(circle at 80% 40%, rgba(252, 228, 236, 0.3) 0%, transparent 50%),
+					radial-gradient(circle at 40% 80%, rgba(244, 143, 177, 0.3) 0%, transparent 50%);
+				animation: float 6s ease-in-out infinite;
+			}
+			
+			@keyframes float {
+				0%, 100% { transform: translateY(0px) rotate(0deg); }
+				50% { transform: translateY(-20px) rotate(5deg); }
+			}
+			
+			/* Navigation Styles */
+			.about-nav .nav-link {
+				color: #ad1457;
+				transition: all 0.3s ease;
+				border: 2px solid transparent;
+			}
+			
+			.about-nav .nav-link:hover,
+			.about-nav .nav-link.active {
+				background: linear-gradient(135deg, #f48fb1, #f8bbd9);
+				color: white;
+				border-color: #ad1457;
+				transform: translateX(5px);
+			}
+			
+			/* Value Cards Hover Effect */
+			.value-card:hover {
+				transform: translateY(-10px);
+				box-shadow: 0 15px 35px rgba(244, 143, 177, 0.3);
+			}
+			
+			/* Social Links Hover */
+			.social-links a:hover {
+				background: linear-gradient(135deg, #f48fb1, #f8bbd9);
+				color: white !important;
+				border-color: #ad1457 !important;
+				transform: scale(1.1);
+			}
+			
+			/* Section Animation on Scroll */
+			.content-section {
+				opacity: 0;
+				transform: translateY(50px);
+				transition: all 0.6s ease;
+			}
+			
+			.content-section.visible {
+				opacity: 1;
+				transform: translateY(0);
+			}
+			
+			/* Smooth scrolling for internal links */
+			html {
+				scroll-behavior: smooth;
+			}
+			
+			/* Team stats animation */
+			.team-stats {
+				transition: all 0.3s ease;
+			}
+			
+			.team-stats:hover {
+				transform: scale(1.05);
+				box-shadow: 0 10px 25px rgba(244, 143, 177, 0.3);
+			}
+		</style>
+		
+		<script>
+			document.addEventListener('DOMContentLoaded', function () {
+				// Smooth navigation
+				const navLinks = document.querySelectorAll('#about-sidebar .nav-link');
+				const sections = document.querySelectorAll('.content-section');
+				
+				// Navigation active state
+				navLinks.forEach(link => {
+					link.addEventListener('click', function(e) {
+						e.preventDefault();
+						const targetId = this.getAttribute('data-section');
+						const targetSection = document.getElementById(targetId);
+						
+						// Remove active class from all links
+						navLinks.forEach(l => l.classList.remove('active'));
+						this.classList.add('active');
+						
+						// Smooth scroll to section
+						if (targetSection) {
+							targetSection.scrollIntoView({
+								behavior: 'smooth',
+								block: 'start'
+							});
+						}
+					});
+				});
+				
+				// Intersection Observer for section visibility
+				const observerOptions = {
+					threshold: 0.3,
+					rootMargin: '-50px 0px'
+				};
+				
+				const observer = new IntersectionObserver((entries) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							entry.target.classList.add('visible');
+							
+							// Update active navigation
+							const sectionId = entry.target.id;
+							navLinks.forEach(link => {
+								link.classList.remove('active');
+								if (link.getAttribute('data-section') === sectionId) {
+									link.classList.add('active');
+								}
+							});
+						}
+					});
+				}, observerOptions);
+				
+				// Observe all sections
+				sections.forEach(section => {
+					observer.observe(section);
+				});
+				
+				// Counter animation for team stats
+				function animateCounter(element, target) {
+					let current = 0;
+					const increment = target / 100;
+					const timer = setInterval(() => {
+						current += increment;
+						if (current >= target) {
+							current = target;
+							clearInterval(timer);
+						}
+						element.textContent = Math.floor(current) + (target > 50 ? '+' : '%');
+					}, 20);
+				}
+				
+				// Trigger counter animation when team section is visible
+				const teamSection = document.getElementById('team');
+				const teamObserver = new IntersectionObserver((entries) => {
+					entries.forEach(entry => {
+						if (entry.isIntersecting) {
+							const counters = entry.target.querySelectorAll('.team-stats h4');
+							setTimeout(() => {
+								animateCounter(counters[0], 50);
+								animateCounter(counters[1], 100);
+							}, 500);
+							teamObserver.unobserve(entry.target);
+						}
+					});
+				}, { threshold: 0.5 });
+				
+				if (teamSection) {
+					teamObserver.observe(teamSection);
+				}
+				
+				// Add floating animation to hero elements
+				const heroElements = document.querySelectorAll('[data-aos]');
+				heroElements.forEach((element, index) => {
+					element.style.animationDelay = `${index * 0.2}s`;
+				});
+			});
+		</script>
+	</th:block>
+
+</body>
+</html>
