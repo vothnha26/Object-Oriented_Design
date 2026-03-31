@@ -1,0 +1,55 @@
+@startuml
+title Sequence Diagram for Task 2: Order State Management (State Pattern)
+autonumber
+
+actor Admin
+participant "OrderAdminController" as OAC
+participant "VendorOrderService" as VOS
+participant "OrderContext" as OC
+participant "OrderState" as OS
+participant "PendingState" as PS
+participant "PreparingState" as PRPS
+participant "Order" as O
+database DB
+
+Admin -> OAC : changeStatus(orderId, newStatus)
+activate OAC
+
+OAC -> VOS : updateStatus(orderId, newStatus)
+activate VOS
+
+VOS -> DB : findById(orderId)
+activate DB
+DB --> VOS : order
+deactivate DB
+
+note over OC: Member 1: State Pattern
+VOS -> OC** : new OrderContext(order)
+activate OC
+OC -> PS** : new PendingState()
+OC -> PS : setContext(this)
+deactivate OC
+
+VOS -> OC : nextState()
+activate OC
+OC -> PS : next(context)
+activate PS
+PS -> PRPS** : new PreparingState()
+PS -> PRPS : setContext(context)
+PS -> OC : setState(PreparingState)
+deactivate PS
+deactivate OC
+
+VOS -> O : setStatus(PREPARING)
+VOS -> DB : save(order)
+activate DB
+DB --> VOS : saved
+deactivate DB
+
+VOS --> OAC : success
+deactivate VOS
+
+OAC --> Admin : Redirect with success
+deactivate OAC
+
+@enduml

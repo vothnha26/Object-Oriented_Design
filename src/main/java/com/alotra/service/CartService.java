@@ -239,59 +239,21 @@ public class CartService {
             throw new IllegalArgumentException("Không có sản phẩm hợp lệ để đặt hàng");
         }
 
-        Order order = new Order();
-        order.setCustomer(customer);
+        // 3. Create Order using OrderBuilder (Builder Pattern)
+        Order order = com.alotra.builder.OrderBuilder.builder()
+                .forCustomer(customer)
+                .payBy(paymentMethod)
+                .receivingMethod(receivingMethod)
+                .shipTo(shipName, shipPhone, shipAddress)
+                .withNote(note)
+                .withSubtotal(calcTotal(items))
+                .withDiscount(BigDecimal.ZERO)
+                .withShippingFee(BigDecimal.ZERO)
+                .build();
 
-        Payment payment = new Payment();
-        if (paymentMethod != null) {
-            try {
-                payment.setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase()));
-            } catch (Exception ignored) {
-            }
-        }
-        order.setPayment(payment);
-
-        // Build ShippingInfo
-        ShippingInfo shipping = new ShippingInfo();
-        StringBuilder orderNote = new StringBuilder();
-        if (note != null && !note.isBlank())
-            orderNote.append(note.trim());
-        boolean isDelivery = "Ship".equalsIgnoreCase(receivingMethod);
-        if (isDelivery) {
-            shipping.setMethod(ReceivingMethod.DELIVERY);
-            String recvName = (shipName != null && !shipName.isBlank()) ? shipName.trim()
-                    : (customer.getFullName() != null ? customer.getFullName().trim() : null);
-            String recvPhone = (shipPhone != null && !shipPhone.isBlank()) ? shipPhone.trim()
-                    : (customer.getPhone() != null ? customer.getPhone().trim() : null);
-            String recvAddr = (shipAddress != null && !shipAddress.isBlank()) ? shipAddress.trim() : null;
-            if (recvPhone == null || recvPhone.isBlank() || recvAddr == null || recvAddr.isBlank()) {
-                throw new IllegalArgumentException("Vui lòng nhập đầy đủ SĐT và Địa chỉ khi chọn Ship tận nơi");
-            }
-            shipping.setReceiverName(recvName);
-            shipping.setReceiverPhone(recvPhone);
-            shipping.setShippingAddress(recvAddr);
-            if (orderNote.length() > 0)
-                orderNote.append(" | ");
-            orderNote.append("Ship to: ");
-            if (recvName != null && !recvName.isBlank())
-                orderNote.append(recvName).append(", ");
-            orderNote.append(recvPhone).append(", ").append(recvAddr);
-        } else {
-            shipping.setMethod(ReceivingMethod.PICKUP);
-        }
-        order.setShippingInfo(shipping);
-        if (orderNote.length() > 0)
-            order.setNote(orderNote.toString());
-
-        // Compute totals
-        BigDecimal subtotal = calcTotal(items);
-        order.setSubtotal(subtotal);
-        order.setDiscount(BigDecimal.ZERO);
-        order.setShippingFee(BigDecimal.ZERO);
-        order.setTotalAmount(subtotal.add(order.getShippingFee()).subtract(order.getDiscount()));
         order = orderRepository.save(order);
 
-        // Persist lines and toppings
+        // 4. Persist lines and toppings
         for (CartItem ci : items) {
             OrderItem oi = new OrderItem();
             oi.setOrder(order);
