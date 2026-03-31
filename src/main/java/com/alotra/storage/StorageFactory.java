@@ -15,10 +15,10 @@ public class StorageFactory {
     private String storageProvider;
 
     @Autowired
-    private CloudinaryAdapter cloudinaryAdapter;
+    private org.springframework.beans.factory.ObjectProvider<CloudinaryAdapter> cloudinaryAdapterProvider;
 
     @Autowired
-    private LocalStorageAdapter localStorageAdapter;
+    private org.springframework.beans.factory.ObjectProvider<LocalStorageAdapter> localStorageAdapterProvider;
 
     /**
      * Get the active storage service based on configuration.
@@ -26,9 +26,13 @@ public class StorageFactory {
      */
     public ImageStorageService getStorageService() {
         if ("local".equalsIgnoreCase(storageProvider)) {
-            return localStorageAdapter;
+            LocalStorageAdapter local = localStorageAdapterProvider.getIfAvailable();
+            if (local != null) return local;
+            throw new IllegalStateException("LocalStorageAdapter bean not available");
         } else if ("cloudinary".equalsIgnoreCase(storageProvider)) {
-            return cloudinaryAdapter;
+            CloudinaryAdapter cloud = cloudinaryAdapterProvider.getIfAvailable();
+            if (cloud != null) return cloud;
+            throw new IllegalStateException("CloudinaryAdapter bean not available");
         } else {
             throw new IllegalArgumentException("Unsupported storage provider: " + storageProvider);
         }
@@ -41,9 +45,13 @@ public class StorageFactory {
      */
     public ImageStorageService getStorageService(String providerName) {
         if ("local".equalsIgnoreCase(providerName)) {
-            return localStorageAdapter;
+            LocalStorageAdapter local = localStorageAdapterProvider.getIfAvailable();
+            if (local != null) return local;
+            throw new IllegalStateException("LocalStorageAdapter bean not available");
         } else if ("cloudinary".equalsIgnoreCase(providerName)) {
-            return cloudinaryAdapter;
+            CloudinaryAdapter cloud = cloudinaryAdapterProvider.getIfAvailable();
+            if (cloud != null) return cloud;
+            throw new IllegalStateException("CloudinaryAdapter bean not available");
         } else {
             throw new IllegalArgumentException("Unsupported storage provider: " + providerName);
         }

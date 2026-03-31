@@ -1,9 +1,5 @@
 package com.alotra.storage;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,11 +7,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
 /**
  * Adapter for local file system storage.
  * Implements ImageStorageService interface for development/testing.
  */
 @Component("localStorageAdapter")
+@ConditionalOnProperty(name = "storage.provider", havingValue = "local")
 public class LocalStorageAdapter implements ImageStorageService {
 
     @Value("${storage.local.path:/uploads}")

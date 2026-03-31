@@ -1,37 +1,41 @@
 package com.alotra.controller.account;
 
-import java.util.List;
-
-import com.alotra.entity.Order;
-import com.alotra.entity.enums.OrderStatus;
-import com.alotra.entity.enums.PaymentMethod;
-import com.alotra.entity.enums.PaymentStatus;
-import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.OrderHistoryService;
-import com.alotra.repository.OrderRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.alotra.entity.Order;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.enums.PaymentMethod;
+import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.repository.OrderRepository;
+import com.alotra.security.CustomerUserDetails;
+import com.alotra.service.OrderHistoryService;
 
 @Controller
 @RequestMapping("/payment")
 public class PaymentController {
-    @org.springframework.beans.factory.annotation.Value("${payment.settle.bank-code:VCB}}")
+    @org.springframework.beans.factory.annotation.Value("${payment.settle.bank-code:VCB}")
     private String BANK_CODE;
-    @org.springframework.beans.factory.annotation.Value("${payment.settle.account}")
+    @org.springframework.beans.factory.annotation.Value("${payment.settle.account:}")
     private String ACCOUNT_NUMBER;
     @org.springframework.beans.factory.annotation.Value("${payment.settle.account-name:}")
     private String ACCOUNT_NAME;
