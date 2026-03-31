@@ -28,17 +28,17 @@ public class CartManagementService {
 
     @Transactional
     public Cart getOrCreateActiveCart(Customer customer) {
-        return cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE")
+        return cartRepository.findFirstByCustomerAndStatus(customer, com.alotra.entity.enums.CartStatus.ACTIVE)
             .orElseGet(() -> {
                 Cart cart = new Cart();
                 cart.setCustomer(customer);
-                cart.setStatus("ACTIVE");
+                cart.setStatus(com.alotra.entity.enums.CartStatus.ACTIVE);
                 return cartRepository.save(cart);
             });
     }
 
     public Cart getActiveCart(Customer customer) {
-        return cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElse(null);
+        return cartRepository.findFirstByCustomerAndStatus(customer, com.alotra.entity.enums.CartStatus.ACTIVE).orElse(null);
     }
 
     @Transactional
@@ -46,7 +46,7 @@ public class CartManagementService {
         Cart cart = getActiveCart(customer);
         if (cart != null) {
             cartItemRepository.deleteAll(cartItemRepository.findByCart(cart));
-            cart.setStatus("CLEARED");
+            cart.setStatus(com.alotra.entity.enums.CartStatus.CANCELLED); // Fixed to use CANCELLED
             cartRepository.save(cart);
         }
     }

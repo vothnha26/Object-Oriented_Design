@@ -196,7 +196,7 @@ public class CheckoutService {
         // If cart is empty, mark as checked out and create new active cart
         boolean noMoreItems = cartItemRepository.findByCart(activeCart).isEmpty();
         if (noMoreItems) {
-            activeCart.setStatus("CHECKED_OUT");
+            activeCart.setStatus(com.alotra.entity.enums.CartStatus.CHECKED_OUT);
             cartRepository.save(activeCart);
         }
     }

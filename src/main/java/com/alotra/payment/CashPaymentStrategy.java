@@ -21,6 +21,12 @@ public class CashPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
+    public void processPayment(java.math.BigDecimal amount) {
+        // For cash, processing happens at delivery, so we just log or mark as ready
+        System.out.println("[Payment] Processing cash payment of " + amount + " at delivery.");
+    }
+
+    @Override
     public String getMethodName() {
         return "Cash on Delivery";
     }

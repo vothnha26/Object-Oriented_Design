@@ -23,4 +23,9 @@ public class BasePriceComponent implements PriceComponent {
         }
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
+
+    @Override
+    public String getDescription() {
+        return "Base Price (" + unitPrice + " x " + quantity + ")";
+    }
 }

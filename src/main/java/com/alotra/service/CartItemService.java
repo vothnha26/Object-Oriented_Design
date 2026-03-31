@@ -140,17 +140,17 @@ public class CartItemService {
     }
 
     public List<CartItem> listItems(Customer customer) {
-        Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElse(null);
+        Cart cart = cartRepository.findFirstByCustomerAndStatus(customer, com.alotra.entity.enums.CartStatus.ACTIVE).orElse(null);
         return cart != null ? cartItemRepository.findByCart(cart) : List.of();
     }
 
     // Helper methods
 
     private Cart getOrCreateActiveCart(Customer customer) {
-        return cartRepository.findFirstByCustomerAndStatus(customer, "ACTIVE").orElseGet(() -> {
+        return cartRepository.findFirstByCustomerAndStatus(customer, com.alotra.entity.enums.CartStatus.ACTIVE).orElseGet(() -> {
             Cart cart = new Cart();
             cart.setCustomer(customer);
-            cart.setStatus("ACTIVE");
+            cart.setStatus(com.alotra.entity.enums.CartStatus.ACTIVE);
             return cartRepository.save(cart);
         });
     }

@@ -22,6 +22,12 @@ public interface PaymentStrategy {
     boolean requiresPrePayment();
     
     /**
+     * Process the payment for the given amount.
+     * @param amount the total amount to pay
+     */
+    void processPayment(java.math.BigDecimal amount);
+
+    /**
      * Get the payment method name.
      * @return method name (e.g., "Bank Transfer", "Cash")
      */

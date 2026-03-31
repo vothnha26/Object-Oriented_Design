@@ -26,6 +26,12 @@ public class BankTransferPaymentStrategy implements PaymentStrategy {
     }
 
     @Override
+    public void processPayment(java.math.BigDecimal amount) {
+        // For bank transfer, we might trigger an external API or wait for notification
+        System.out.println("[Payment] Processing bank transfer of " + amount + ". Waiting for confirmation.");
+    }
+
+    @Override
     public String getMethodName() {
         return "Bank Transfer";
     }

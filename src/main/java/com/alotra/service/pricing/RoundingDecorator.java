@@ -15,7 +15,12 @@ public class RoundingDecorator extends PriceDecorator {
 
     @Override
     public BigDecimal calculate() {
-        BigDecimal price = delegate.calculate();
+        BigDecimal price = wrapped.calculate();
         return price.setScale(0, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    public String getDescription() {
+        return wrapped.getDescription() + " (Rounded)";
     }
 }
