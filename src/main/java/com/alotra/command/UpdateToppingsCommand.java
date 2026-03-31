@@ -3,7 +3,6 @@ package com.alotra.command;
 import com.alotra.service.CartService;
 import com.alotra.entity.Customer;
 import java.util.Map;
-import java.util.HashMap;
 
 public class UpdateToppingsCommand implements CartCommand {
     private final CartService cartService;
@@ -13,7 +12,8 @@ public class UpdateToppingsCommand implements CartCommand {
     private Map<Integer, Integer> oldToppingQty; // Snapshot for Undo
     private final String description;
 
-    public UpdateToppingsCommand(CartService cartService, Customer customer, Integer itemId, Map<Integer, Integer> newToppingQty, String description) {
+    public UpdateToppingsCommand(CartService cartService, Customer customer, Integer itemId,
+            Map<Integer, Integer> newToppingQty, String description) {
         this.cartService = cartService;
         this.customer = customer;
         this.itemId = itemId;

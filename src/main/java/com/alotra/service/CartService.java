@@ -2,8 +2,6 @@ package com.alotra.service;
 
 import com.alotra.entity.*;
 import com.alotra.entity.enums.CartStatus;
-import com.alotra.entity.enums.PaymentMethod;
-import com.alotra.entity.enums.ReceivingMethod;
 import com.alotra.repository.*;
 import com.alotra.service.pricing.*;
 import org.springframework.stereotype.Service;
@@ -164,7 +162,8 @@ public class CartService {
             for (Map.Entry<Integer, Integer> entry : toppingQtyById.entrySet()) {
                 Integer tid = entry.getKey();
                 Integer qty = entry.getValue() == null ? 0 : Math.max(0, entry.getValue());
-                if (qty <= 0) continue;
+                if (qty <= 0)
+                    continue;
 
                 Topping topping = toppingRepository.findById(tid).orElse(null);
                 if (topping != null) {
@@ -195,7 +194,7 @@ public class CartService {
         }
         int oldQty = item.getQuantity();
         item.setQuantity(qty);
-        
+
         // Sync topping totals
         List<SelectedTopping> selected = selectedToppingRepository.findByCartItem(item);
         for (SelectedTopping st : selected) {
@@ -204,7 +203,7 @@ public class CartService {
             st.setLineTotal(st.getUnitPrice().multiply(BigDecimal.valueOf(st.getQuantity())));
             selectedToppingRepository.save(st);
         }
-        
+
         recomputeLineTotal(item);
     }
 
@@ -245,7 +244,7 @@ public class CartService {
 
         // 3. Create Order using OrderBuilder (Builder Pattern)
         BigDecimal subtotal = calcTotal(items);
-        
+
         // Member 2: Apply Discount Strategy (Default to NoDiscount for now)
         com.alotra.discount.DiscountStrategy discountStrategy = new com.alotra.discount.NoDiscountStrategy();
         BigDecimal finalTotal = discountStrategy.apply(subtotal);
@@ -324,11 +323,11 @@ public class CartService {
         return map;
     }
 
-
     private void recomputeLineTotal(CartItem item) {
         // 1. Core unit price (Base + Promo)
         BigDecimal basePrice = item.getVariant().getPrice();
-        Integer discountPercent = appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(item.getVariant().getProduct().getId());
+        Integer discountPercent = appliedPromotionRepository
+                .findActiveMaxDiscountPercentForProduct(item.getVariant().getProduct().getId());
         PriceComponent unitComp = new BasePrice(basePrice);
         if (discountPercent != null && discountPercent > 0) {
             unitComp = new PromotionDecorator(unitComp, discountPercent);
@@ -345,7 +344,7 @@ public class CartService {
                 // Ensure record consistency
                 st.setLineTotal(st.getUnitPrice().multiply(BigDecimal.valueOf(st.getQuantity())));
                 selectedToppingRepository.save(st);
-                
+
                 // Derive unit quantity for Decorator logic
                 int perItem = st.getQuantity() / itemQty;
                 if (perItem > 0) {
@@ -360,11 +359,12 @@ public class CartService {
             priceComponent = new ToppingDecorator(priceComponent, toppingMap);
         }
         priceComponent = new QuantityDecorator(priceComponent, itemQty);
-        
+
         item.setLineTotal(priceComponent.calculate());
         cartItemRepository.save(item);
-        
-        System.out.println("[Cart Recompute] Item=" + item.getId() + " Qty=" + itemQty + " Total=" + item.getLineTotal());
+
+        System.out
+                .println("[Cart Recompute] Item=" + item.getId() + " Qty=" + itemQty + " Total=" + item.getLineTotal());
     }
 
     @Transactional
@@ -397,9 +397,8 @@ public class CartService {
         CartItem item = cartItemRepository.findById(itemId).orElseThrow();
         List<SelectedTopping> selected = selectedToppingRepository.findByCartItem(item);
         return selected.stream().collect(Collectors.toMap(
-            t -> t.getTopping().getId(), 
-            t -> t.getQuantity() / item.getQuantity()
-        ));
+                t -> t.getTopping().getId(),
+                t -> t.getQuantity() / item.getQuantity()));
     }
 
     public List<ProductVariant> listVariantsForProduct(Product product) {

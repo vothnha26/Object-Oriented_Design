@@ -1,0 +1,38 @@
+@startuml
+title Sequence Diagram for Member 2: Image Storage (Factory Pattern)
+autonumber
+
+actor Admin
+participant "AdminController" as AC
+participant "Factory:StorageFactory" as SF
+participant "Adapter:ImageStorageService" as ISS
+participant "CloudinaryAdapter" as CA
+participant "LocalStorageAdapter" as LA
+database "Storage/Cloud" as ST
+
+Admin -> AC : Upload ảnh sản phẩm (MultipartFile)
+activate AC
+
+AC -> SF : getStorageService()
+activate SF
+SF -> SF : Read property 'storage.provider'
+alt provider == 'cloudinary'
+    SF -> CA : Return CloudinaryAdapter
+else provider == 'local'
+    SF -> LA : Return LocalStorageAdapter
+end
+SF --> AC : adapter
+deactivate SF
+
+AC -> ISS : uploadImage(file)
+activate ISS
+ISS -> ST : Gửi dữ liệu ảnh & Lưu trữ
+ST --> ISS : Trả về URL ảnh
+ISS --> AC : imageUrl
+deactivate ISS
+
+AC -> AC : Lưu imageUrl vào DB (Product/Topping)
+AC --> Admin : Hiển thị sản phẩm với ảnh mới
+deactivate AC
+
+@enduml

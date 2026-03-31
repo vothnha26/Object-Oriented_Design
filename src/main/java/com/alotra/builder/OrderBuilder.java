@@ -123,6 +123,11 @@ public class OrderBuilder {
             order.setNote(orderNote.toString());
         }
 
+        // Default values for mandatory currency fields to avoid DB errors
+        if (subtotal == null) subtotal = BigDecimal.ZERO;
+        if (discount == null) discount = BigDecimal.ZERO;
+        if (shippingFee == null) shippingFee = BigDecimal.ZERO;
+
         order.setSubtotal(subtotal);
         order.setDiscount(discount);
         order.setShippingFee(shippingFee);

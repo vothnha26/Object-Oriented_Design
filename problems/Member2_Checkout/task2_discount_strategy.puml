@@ -1,0 +1,53 @@
+@startuml
+title Sequence Diagram for Member 2: Discount Calculation (Strategy Pattern)
+autonumber
+
+actor Client
+participant "CartService" as CS
+participant "DiscountStrategy" as DS
+participant "NoDiscountStrategy" as NDS
+participant "PercentDiscountStrategy" as PDS
+participant "PriceComponent" as PC
+
+== Phase 1: Xác định Chiến lược Giảm giá ==
+CS -> CS : checkoutWithOptions()
+activate CS
+
+alt Nếu không có khuyến mãi
+    CS -> NDS** : new NoDiscountStrategy()
+    activate NDS
+    NDS --> CS : strategy
+    deactivate NDS
+else Nếu có khuyến mãi phần trăm
+    CS -> PDS** : new PercentDiscountStrategy(percent)
+    activate PDS
+    PDS --> CS : strategy
+    deactivate PDS
+end
+
+== Phase 2: Áp dụng Giảm giá ==
+CS -> DS : apply(subtotal)
+activate DS
+
+alt NoDiscountStrategy
+    DS -> NDS : apply(subtotal)
+    NDS --> DS : subtotal (không đổi)
+else PercentDiscountStrategy
+    DS -> PDS : apply(subtotal)
+    PDS --> DS : subtotal * (1 - percent/100)
+end
+
+DS --> CS : finalTotal
+deactivate DS
+
+== Phase 3: Đồng bộ với Builder & Decorator ==
+CS -> PC : calculate() 
+note right: Tích hợp với Decorator để tính giá dòng sản phẩm
+
+CS -> CS : discountAmount = subtotal - finalTotal
+note right: Dùng kết quả để đưa vào OrderBuilder
+
+CS --> Client : Hiển thị giá sau giảm
+deactivate CS
+
+@enduml

@@ -30,12 +30,12 @@ public class AdminController {
 
     public AdminController(CategoryRepository categoryRepository, 
                            ToppingRepository toppingRepository, 
-                           ImageStorageService storageService, 
+                           com.alotra.storage.StorageFactory storageFactory, 
                            ProductRepository productRepository, 
                            StatsService statsService) {
         this.categoryRepository = categoryRepository;
         this.toppingRepository = toppingRepository;
-        this.storageService = storageService;
+        this.storageService = storageFactory.getStorageService();
         this.productRepository = productRepository;
         this.statsService = statsService;
     }

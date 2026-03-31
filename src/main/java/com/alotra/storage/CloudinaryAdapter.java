@@ -2,6 +2,7 @@ package com.alotra.storage;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,7 @@ import java.util.Map;
  * Adapter for Cloudinary cloud storage provider.
  * Implements ImageStorageService interface to enable multi-provider support.
  */
+@Primary
 @Component("cloudinaryAdapter")
 public class CloudinaryAdapter implements ImageStorageService {
 
