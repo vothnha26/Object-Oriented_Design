@@ -25,6 +25,8 @@ public class CartService {
     private final OrderedToppingRepository orderedToppingRepository;
     private final AppliedPromotionRepository appliedPromotionRepository;
 
+    private final com.alotra.payment.PaymentStrategyFactory paymentStrategyFactory;
+
     public CartService(CartRepository cartRepository,
             CartItemRepository cartItemRepository,
             ProductVariantRepository variantRepository,
@@ -33,7 +35,8 @@ public class CartService {
             SelectedToppingRepository selectedToppingRepository,
             ToppingRepository toppingRepository,
             OrderedToppingRepository orderedToppingRepository,
-            AppliedPromotionRepository appliedPromotionRepository) {
+            AppliedPromotionRepository appliedPromotionRepository,
+            com.alotra.payment.PaymentStrategyFactory paymentStrategyFactory) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.variantRepository = variantRepository;
@@ -43,6 +46,7 @@ public class CartService {
         this.toppingRepository = toppingRepository;
         this.orderedToppingRepository = orderedToppingRepository;
         this.appliedPromotionRepository = appliedPromotionRepository;
+        this.paymentStrategyFactory = paymentStrategyFactory;
     }
 
     @Transactional
@@ -240,16 +244,32 @@ public class CartService {
         }
 
         // 3. Create Order using OrderBuilder (Builder Pattern)
+        BigDecimal subtotal = calcTotal(items);
+        
+        // Member 2: Apply Discount Strategy (Default to NoDiscount for now)
+        com.alotra.discount.DiscountStrategy discountStrategy = new com.alotra.discount.NoDiscountStrategy();
+        BigDecimal finalTotal = discountStrategy.apply(subtotal);
+        BigDecimal discountAmount = subtotal.subtract(finalTotal);
+
         Order order = com.alotra.builder.OrderBuilder.builder()
                 .forCustomer(customer)
                 .payBy(paymentMethod)
                 .receivingMethod(receivingMethod)
                 .shipTo(shipName, shipPhone, shipAddress)
                 .withNote(note)
-                .withSubtotal(calcTotal(items))
-                .withDiscount(BigDecimal.ZERO)
+                .withSubtotal(subtotal)
+                .withDiscount(discountAmount)
                 .withShippingFee(BigDecimal.ZERO)
                 .build();
+
+        // Member 2: Process Payment via Strategy Pattern
+        try {
+            com.alotra.payment.PaymentStrategy strategy = paymentStrategyFactory.getStrategy(paymentMethod);
+            strategy.processPayment(finalTotal);
+            order.getPayment().setStatus(com.alotra.entity.enums.PaymentStatus.PAID);
+        } catch (Exception e) {
+            System.out.println("[Payment] Failed or bypassed strategy: " + e.getMessage());
+        }
 
         order = orderRepository.save(order);
 
