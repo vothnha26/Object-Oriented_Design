@@ -1,16 +1,17 @@
 // 📁 com/alotra/repository/ProductRepository.java
 package com.alotra.repository;
 
-import com.alotra.entity.Product;
-import com.alotra.entity.Category;
-import com.alotra.entity.enums.ProductStatus;
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.math.BigDecimal;
-import java.util.List;
+import com.alotra.entity.Category;
+import com.alotra.entity.Product;
+import com.alotra.entity.enums.ProductStatus;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Integer> {
