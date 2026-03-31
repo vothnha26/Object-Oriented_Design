@@ -19,33 +19,22 @@ public class CreateAdminInitializer implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(CreateAdminInitializer.class);
 
     private final CustomerRepository repo;
-    private final PasswordEncoder encoder;
+    private final com.alotra.factory.UserFactory userFactory;
 
-    public CreateAdminInitializer(CustomerRepository repo, PasswordEncoder encoder) {
+    public CreateAdminInitializer(CustomerRepository repo, com.alotra.factory.UserFactory userFactory) {
         this.repo = repo;
-        this.encoder = encoder;
+        this.userFactory = userFactory;
     }
 
     @Override
     public void run(ApplicationArguments args) {
         // If a user with username 'boss' already exists, do nothing
-        Customer existing = repo.findByUsername("boss").orElse(null);
-        if (existing != null) {
-            log.info("Admin account 'boss' already exists (id={}).", existing.getId());
+        if (repo.findByUsername("boss").isPresent() || repo.findByEmail("boss@alotra.com").isPresent()) {
+            log.info("Admin account 'boss' or email 'boss@alotra.com' already exists.");
             return;
         }
-        // Also guard by email in case someone created it with email.
-        if (repo.findByEmail("boss@alotra.com").isPresent()) {
-            log.info("An account with email boss@alotra.com already exists; skipping admin seed.");
-            return;
-        }
-        Customer admin = new Customer();
-        admin.setUsername("boss");
-        admin.setFullName("AloTra Administrator");
-        admin.setEmail("boss@alotra.com");
-        admin.setPhone("0900000000");
-        admin.setStatus(CustomerStatus.ACTIVE);
-        admin.setPasswordHash(encoder.encode("123"));
+        
+        Customer admin = userFactory.createAdmin("boss", "boss@alotra.com", "123", "0900000000");
         repo.save(admin);
         log.warn("Seeded default admin account: username='boss', password='123'. Please change the password after first login.");
     }

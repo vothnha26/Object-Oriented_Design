@@ -12,8 +12,11 @@ import java.util.Map;
 @Service
 public class CloudinaryService {
 
-    @Autowired
-    private Cloudinary cloudinary;
+    private final Cloudinary cloudinary;
+
+    public CloudinaryService(Cloudinary cloudinary) {
+        this.cloudinary = cloudinary;
+    }
 
     public String uploadFile(MultipartFile file) {
         try {

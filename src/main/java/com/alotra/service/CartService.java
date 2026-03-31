@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
-public class CartService {
+@Service("cartOperationsReal")
+public class CartService implements com.alotra.service.proxy.CartOperations {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductVariantRepository variantRepository;

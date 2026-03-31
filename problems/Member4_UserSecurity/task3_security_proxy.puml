@@ -1,0 +1,42 @@
+@startuml
+title Sequence Diagram for Member 4: Ownership Security (Proxy Pattern)
+autonumber
+
+actor User
+participant "CartController" as CC
+participant "Proxy:CartOperationsProxy" as PROXY
+participant "Real:CartService" as REAL
+participant "Repo:CartItemRepository" as REPO
+database DB
+
+User -> CC : updateQuantity(itemId, qty)
+activate CC
+
+CC -> PROXY : updateQuantity(customer, itemId, qty)
+activate PROXY
+
+PROXY -> REPO : findById(itemId)
+activate REPO
+REPO --> PROXY : cartItem
+deactivate REPO
+
+PROXY -> PROXY : validateOwnership(customer, cartItem)
+note right: So sánh customer.id với item.cart.customer.id
+
+alt Nếu sở hữu hợp lệ
+    PROXY -> REAL : updateQuantity(customer, itemId, qty)
+    activate REAL
+    REAL -> DB : UPDATE CartItem
+    REAL --> PROXY : done
+    deactivate REAL
+    PROXY --> CC : success
+else Nếu KHÔNG sở hữu (Security Breach)
+    PROXY -> PROXY : log.warn("SECURITY BREACH")
+    PROXY --[#red]> CC : throw SecurityException
+end
+
+deactivate PROXY
+CC --> User : Redirect / Error message
+deactivate CC
+
+@enduml

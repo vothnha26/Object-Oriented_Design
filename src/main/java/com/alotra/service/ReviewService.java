@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Service
-public class ReviewService {
+@Service("reviewOperationsReal")
+public class ReviewService implements com.alotra.service.proxy.ReviewOperations {
     public static final Duration EDIT_WINDOW = Duration.ofMinutes(15);
 
     private final ReviewRepository reviewRepo;

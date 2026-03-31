@@ -1,30 +1,38 @@
 package com.alotra.auth;
 
+import com.alotra.entity.Employee;
 import com.alotra.repository.EmployeeRepository;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
-public class PasswordHashNormalizerNhanVien implements ApplicationRunner {
+public class PasswordHashNormalizerNhanVien extends AbstractPasswordHashNormalizer<Employee> {
     private final EmployeeRepository repo;
-    private final PasswordEncoder encoder;
 
     public PasswordHashNormalizerNhanVien(EmployeeRepository repo, PasswordEncoder encoder) {
+        super(encoder);
         this.repo = repo;
-        this.encoder = encoder;
     }
 
     @Override
-    public void run(ApplicationArguments args) {
-        repo.findAll().forEach(nv -> {
-            String hash = nv.getPasswordHash();
-            if (hash == null) return;
-            if (!hash.startsWith("$2a$") && !hash.startsWith("$2b$") && !hash.startsWith("$2y$")) {
-                nv.setPasswordHash(encoder.encode(hash));
-                repo.save(nv);
-            }
-        });
+    protected List<Employee> findAll() {
+        return repo.findAll();
+    }
+
+    @Override
+    protected String getPasswordHash(Employee entity) {
+        return entity.getPasswordHash();
+    }
+
+    @Override
+    protected void setPasswordHash(Employee entity, String hash) {
+        entity.setPasswordHash(hash);
+    }
+
+    @Override
+    protected void save(Employee entity) {
+        repo.save(entity);
     }
 }

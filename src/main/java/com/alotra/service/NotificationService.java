@@ -49,24 +49,23 @@ public class NotificationService {
 
     private int countUnpaidOrders(Integer customerId) {
         Integer n = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM Orders dh JOIN Payment p ON p.OrderId = dh.MaDH WHERE dh.MaKH = ? AND p.Status <> 'PAID'",
+                "SELECT COUNT(*) FROM DonHang WHERE MaKH = ? AND (PaymentStatus IS NULL OR PaymentStatus <> 'DaThanhToan')",
                 Integer.class, customerId);
         return n == null ? 0 : n;
     }
 
     private int countReviewableItems(Integer customerId) {
         // Count order lines from delivered + paid orders without a review by this customer
-        String sql = "SELECT COUNT(*) FROM OrderItem ct " +
-                "JOIN Orders dh ON dh.MaDH = ct.MaDH " +
-                "JOIN Payment p ON p.OrderId = dh.MaDH " +
-                "WHERE dh.MaKH = ? AND dh.TrangThaiDonHang = 'DELIVERED' AND p.Status = 'PAID' " +
-                "AND NOT EXISTS (SELECT 1 FROM Review dg WHERE dg.MaCT = ct.MaCT AND dg.MaKH = dh.MaKH)";
+        String sql = "SELECT COUNT(*) FROM CTDonHang ct " +
+                "JOIN DonHang dh ON dh.MaDH = ct.MaDH " +
+                "WHERE dh.MaKH = ? AND dh.TrangThaiDonHang = 'DaGiao' AND dh.PaymentStatus = 'DaThanhToan' " +
+                "AND NOT EXISTS (SELECT 1 FROM DanhGia dg WHERE dg.MaCT = ct.MaCT AND dg.MaKH = dh.MaKH)";
         Integer n = jdbc.queryForObject(sql, Integer.class, customerId);
         return n == null ? 0 : n;
     }
 
     private List<Map<String, Object>> listRecentOrders(Integer customerId, int limit) {
-        String sql = "SELECT MaDH, TrangThaiDonHang, NgayLap FROM Orders WHERE MaKH = ? ORDER BY MaDH DESC LIMIT " + Math.max(1, limit);
+        String sql = "SELECT TOP " + Math.max(1, limit) + " MaDH, TrangThaiDonHang, NgayLap FROM DonHang WHERE MaKH = ? ORDER BY MaDH DESC";
         return jdbc.query(sql, ps -> ps.setInt(1, customerId), (rs, i) -> {
             Map<String, Object> m = new HashMap<>();
             m.put("id", rs.getInt("MaDH"));
