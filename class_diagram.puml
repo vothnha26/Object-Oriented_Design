@@ -1,4 +1,4 @@
-@startuml AloTra_ClassDiagram
+@startuml AloTra_ClassDiagram_Final
 
 skinparam classAttributeIconSize 0
 skinparam classFontSize 13
@@ -9,6 +9,8 @@ skinparam classBackgroundColor #F0F7FF
 skinparam stereotypeCBackgroundColor #E8F4FD
 skinparam ArrowColor #2C5F8A
 skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
 
 ' =============================================
 ' ENUMS
@@ -18,37 +20,28 @@ enum CustomerStatus {
     INACTIVE
     BANNED
 }
-
 enum EmployeeStatus {
     ACTIVE
     INACTIVE
 }
-
 enum EmployeeRole {
     ADMIN
     STAFF
 }
-
 enum ProductStatus {
     ACTIVE
     INACTIVE
-    DELETED
+    OUT_OF_STOCK
 }
-
 enum PromotionStatus {
     ACTIVE
     INACTIVE
-    DELETED
-    UPCOMING
     EXPIRED
 }
-
 enum ToppingStatus {
-    AVAILABLE
-    UNAVAILABLE
-    DELETED
+    ACTIVE
+    INACTIVE
 }
-
 enum OrderStatus {
     PENDING
     PREPARING
@@ -56,31 +49,19 @@ enum OrderStatus {
     DELIVERED
     CANCELLED
 }
-
 enum PaymentStatus {
     UNPAID
     PAID
+    REFUNDED
 }
-
 enum PaymentMethod {
     CASH
     BANK_TRANSFER
     MOMO
 }
 
-enum ReceivingMethod {
-    DELIVERY
-    PICKUP
-}
-
-enum CartStatus {
-    ACTIVE
-    CHECKED_OUT
-    CANCELLED
-}
-
 ' =============================================
-' ABSTRACT BASE
+' NỬA TRÊN: ABSTRACT BASE & USERS
 ' =============================================
 abstract class User {
     - Integer id
@@ -89,7 +70,6 @@ abstract class User {
     - String email
     - String fullName
     - String phone
-    - LocalDateTime createdAt
     + getDisplayName() : String
     + isActive() : boolean
 }
@@ -101,25 +81,42 @@ class Customer {
 class Employee {
     - EmployeeStatus status
     - EmployeeRole role
-    - LocalDateTime deletedAt
     + isAdmin() : boolean
 }
 
 User <|-- Customer
 User <|-- Employee
+
 Customer ..> CustomerStatus
 Employee ..> EmployeeStatus
 Employee ..> EmployeeRole
 
 ' =============================================
-' VALUE OBJECTS
+' ĐỊA CHỈ & DANH SÁCH YÊU THÍCH
 ' =============================================
-class ShippingInfo <<embeddable>> {
-    - String receiverName
-    - String receiverPhone
-    - String shippingAddress
-    - ReceivingMethod method
-    + isValid() : boolean
+class Address {
+    - Integer id
+    - String label
+    - String addressLine
+    - boolean isDefault
+}
+
+class Wishlist {
+    - Integer id
+    - LocalDateTime addedAt
+}
+
+Customer "1" --> "*" Address : manages
+Customer "1" --> "*" Wishlist : manages
+
+' =============================================
+' TRUNG TÂM: ORDER & PAYMENT
+' =============================================
+class Order {
+    - Integer id
+    - LocalDateTime createdAt
+    - OrderStatus status
+    + calculateTotal() : BigDecimal
 }
 
 class Payment {
@@ -127,42 +124,25 @@ class Payment {
     - PaymentStatus status
     - PaymentMethod method
     - BigDecimal amount
-    - LocalDateTime paidAt
+    - String transactionRef
 }
 
-ShippingInfo ..> ReceivingMethod
+Order "*" --> "1" Customer : placed by
+Order "*" --> "0..1" Employee : approved by
+Order "*" --> "1" Address : ships to
+Order ..> OrderStatus
+
+Order "1" --> "0..1" Payment : has payment
 Payment ..> PaymentStatus
 Payment ..> PaymentMethod
 
 ' =============================================
-' ABSTRACT LINE ITEM
-' =============================================
-abstract class OrderLineItem {
-    - Integer quantity
-    - BigDecimal unitPrice
-    - BigDecimal lineTotal
-    - String note
-}
-
-class CartItem {
-    - Integer id
-}
-
-class OrderItem {
-    - Integer id
-}
-
-OrderLineItem <|-- CartItem
-OrderLineItem <|-- OrderItem
-
-' =============================================
-' PRODUCT GROUP
+' NỬA DƯỚI: PRODUCT GROUP & PROMOTION
 ' =============================================
 class Category {
     - Integer id
     - String name
     - String description
-    - LocalDateTime deletedAt
 }
 
 class Product {
@@ -171,13 +151,13 @@ class Product {
     - String description
     - ProductStatus status
     - String imageUrl
-    - LocalDateTime deletedAt
     + isAvailable() : boolean
 }
 
 class ProductSize {
     - Integer id
     - String name
+    - boolean isActive
 }
 
 class ProductVariant {
@@ -193,118 +173,61 @@ class Topping {
     - BigDecimal extraPrice
     - ToppingStatus status
     - String imageUrl
-    - LocalDateTime deletedAt
 }
-
-Category "1" o-- "many" Product : contains
-Product "1" *-- "many" ProductVariant : has variants
-ProductSize "1" --> "many" ProductVariant : applies to
-Product ..> ProductStatus
-ProductVariant ..> ProductStatus
-Topping ..> ToppingStatus
-
-' =============================================
-' ADDITIONAL ENTITIES (OTP, MEDIA)
-' =============================================
-class OtpCode {
-    - Integer id
-    - String email
-    - String code
-    - LocalDateTime expiresAt
-    - boolean used
-}
-Customer "1" o-- "many" OtpCode : requests
 
 class ProductMedia {
     - Integer id
     - String url
 }
-Product "1" *-- "many" ProductMedia : contains media
 
-' =============================================
-' PROMOTION GROUP
-' =============================================
 class Promotion {
     - Integer id
     - String name
+    - String code
     - String description
     - LocalDate startDate
     - LocalDate endDate
+    - Integer usageLimit
+    - Integer usedCount
     - PromotionStatus status
     - String imageUrl
-    - Integer views
-    - LocalDateTime deletedAt
+    - boolean isPublic
     + isActive() : boolean
 }
 
-class AppliedPromotion {
-    - AppliedPromotionId id
-    - Integer discountPercent
-}
+Category "1" o-- "*" Product : contains
+Product "1" *-- "many" ProductVariant : has variants
+ProductVariant "*" --> "1" ProductSize : has size
+Product "1" *-- "many" ProductMedia : contains media
 
+Product ..> ProductStatus
+ProductVariant ..> ProductStatus
+Topping ..> ToppingStatus
 Promotion ..> PromotionStatus
-Promotion "1" *-- "many" AppliedPromotion : includes
-Product "1" o-- "many" AppliedPromotion : is applied to
+Wishlist "*" --> "1" Product : references
+Order "*" --> "0..1" Promotion : applies
 
 ' =============================================
-' CART GROUP
+' CHI TIẾT ĐƠN HÀNG (ORDER ITEMS)
 ' =============================================
-class Cart {
+class OrderItem {
     - Integer id
-    - CartStatus status
-    - LocalDateTime createdAt
-    - LocalDateTime updatedAt
-    + getItemCount() : int
-    + getTotalAmount() : BigDecimal
-}
-
-Customer "1" o-- "many" Cart : owns
-Cart "1" *-- "many" CartItem : contains
-ProductVariant "1" --> "many" CartItem : references
-Cart ..> CartStatus
-
-class SelectedTopping {
     - Integer quantity
     - BigDecimal unitPrice
-    - BigDecimal lineTotal
-}
-CartItem "1" *-- "many" SelectedTopping : contains
-Topping "1" <-- "many" SelectedTopping : references
-
-' =============================================
-' ORDER GROUP
-' =============================================
-class Order {
-    - Integer id
-    - LocalDateTime createdAt
-    - OrderStatus status
-    - BigDecimal subtotal
-    - BigDecimal discount
-    - BigDecimal shippingFee
-    - BigDecimal totalAmount
     - String note
-    - ShippingInfo shippingInfo
-    - Payment payment
-    + canCancel() : boolean
-    + isDone() : boolean
+    + getLineTotal() : BigDecimal
 }
-
-Order *-- ShippingInfo : contains
-Order "1" --> "1" Payment : has
-Order ..> OrderStatus
-
-Customer "1" o-- "many" Order : places
-Employee "1" --> "many" Order : handles
-Order "1" *-- "many" OrderItem : contains
-ProductVariant "1" --> "many" OrderItem : references
 
 class OrderedTopping {
     - Integer quantity
-    - BigDecimal unitPrice
-    - BigDecimal lineTotal
+    - BigDecimal price
+    + getToppingTotal() : BigDecimal
 }
-OrderItem "1" *-- "many" OrderedTopping : contains
-Topping "1" <-- "many" OrderedTopping : references
+
+Order "1" *-- "many" OrderItem : contains
+OrderItem "*" --> "1" ProductVariant : references
+OrderItem "1" *-- "many" OrderedTopping : contains toppings
+OrderedTopping "*" --> "1" Topping : references
 
 ' =============================================
 ' REVIEW GROUP
@@ -313,16 +236,13 @@ class Review {
     - Integer id
     - Integer stars
     - String comment
-    - LocalDateTime createdAt
     - String adminReply
-    - LocalDateTime adminRepliedAt
-    - Employee repliedBy
     + hasReply() : boolean
 }
 
-Customer "1" o-- "many" Review : writes
-OrderItem "1" *-- "0..1" Review : is reviewed
-Employee "0..1" --> "many" Review : replies to
-Review --> Employee : repliedBy
+Review "*" --> "1" Customer : written by
+Review "*" --> "1" Product : evaluates
+Review "0..1" --> "1" Order : verified purchase
+Review "*" --> "0..1" Employee : replied by
 
 @enduml

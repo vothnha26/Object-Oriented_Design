@@ -6,7 +6,7 @@ import java.util.Objects;
 
 @Embeddable
 public class SelectedToppingId implements Serializable {
-    private Integer cartItemId; // renamed from ctghId
+    private Integer cartItemId;
     private Integer toppingId;
 
     public SelectedToppingId() {}

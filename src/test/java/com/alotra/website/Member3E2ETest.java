@@ -13,10 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.alotra.service.CustomerService;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.alotra.service.CustomerService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,11 +44,7 @@ class Member3E2ETest {
     @MockitoBean
     private CartRepository cartRepository;
     @MockitoBean
-    private CartItemRepository cartItemRepository;
-    @MockitoBean
     private OrderRepository orderRepository;
-    @MockitoBean
-    private OrderItemRepository orderItemRepository;
     @MockitoBean
     private CustomerRepository customerRepository;
     @MockitoBean
@@ -56,7 +52,7 @@ class Member3E2ETest {
     @MockitoBean
     private SelectedToppingRepository selectedToppingRepository;
     @MockitoBean
-    private OrderedToppingRepository orderedToppingRepository;
+    private CartItemRepository cartItemRepository;
     @MockitoBean
     private AppliedPromotionRepository appliedPromotionRepository;
     @MockitoBean
@@ -95,9 +91,10 @@ class Member3E2ETest {
 
         when(productRepository.findById(10)).thenReturn(Optional.of(p));
         when(variantRepository.findById(20)).thenReturn(Optional.of(v));
+        when(customerService.findByUsername(any())).thenReturn(customerDetails.getCustomer());
+        // Mock save() to return the input item
+        when(cartItemRepository.save(any(CartItem.class))).thenAnswer(inv -> inv.getArgument(0));
         when(cartRepository.findFirstByCustomerAndStatus(any(), any())).thenReturn(Optional.of(new Cart()));
-        when(customerService.findByUsername(anyString())).thenReturn(customerDetails.getCustomer());
-        when(cartItemRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
 
         mockMvc.perform(post("/products/10/add-to-cart")
                 .with(user(customerDetails))
@@ -118,6 +115,7 @@ class Member3E2ETest {
         o.setStatus(OrderStatus.PENDING);
 
         when(orderRepository.findById(500)).thenReturn(Optional.of(o));
+        // Mock JdbcTemplate calls inside UpdateOrderStatusCommand
         when(jdbc.queryForObject(anyString(), eq(String.class), eq(500))).thenReturn("PENDING");
 
         mockMvc.perform(post("/vendor/orders/500/advance")
@@ -125,9 +123,9 @@ class Member3E2ETest {
                 .param("from", "list"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/vendor/orders"));
-
+        
         // Success advance should move status PENDING -> PREPARING
-        verify(orderRepository, atLeastOnce()).save(any(Order.class));
+        verify(jdbc).update(anyString(), eq("PREPARING"), eq(500));
     }
 
     @Test
