@@ -1,563 +1,160 @@
+-- AloTra Database Initialization Script
+-- Sync with Domain Model (Entity/UML)
+-- Table names: plural, lowercase, English
+-- Column names: snake_case, English
+
 USE `Website_BanTraSua`;
+
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE `Employee`;
-TRUNCATE TABLE `Customer`;
-TRUNCATE TABLE `Category`;
-TRUNCATE TABLE `Product`;
-TRUNCATE TABLE `ProductMedia`;
-TRUNCATE TABLE `ProductSize`;
-TRUNCATE TABLE `ProductVariant`;
-TRUNCATE TABLE `Topping`;
-TRUNCATE TABLE `Promotion`;
-TRUNCATE TABLE `Orders`;
-TRUNCATE TABLE `Payment`;
-TRUNCATE TABLE `OrderItem`;
-TRUNCATE TABLE `OrderedTopping`;
-TRUNCATE TABLE `Review`;
-TRUNCATE TABLE `Cart`;
-TRUNCATE TABLE `CartItem`;
-TRUNCATE TABLE `SelectedTopping`;
-TRUNCATE TABLE `AppliedPromotion`;
-TRUNCATE TABLE `OtpCodes`;
+TRUNCATE TABLE `ordered_toppings`;
+TRUNCATE TABLE `order_items`;
+TRUNCATE TABLE `payments`;
+TRUNCATE TABLE `reviews`;
+TRUNCATE TABLE `wishlists`;
+TRUNCATE TABLE `orders`;
+TRUNCATE TABLE `addresses`;
+TRUNCATE TABLE `employees`;
+TRUNCATE TABLE `customers`;
+TRUNCATE TABLE `promotions`;
+TRUNCATE TABLE `product_variants`;
+TRUNCATE TABLE `products`;
+TRUNCATE TABLE `product_sizes`;
+TRUNCATE TABLE `toppings`;
+TRUNCATE TABLE `categories`;
 SET FOREIGN_KEY_CHECKS = 1;
 
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (1, 'phuoc', '$2a$10$ByO4AsTPqG2XVSOA8FKd9OJj1QuX6SgW.uNu5EcwRUT3022QY13Jq', 'khanh@example.com', 'Nguyễn Phước Tài', '0912345678', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (2, 'tai', '$2a$10$6feKgfK/m6WIgdaAe5tWD.4Ztimo7qvcaOMy9AgrOap1.pgbJw8uC', 'tai@example.com', 'Tài Phước', '0987654321', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (3, 'sang@gmail.com', '$2a$10$2hoosJv7VngsRrzIjBnlNOgbM6.TRsru3iz3ekIJplwy53K1ry.oC', 'dinhsang1105@gmail.com', 'Phan Đình Sáng', '123123123', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (4, 'test@gmail.com', '$2a$10$.P.bQz3zCX8Y/YzHAJKhw.HfmqNX0MYddQZOA6wWD/5cQuYYswHm6', 'test1105@gmamil.ccom', 'Quốc Huy', '123123', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (5, 'sangphan2005@gmail.com', '$2a$10$DJllagh0Z.BHh9SsimcJV.4qutdoTgV/P4.9Sjy1EB7NZnUJgmFhe', 'sang2005@gmail.com', 'Đình Sáng', '666666', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (6, 'boss', '$2a$10$3Aj4e223jyxV6PpU/FNRHOWV3wCpTCNqlZDoAli1psrDnK9fShNOK', 'boss@alotra.com', 'AloTra Administrator', '0900000000', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (7, 'huy', '$2a$10$fAzOaq/25QFSl99CDH0jtufMkaU2Lw8XkH/fK6mJY1ZZ/DYwm5QyC', 'ngochuy@gmail.com', 'Huy', '123123123222', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (9, 'phuochoa2021vg@gmail.com', '$2a$10$X6svdgFF0feS5SY4pALBjeFy.J.932zcqSqGVkIdapL.1PH2xavbm', 'phuochoa2021vg@gmail.com', 'Hồng Phước Hòa', '12512235', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Customer (`MaKH`, `Username`, `MatKhauHash`, `Email`, `TenKH`, `SoDienThoai`, `TrangThai`, `NgayTao`) VALUES (10, 'noname012', '$2a$10$3.eQEFnjQXl70ULysXZpQObY2Ua79AmRxQ6c.s.h1ZS9HGjwEo0ya', 'daisyprof205@gmail.com', 'sáng phan', '0123554158', 'ACTIVE', '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (1, 'admin', '$2a$10$A1vUWQEQC7l2LPyy1jlnl.5c35zfBvWydCrMEjlI5WkhxhK4k96z2', 'admin@trasua.com', 'Nguyễn Quản Lý', 'ADMIN', '0900000001', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (3, 'phuochoa', '$2a$10$iFN2S/EvbUob3tnGFAvLo.wNsHwQWDQcKCAyKTGXEbNdeZ/DSFImm', 'hoahp@gmail.com', 'Hong Phuoc Hoa', 'STAFF', '0999888777', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (4, 'boss', '$2a$10$LwJhmokLZri0WHXVLXkJSOuauIoomX2YgxmPmrWe7SRkfhTZ1vnFy', 'johnn@gmail.com', 'Nguyễn B', 'ADMIN', '123422356', 'INACTIVE', '2025-10-12 09:04:27.056074', '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (5, 'noname', '$2a$10$HE0ramT17haI/CbgeQlNWuQeEHuN7djqOrFEASqfEEShfRmFRJJOS', 'sangphan@gmail.com', 'Nguyễn A', 'ADMIN', '5246624422', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (7, 'boss2', '$2a$10$KJMHLTlzrwDnaKbUvrjqHum4G1yW8uudo4n4/rQLZYaronwd4TXr6', 'boss2@alotra.com', 'boss2', 'STAFF', '545773322234', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (8, 'đâsd', '$2a$10$fplATezKXOAV.DgKvyzsP.omEg4kcW.Cg9xxy.OS2NUG4aqw0wwhG', 'll@gmail.com', 'ádasdasd', 'ADMIN', '', 'INACTIVE', '2025-10-14 10:24:45.220198', '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (10, 'nva', '$2a$10$RzQ9R5EnDXv6YemRlkV00Ok6yMIksO.dwYIvbsfNNxtEyVWi.OuJq', 'nv.a@alotra.com', 'Nguyễn Văn A', 'ADMIN', '0869697790', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Employee (`MaNV`, `Username`, `MatKhauHash`, `Email`, `TenNV`, `VaiTro`, `SoDienThoai`, `TrangThai`, `DeletedAt`, `NgayTao`) VALUES (11, 'sang', '$2a$10$La9Q30aKxJr4whjSpDkpRe2k7JSk/7fIab.ti27ftbnydugdwrguu', 'noname@gmail.com', 'Sáng', 'ADMIN', '0123456778', 'ACTIVE', NULL, '2025-10-01 00:00:00');
-INSERT INTO Promotion (`MaKM`, `TenSuKien`, `MoTa`, `NgayBD`, `NgayKT`, `TrangThai`, `UrlAnh`, `LuotXem`, `DeletedAt`) VALUES (1, 'Khuyến mãi mùa Noel', 'Mùa Noel, giảm giá đậm sâu', '2025-08-01', '2025-10-01', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761571756/gjgmvaicfm88e0c2ab9f.jpg', NULL, NULL);
-INSERT INTO Promotion (`MaKM`, `TenSuKien`, `MoTa`, `NgayBD`, `NgayKT`, `TrangThai`, `UrlAnh`, `LuotXem`, `DeletedAt`) VALUES (2, 'Năm mới - Tuổi mới', 'Ưu đãi toàn menu;
-', '2025-04-01', '2025-10-10', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761571798/k1aarz6hejqdw3m5g7jv.jpg', NULL, NULL);
-INSERT INTO Promotion (`MaKM`, `TenSuKien`, `MoTa`, `NgayBD`, `NgayKT`, `TrangThai`, `UrlAnh`, `LuotXem`, `DeletedAt`) VALUES (5, 'Khuyến mãi sốc mừng Valentine', 'Khuyến mãi 20/10!', '2025-10-01', '2025-10-20', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761571834/bm8byvcb2rffkpypywbp.jpg', NULL, NULL);
-INSERT INTO Promotion (`MaKM`, `TenSuKien`, `MoTa`, `NgayBD`, `NgayKT`, `TrangThai`, `UrlAnh`, `LuotXem`, `DeletedAt`) VALUES (6, 'Mừng khai trương', 'Khai trương tưng bừng', '2025-10-27', '2025-10-31', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761571936/n6ltpsc1hahp8wdozcua.jpg', NULL, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (1, 1, 1, 1, '2025-10-03 12:52:38.363137', 'CANCELLED', 54000.00, 5000.00, 10000.00, 59000.00, 'Giao trước 17h', NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (1, 'CASH', 'UNPAID', 59000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (2, 3, 3, NULL, '2025-10-05 13:54:38.954015', 'DELIVERED', 36000.00, 0.00, 0.00, 36000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (2, 'CASH', 'UNPAID', 36000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (3, 7, 3, NULL, '2025-10-05 15:02:03.044698', 'DELIVERED', 150000.00, 0.00, 0.00, 150000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (3, 'CASH', 'UNPAID', 150000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (4, 7, NULL, NULL, '2025-10-05 15:07:57.955241', 'CANCELLED', 39000.00, 0.00, 0.00, 39000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (4, 'CASH', 'UNPAID', 39000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (5, 7, NULL, NULL, '2025-10-05 15:13:53.177672', 'CANCELLED', 66000.00, 0.00, 0.00, 66000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (5, 'CASH', 'UNPAID', 66000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (6, 7, NULL, NULL, '2025-10-05 15:19:48.672687', 'CANCELLED', 39000.00, 0.00, 0.00, 39000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (6, 'CASH', 'UNPAID', 39000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (7, 7, NULL, NULL, '2025-10-05 15:22:14.935773', 'CANCELLED', 39000.00, 0.00, 0.00, 39000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (7, 'CASH', 'UNPAID', 39000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (8, 7, NULL, NULL, '2025-10-05 15:23:11.408131', 'CANCELLED', 45000.00, 0.00, 0.00, 45000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (8, 'CASH', 'UNPAID', 45000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (9, 7, NULL, NULL, '2025-10-05 15:23:18.416058', 'CANCELLED', 30000.00, 0.00, 0.00, 30000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (9, 'CASH', 'UNPAID', 30000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (10, 7, NULL, NULL, '2025-10-05 15:33:59.126120', 'CANCELLED', 26000.00, 0.00, 0.00, 26000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (10, 'CASH', 'UNPAID', 26000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (11, 3, NULL, NULL, '2025-10-05 18:49:34.052646', 'CANCELLED', 24000.00, 0.00, 0.00, 24000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (11, 'MOMO', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (12, 3, NULL, NULL, '2025-10-05 18:53:56.951228', 'CANCELLED', 24000.00, 0.00, 0.00, 24000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (12, 'CASH', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (13, 3, NULL, NULL, '2025-10-05 18:56:41.630123', 'CANCELLED', 40000.00, 0.00, 0.00, 40000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (13, 'CASH', 'UNPAID', 40000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (14, 3, NULL, NULL, '2025-10-05 19:03:37.185059', 'DELIVERED', 25000.00, 0.00, 0.00, 25000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (14, 'CASH', 'PAID', 25000.00, '2025-10-06 10:32:29.813161');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (15, 3, NULL, NULL, '2025-10-05 19:05:49.936975', 'CANCELLED', 24000.00, 0.00, 0.00, 24000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (15, 'CASH', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (16, 3, NULL, NULL, '2025-10-05 19:06:16.457924', 'CANCELLED', 42000.00, 0.00, 0.00, 42000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (16, 'CASH', 'UNPAID', 42000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (17, 3, NULL, NULL, '2025-10-05 19:06:40.359796', 'DELIVERED', 18000.00, 0.00, 0.00, 18000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (17, 'CASH', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (18, 3, 11, NULL, '2025-10-05 20:14:54.492710', 'DELIVERED', 23000.00, 0.00, 0.00, 23000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (18, 'MOMO', 'UNPAID', 23000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (19, 3, 3, NULL, '2025-10-06 09:17:05.633917', 'DELIVERED', 46000.00, 0.00, 0.00, 46000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (19, 'CASH', 'PAID', 46000.00, '2025-10-06 10:31:39.493027');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (20, 3, NULL, NULL, '2025-10-06 09:32:37.846104', 'PENDING', 18000.00, 0.00, 0.00, 18000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (20, 'BANK_TRANSFER', 'PAID', 18000.00, '2025-10-06 09:33:38.042920');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (21, 3, NULL, NULL, '2025-10-06 09:48:07.558649', 'PENDING', 24000.00, 0.00, 0.00, 24000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (21, 'BANK_TRANSFER', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (22, 3, NULL, NULL, '2025-10-06 10:03:13.437420', 'PENDING', 18000.00, 0.00, 0.00, 18000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (22, 'BANK_TRANSFER', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (23, 3, 3, NULL, '2025-10-06 10:12:11.616482', 'DELIVERING', 1000.00, 0.00, 0.00, 1000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (23, 'CASH', 'PAID', 1000.00, '2025-10-06 10:31:34.105383');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (24, 3, NULL, NULL, '2025-10-06 10:12:25.895804', 'PENDING', 1000.00, 0.00, 0.00, 1000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (24, 'BANK_TRANSFER', 'PAID', 1000.00, '2025-10-06 10:20:25.066221');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (25, 3, NULL, NULL, '2025-10-06 10:24:13.273797', 'PENDING', 1000.00, 0.00, 0.00, 1000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (25, 'BANK_TRANSFER', 'UNPAID', 1000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (26, 3, NULL, NULL, '2025-10-06 10:34:32.928464', 'PENDING', 1000.00, 0.00, 0.00, 1000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (26, 'BANK_TRANSFER', 'UNPAID', 1000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (27, 3, NULL, NULL, '2025-10-06 10:35:55.205293', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (27, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (28, 3, NULL, NULL, '2025-10-06 13:58:23.573755', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (28, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (29, 3, NULL, NULL, '2025-10-06 14:23:54.404235', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (29, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (30, 3, NULL, NULL, '2025-10-06 14:34:59.917623', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (30, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (31, 3, NULL, NULL, '2025-10-06 14:49:39.951893', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (31, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (32, 3, NULL, NULL, '2025-10-06 14:50:44.604186', 'DELIVERED', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (32, 'MOMO', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (33, 3, NULL, NULL, '2025-10-06 14:52:17.768857', 'PENDING', 2000.00, 0.00, 0.00, 2000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (33, 'BANK_TRANSFER', 'UNPAID', 2000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (34, 3, NULL, NULL, '2025-10-06 15:03:21.728840', 'PREPARING', 18000.00, 0.00, 0.00, 18000.00, NULL, NULL, NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (34, 'CASH', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (35, 3, NULL, NULL, '2025-10-06 20:57:52.171422', 'PENDING', 19200.00, 0.00, 0.00, 19200.00, 'Ship to: Vox Huux Ngu, 123123123, ALO', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (35, 'CASH', 'UNPAID', 19200.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (36, 3, NULL, NULL, '2025-10-06 20:59:09.754337', 'PENDING', 18000.00, 0.00, 0.00, 18000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (36, 'CASH', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (37, 3, NULL, NULL, '2025-10-06 20:59:58.253767', 'CANCELLED', 18000.00, 0.00, 0.00, 18000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (37, 'CASH', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (38, 3, NULL, NULL, '2025-10-06 21:00:13.454265', 'DELIVERED', 18000.00, 0.00, 0.00, 18000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (38, 'CASH', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (39, 3, NULL, NULL, '2025-10-06 21:10:28.598470', 'CANCELLED', 18000.00, 0.00, 0.00, 18000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (39, 'BANK_TRANSFER', 'UNPAID', 18000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (40, 3, NULL, NULL, '2025-10-06 21:12:10.570890', 'CANCELLED', 48000.00, 0.00, 0.00, 48000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (40, 'BANK_TRANSFER', 'UNPAID', 48000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (41, 3, NULL, NULL, '2025-10-06 21:13:46.022059', 'CANCELLED', 19200.00, 0.00, 0.00, 19200.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (41, 'BANK_TRANSFER', 'UNPAID', 19200.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (42, 3, NULL, NULL, '2025-10-07 12:50:27.051708', 'CANCELLED', 19200.00, 0.00, 0.00, 19200.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (42, 'BANK_TRANSFER', 'UNPAID', 19200.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (43, 3, NULL, NULL, '2025-10-07 20:00:49.668265', 'DELIVERED', 101000.00, 0.00, 0.00, 101000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (43, 'CASH', 'PAID', 101000.00, '2025-10-07 20:01:40.024375');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (44, 3, NULL, NULL, '2025-10-09 09:37:09.433728', 'CANCELLED', 40100.00, 0.00, 0.00, 40100.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (44, 'BANK_TRANSFER', 'UNPAID', 40100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (45, 3, NULL, NULL, '2025-10-09 13:50:09.170186', 'CANCELLED', 139900.00, 0.00, 0.00, 139900.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (45, 'CASH', 'PAID', 139900.00, '2025-10-09 13:53:57.793653');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (46, 3, NULL, NULL, '2025-10-09 13:50:56.269644', 'CANCELLED', 41100.00, 0.00, 0.00, 41100.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (46, 'BANK_TRANSFER', 'UNPAID', 41100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (47, 3, NULL, NULL, '2025-10-09 13:51:54.291952', 'DELIVERED', 17100.00, 0.00, 0.00, 17100.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (47, 'CASH', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (48, 3, NULL, NULL, '2025-10-09 13:57:10.610899', 'DELIVERED', 24000.00, 0.00, 0.00, 24000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (48, 'CASH', 'PAID', 24000.00, '2025-10-09 13:57:25.482155');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (49, 3, 3, NULL, '2025-10-09 14:51:31.133171', 'DELIVERED', 39000.00, 0.00, 0.00, 39000.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (49, 'CASH', 'PAID', 39000.00, '2025-10-12 19:35:09.692124');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (50, 3, 3, NULL, '2025-10-09 19:00:13.790780', 'DELIVERED', 71100.00, 0.00, 0.00, 71100.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (50, 'CASH', 'PAID', 71100.00, '2025-10-12 19:35:04.203903');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (51, 3, NULL, NULL, '2025-10-09 19:13:10.178621', 'DELIVERED', 20300.00, 0.00, 0.00, 20300.00, 'Ship to: ', 'DELIVERY', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (51, 'CASH', 'PAID', 20300.00, '2025-10-09 19:14:42.709624');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (52, 3, 3, NULL, '2025-10-09 19:59:26.400239', 'CANCELLED', 44000.00, 0.00, 0.00, 44000.00, 'Giao sớm nha | Ship to: Phan Đình Sáng, 123123123, SPKT', 'DELIVERY', 'SPKT', 'Phan Đình Sáng', '123123123 ');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (52, 'CASH', 'UNPAID', 44000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (53, 3, NULL, NULL, '2025-10-09 20:00:00.552777', 'DELIVERED', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (53, 'CASH', 'PAID', 17100.00, '2025-10-10 15:30:14.900591');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (54, 3, 3, NULL, '2025-10-09 20:28:01.837613', 'DELIVERED', 24000.00, 0.00, 0.00, 24000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (54, 'BANK_TRANSFER', 'PAID', 24000.00, '2025-10-09 20:28:36.002853');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (55, 3, 3, NULL, '2025-10-10 14:27:24.804281', 'DELIVERED', 135550.00, 0.00, 0.00, 135550.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (55, 'CASH', 'PAID', 135550.00, '2025-10-10 14:27:36.012529');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (56, 3, 3, NULL, '2025-10-10 14:56:52.575434', 'DELIVERED', 15300.00, 0.00, 0.00, 15300.00, 'Ship to: Phan Đình Sáng, 123123123, SPKT', 'DELIVERY', 'SPKT', 'Phan Đình Sáng', '123123123 ');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (56, 'BANK_TRANSFER', 'PAID', 15300.00, '2025-10-10 14:57:05.596086');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (57, 9, NULL, NULL, '2025-10-12 09:07:03.418235', 'DELIVERED', 66300.00, 0.00, 0.00, 66300.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (57, 'CASH', 'PAID', 66300.00, '2025-10-12 09:07:59.540333');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (58, 9, 3, NULL, '2025-10-12 09:07:33.232778', 'DELIVERED', 45000.00, 0.00, 0.00, 45000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (58, 'CASH', 'PAID', 45000.00, '2025-10-12 09:13:53.351725');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (59, 9, 5, NULL, '2025-10-12 09:14:41.582733', 'DELIVERED', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (59, 'CASH', 'PAID', 21250.00, '2025-10-12 09:15:13.375409');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (60, 3, 3, NULL, '2025-10-14 09:29:50.938264', 'PENDING', 26300.00, 0.00, 0.00, 26300.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (60, 'CASH', 'UNPAID', 26300.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (61, 3, NULL, NULL, '2025-10-14 11:54:14.144583', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (61, 'CASH', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (62, 3, NULL, NULL, '2025-10-15 08:51:19.110164', 'PENDING', 45000.00, 0.00, 0.00, 45000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (62, 'CASH', 'UNPAID', 45000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (63, 3, 3, NULL, '2025-10-15 08:53:17.382654', 'PENDING', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (63, 'CASH', 'UNPAID', 21250.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (64, 3, NULL, NULL, '2025-10-15 09:05:05.886992', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (64, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (65, 3, NULL, NULL, '2025-10-15 09:25:59.404561', 'CANCELLED', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (65, 'BANK_TRANSFER', 'UNPAID', 21250.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (66, 3, NULL, NULL, '2025-10-16 10:18:14.147084', 'PENDING', 62800.00, 0.00, 0.00, 62800.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (66, 'CASH', 'UNPAID', 62800.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (67, 3, NULL, NULL, '2025-10-16 10:18:34.903882', 'PENDING', 131800.00, 0.00, 0.00, 131800.00, 'Ship to: Phan Đình Sáng, 123123123, SPKT', 'DELIVERY', 'SPKT', 'Phan Đình Sáng', '123123123 ');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (67, 'CASH', 'UNPAID', 131800.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (68, 3, 3, NULL, '2025-10-16 10:23:13.155659', 'DELIVERING', 40650.00, 0.00, 0.00, 40650.00, 'ALOAA | Ship to: Phan Đình Sáng, 123123123, SPKT', 'DELIVERY', 'SPKT', 'Phan Đình Sáng', '123123123 ');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (68, 'CASH', 'PAID', 40650.00, '2025-10-27 18:30:30.174998');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (69, 3, NULL, NULL, '2025-10-17 09:30:48.717504', 'PENDING', 20900.00, 0.00, 0.00, 20900.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (69, 'BANK_TRANSFER', 'UNPAID', 20900.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (70, 3, NULL, NULL, '2025-10-17 09:35:04.954362', 'PENDING', 24000.00, 0.00, 0.00, 24000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (70, 'BANK_TRANSFER', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (71, 3, NULL, NULL, '2025-10-17 09:39:46.250941', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (71, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (72, 3, NULL, NULL, '2025-10-17 09:42:48.848560', 'PENDING', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (72, 'BANK_TRANSFER', 'UNPAID', 21250.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (73, 3, NULL, NULL, '2025-10-17 09:49:59.460986', 'PENDING', 24000.00, 0.00, 0.00, 24000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (73, 'BANK_TRANSFER', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (74, 3, NULL, NULL, '2025-10-17 09:58:17.858130', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (74, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (75, 3, NULL, NULL, '2025-10-17 10:04:05.647818', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (75, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (76, 3, NULL, NULL, '2025-10-17 10:09:48.065456', 'PENDING', 24000.00, 0.00, 0.00, 24000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (76, 'BANK_TRANSFER', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (77, 3, NULL, NULL, '2025-10-17 10:17:04.190161', 'PENDING', 24000.00, 0.00, 0.00, 24000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (77, 'BANK_TRANSFER', 'UNPAID', 24000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (78, 3, NULL, NULL, '2025-10-17 10:20:40.441387', 'PENDING', 15300.00, 0.00, 0.00, 15300.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (78, 'BANK_TRANSFER', 'UNPAID', 15300.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (79, 3, NULL, NULL, '2025-10-17 10:29:22.387779', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (79, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (80, 3, NULL, NULL, '2025-10-17 10:31:29.686471', 'PENDING', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (80, 'BANK_TRANSFER', 'UNPAID', 21250.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (81, 3, NULL, NULL, '2025-10-17 10:43:52.224057', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (81, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (82, 3, NULL, NULL, '2025-10-17 10:49:56.273402', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (82, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (83, 3, NULL, NULL, '2025-10-17 11:02:10.844192', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (83, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (84, 3, 3, NULL, '2025-10-17 11:13:17.935682', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (84, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (85, 3, 3, NULL, '2025-10-17 11:17:52.022913', 'PENDING', 17100.00, 0.00, 0.00, 17100.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (85, 'BANK_TRANSFER', 'UNPAID', 17100.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (86, 3, 3, NULL, '2025-10-17 11:21:26.003865', 'PENDING', 27000.00, 0.00, 0.00, 27000.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (86, 'BANK_TRANSFER', 'UNPAID', 27000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (87, 3, 11, NULL, '2025-10-17 11:24:14.742983', 'DELIVERED', 21250.00, 0.00, 0.00, 21250.00, NULL, 'PICKUP', NULL, NULL, NULL);
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (87, 'BANK_TRANSFER', 'PAID', 21250.00, '2025-10-27 11:15:57.060258');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (88, 10, 3, NULL, '2025-10-27 12:43:32.773293', 'DELIVERED', 25000.00, 0.00, 0.00, 25000.00, 'giao sớm | Ship to: sáng phan, 0123554158, Số 1, VV', 'DELIVERY', 'Số 1, VV', 'sáng phan', '0123554158');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (88, 'CASH', 'PAID', 25000.00, '2025-10-27 18:08:51.905355');
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (89, 10, 3, NULL, '2025-10-27 12:45:18.203429', 'PENDING', 29000.00, 0.00, 0.00, 29000.00, 'giao sớm | Ship to: sáng phan, 0123554158, Số 1, VV', 'DELIVERY', 'Số 1, VV', 'sáng phan', '0123554158');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (89, 'BANK_TRANSFER', 'UNPAID', 29000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (90, 10, NULL, NULL, '2025-10-27 12:58:23.934889', 'CANCELLED', 25000.00, 0.00, 0.00, 25000.00, 'Ship to: sáng phan, 0123554158, Số 1, VV', 'DELIVERY', 'Số 1, VV', 'sáng phan', '0123554158');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (90, 'BANK_TRANSFER', 'UNPAID', 25000.00, NULL);
-INSERT INTO Orders (`MaDH`, `MaKH`, `MaNV`, `MaKM`, `NgayLap`, `TrangThaiDonHang`, `TongHang`, `GiamGiaDon`, `PhiVanChuyen`, `TongThanhToan`, `GhiChu`, `PhuongThucNhanHang`, `DiaChiNhanHang`, `TenNguoiNhan`, `SDTNguoiNhan`) VALUES (91, 10, 3, NULL, '2025-10-27 13:03:58.084790', 'DELIVERED', 18000.00, 0.00, 0.00, 18000.00, 'giao sớm | Ship to: sáng phan, 0123554158, Số 1, VV', 'DELIVERY', 'Số 1, VV', 'sáng phan', '0123554158');
-INSERT INTO Payment (`OrderId`, `Method`, `Status`, `Amount`, `PaidAt`) VALUES (91, 'BANK_TRANSFER', 'PAID', 18000.00, '2025-10-27 15:07:40.505631');
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (1, 'Trà sữa', 'Các loại trà sữa đặc biệt', NULL);
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (2, 'Trà trái cây', 'Trà kết hợp trái cây tươi', NULL);
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (3, 'Nước ép', 'Nước ép hoa quả nguyên chất', NULL);
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (4, 'Đá bào', 'Thức uống mát lạnh tê tái;
-', NULL);
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (5, 'Cà phê', 'Cà phê', NULL);
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (6, 'Trà nguyên vị', 'Trà nguyên vị, đậm đà', '2025-10-12 10:07:55.411442');
-INSERT INTO Category (`MaDM`, `TenDM`, `MoTa`, `DeletedAt`) VALUES (7, 'Soda', 'Soda mix trà', '2025-10-12 09:04:42.353853');
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (1, 1, 'Trà Sữa Truyền Thống g', 'Trà s?a v? truy?n th?ng', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761572005/lwl2sjs8wxr9ssxinfwy.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (2, 1, 'Trà Sữa Matcha', 'Trà s?a v? matcha xanh', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449668/Tr%C3%A0_s%E1%BB%AFa_matcha_uwnvw6.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (3, 2, 'Trà Đào Cam Sả', 'Trà dào cam s? thom mát', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449752/Tr%C3%A0_%C4%91%C3%A0o_cam_s%E1%BA%A3_benjcb.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (4, 3, 'Nước ép cam', 'Nước ép cam tươi;
-', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449818/N%C6%B0%E1%BB%9Bc_%C3%A9p_cam_oyn7hh.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (5, 5, 'Cold Drew trái cây', 'Cà phê d?u nh?, mát l?nh, có huong trái cây', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449850/Cold_Drew_tr%C3%A1i_c%C3%A2y_kecbh2.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (7, 5, 'Americano', 'Cà phê nh?t nh?o', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449892/Americano_ywnwmn.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (8, 2, 'Trà đào', 'Trà olong v? dào', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449960/%C3%94_long_%C4%91%C3%A0o_wwtnis.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (9, 1, 'test thanh toán', '1k', 'INACTIVE', '', '2025-10-09 19:41:12.929844');
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (10, 1, 'Trà sữa rang muối', '', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566204/j0bknbsqzku94nokujwf.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (11, 3, 'Nước ép dưa hấu', 'Dưa hấu nè!', 'INACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450009/N%C6%B0%E1%BB%9Bc_%C3%A9p_d%C6%B0a_h%E1%BA%A5u_yc78t2.png', '2025-10-14 09:14:23.893392');
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (12, 1, 'Ma Nhan Nam', 'ssas', 'INACTIVE', '', '2025-10-14 09:07:29.173482');
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (14, 1, 'test', '123', 'INACTIVE', '', '2025-10-14 12:08:40.112673');
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (15, 1, 'Hồng Trà', 'Nhiều trà ít sửa', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566129/cyijqkg0auraqsvu4rff.png', NULL);
-INSERT INTO Product (`MaSP`, `MaDM`, `TenSP`, `MoTa`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (16, 2, 'Tra Kem', '', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566273/e6j2lgaxyqmr6hime4kf.png', NULL);
-INSERT INTO ProductSize (`Id`, `Name`, `Status`, `PriceAdjustment`) VALUES (1, 'S', 'ACTIVE', 0.00);
-INSERT INTO ProductSize (`Id`, `Name`, `Status`, `PriceAdjustment`) VALUES (2, 'M', 'ACTIVE', 0.00);
-INSERT INTO ProductSize (`Id`, `Name`, `Status`, `PriceAdjustment`) VALUES (3, 'L', 'ACTIVE', 0.00);
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (1, 1, 1, 20000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (2, 1, 2, 25000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (3, 1, 3, 30000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (4, 2, 1, 22000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (5, 2, 2, 27000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (6, 2, 3, 32000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (7, 3, 1, 25000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (8, 3, 2, 30000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (9, 3, 3, 35000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (10, 4, 1, 18000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (11, 4, 2, 22000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (12, 4, 3, 27000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (14, 8, 1, 18000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (15, 8, 2, 20000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (16, 8, 3, 22000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (17, 7, 3, 24000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (18, 9, 1, 1000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (19, 9, 2, 2000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (20, 5, 2, 45000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (21, 10, 1, 250000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (22, 10, 2, 27000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (23, 10, 3, 29000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (24, 11, 1, 19000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (25, 11, 2, 23000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (26, 11, 3, 27000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (27, 14, 1, 12000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (28, 15, 1, 20000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (29, 15, 2, 18000.00, 'ACTIVE');
-INSERT INTO ProductVariant (`Id`, `ProductId`, `ProductSizeId`, `Price`, `Status`) VALUES (30, 16, 1, 20000.00, 'ACTIVE');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (1, 1, 2, 2, 25000.00, 2000.00, 48000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (2, 1, 5, 1, 27000.00, 0.00, 27000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (3, 2, 14, 2, 18000.00, 0.00, 36000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (4, 3, 14, 1, 18000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (5, 3, 17, 1, 24000.00, 0.00, 45000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (6, 3, 14, 3, 18000.00, 0.00, 66000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (7, 4, 14, 1, 18000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (8, 5, 14, 3, 18000.00, 0.00, 66000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (9, 6, 14, 1, 18000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (10, 7, 14, 1, 18000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (11, 8, 17, 1, 24000.00, 0.00, 45000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (12, 9, 14, 1, 18000.00, 0.00, 30000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (13, 10, 11, 1, 22000.00, 0.00, 26000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (14, 11, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (15, 12, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (16, 13, 9, 1, 35000.00, 0.00, 40000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (17, 14, 7, 1, 25000.00, 0.00, 25000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (18, 15, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (19, 16, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (20, 16, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (21, 17, 10, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (22, 18, 14, 1, 18000.00, 0.00, 23000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (23, 19, 10, 1, 18000.00, 0.00, 28000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (24, 19, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (25, 20, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (26, 21, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (27, 22, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (28, 23, 18, 1, 1000.00, 0.00, 1000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (29, 24, 18, 1, 1000.00, 0.00, 1000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (30, 25, 18, 1, 1000.00, 0.00, 1000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (31, 26, 18, 1, 1000.00, 0.00, 1000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (32, 27, 19, 1, 2000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (33, 28, 18, 2, 1000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (34, 29, 18, 2, 1000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (35, 30, 19, 1, 2000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (36, 31, 19, 1, 2000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (37, 32, 19, 1, 2000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (38, 33, 19, 1, 2000.00, 0.00, 2000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (39, 34, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (40, 35, 17, 1, 19200.00, 0.00, 19200.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (41, 36, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (42, 37, 10, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (43, 38, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (44, 39, 14, 1, 18000.00, 0.00, 18000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (45, 40, 12, 1, 27000.00, 0.00, 48000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (46, 41, 17, 1, 19200.00, 0.00, 19200.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (47, 42, 17, 1, 19200.00, 0.00, 19200.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (48, 43, 15, 3, 17000.00, 0.00, 101000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (49, 44, 17, 1, 19200.00, 0.00, 19200.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (50, 44, 11, 1, 20900.00, 0.00, 20900.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (51, 45, 17, 1, 24000.00, 0.00, 74000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (52, 45, 14, 1, 15300.00, 0.00, 15300.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (53, 45, 14, 2, 15300.00, 0.00, 50600.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (54, 46, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (55, 46, 10, 1, 17100.00, 0.00, 17100.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (56, 47, 10, 1, 17100.00, 0.00, 17100.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (57, 48, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (58, 49, 17, 1, 24000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (59, 50, 17, 1, 24000.00, 0.00, 39000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (60, 50, 10, 1, 17100.00, 0.00, 32100.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (61, 51, 14, 1, 15300.00, 0.00, 20300.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (62, 52, 23, 1, 29000.00, 0.00, 44000.00, 'Đường: Bình thường; Đá: Nhiều');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (63, 53, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (64, 54, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (65, 55, 23, 1, 29000.00, 0.00, 29000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (66, 55, 14, 1, 15300.00, 0.00, 15300.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (67, 55, 17, 1, 24000.00, 0.00, 35000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (68, 55, 7, 1, 21250.00, 0.00, 32250.00, 'Đường: Nhiều; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (69, 55, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (70, 56, 14, 1, 15300.00, 0.00, 15300.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (71, 57, 22, 1, 27000.00, 0.00, 27000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (72, 57, 14, 1, 15300.00, 0.00, 15300.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (73, 57, 17, 1, 24000.00, 0.00, 24000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (74, 58, 20, 1, 45000.00, 0.00, 45000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (75, 59, 7, 1, 21250.00, 0.00, 21250.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (76, 60, 14, 1, 15300.00, 0.00, 26300.00, 'Đường: Bình thường; Đá: Nhiều');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (77, 61, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (78, 62, 20, 1, 45000.00, 0.00, 45000.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (79, 63, 7, 1, 21250.00, 0.00, 21250.00, NULL);
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (80, 64, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (81, 65, 7, 1, 21250.00, 0.00, 21250.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (82, 66, 22, 1, 27000.00, 0.00, 27000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (83, 66, 16, 1, 18700.00, 0.00, 18700.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (84, 66, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (85, 67, 9, 2, 29750.00, 0.00, 89500.00, 'Đường: Nhiều; Đá: Nhiều');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (86, 67, 14, 1, 15300.00, 0.00, 15300.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (87, 67, 22, 1, 27000.00, 0.00, 27000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (88, 68, 12, 1, 25650.00, 0.00, 40650.00, 'Đường: Nhiều; Đá: Nhiều');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (89, 69, 11, 1, 20900.00, 0.00, 20900.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (90, 70, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (91, 71, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (92, 72, 7, 1, 21250.00, 0.00, 21250.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (93, 73, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (94, 74, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (95, 75, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (96, 76, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (97, 77, 17, 1, 24000.00, 0.00, 24000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (98, 78, 14, 1, 15300.00, 0.00, 15300.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (99, 79, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (100, 80, 7, 1, 21250.00, 0.00, 21250.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (101, 81, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (102, 82, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (103, 83, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (104, 84, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (105, 85, 10, 1, 17100.00, 0.00, 17100.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (106, 86, 22, 1, 27000.00, 0.00, 27000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (107, 87, 7, 1, 21250.00, 0.00, 21250.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (108, 88, 7, 1, 25000.00, 0.00, 25000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (109, 89, 17, 1, 24000.00, 0.00, 29000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (110, 90, 7, 1, 25000.00, 0.00, 25000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO OrderItem (`MaCT`, `MaDH`, `MaBT`, `SoLuong`, `DonGia`, `GiamGiaDong`, `ThanhTien`, `GhiChu`) VALUES (111, 91, 14, 1, 18000.00, 0.00, 18000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO Topping (`MaTopping`, `TenTopping`, `GiaThem`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (1, 'Trân châu đen', 5000.00, 'AVAILABLE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450324/Tran-Chau-Den_uyp7ow.png', NULL);
-INSERT INTO Topping (`MaTopping`, `TenTopping`, `GiaThem`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (2, 'Trân châu trắng', 6000.00, 'AVAILABLE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450365/tr%C3%A2n_ch%C3%A2u_tr%E1%BA%AFng_nskmtg.jpg', NULL);
-INSERT INTO Topping (`MaTopping`, `TenTopping`, `GiaThem`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (3, 'Thạch dừa 3Q', 4000.00, 'AVAILABLE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450391/th%E1%BA%A1ch_d%E1%BB%ABa_ng5tks.jpg', NULL);
-INSERT INTO Topping (`MaTopping`, `TenTopping`, `GiaThem`, `TrangThai`, `UrlAnh`, `DeletedAt`) VALUES (4, 'Kem Trứng', 10000.00, 'AVAILABLE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566324/r4sunw3gbi9jquxig9rp.png', NULL);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (1, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (1, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (2, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (4, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (4, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (4, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (5, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (5, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (5, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (6, 3, 3, 4000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (7, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (7, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (7, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (8, 3, 3, 4000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (9, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (9, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (9, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (10, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (10, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (10, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (11, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (11, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (11, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (12, 3, 3, 4000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (13, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (16, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (22, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (23, 1, 2, 5000.00, 10000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (45, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (45, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (45, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (48, 1, 4, 5000.00, 20000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (48, 2, 5, 6000.00, 30000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (51, 1, 4, 5000.00, 20000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (51, 2, 3, 6000.00, 18000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (51, 3, 3, 4000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (53, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (53, 3, 2, 4000.00, 8000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (58, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (58, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (58, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (59, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (59, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (59, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (60, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (60, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (60, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (61, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (62, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (62, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (62, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (67, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (67, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (68, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (68, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (76, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (76, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (85, 1, 2, 5000.00, 10000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (85, 2, 2, 6000.00, 12000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (85, 3, 2, 4000.00, 8000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (88, 1, 1, 5000.00, 5000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (88, 2, 1, 6000.00, 6000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (88, 3, 1, 4000.00, 4000.00);
-INSERT INTO OrderedTopping (`MaCT`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (109, 1, 1, 5000.00, 5000.00);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (1, 1, 1, 5, 'Ngon, đúng ý!', '2025-10-03 12:52:38.366811', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (2, 3, 23, 5, 'thức uống tuyệt diệu', '2025-10-07 19:21:04.358528', 'Cảm ơn bạn, mong bạn tiếp tục ủng hộ quán.', '2025-10-13 16:03:14.218625', 4);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (3, 3, 24, 5, '', '2025-10-07 19:21:07.865779', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (4, 3, 48, 5, 'Dịu!!!', '2025-10-07 20:02:16.207698', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (5, 3, 57, 4, 'Ngonnn', '2025-10-09 13:57:45.612079', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (6, 3, 65, 5, '', '2025-10-12 19:01:42.525501', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (7, 3, 66, 5, '', '2025-10-12 19:01:47.822202', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (8, 3, 67, 5, '', '2025-10-12 19:01:49.253477', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (9, 3, 68, 5, '', '2025-10-12 19:01:50.373678', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (10, 3, 69, 5, '', '2025-10-12 19:01:51.797487', NULL, NULL, NULL);
-INSERT INTO Review (`MaDG`, `MaKH`, `MaCT`, `SoSao`, `BinhLuan`, `NgayDG`, `TraLoiAdmin`, `TraLoiLuc`, `TraLoiBoi`) VALUES (11, 3, 64, 5, '', '2025-10-15 18:35:38.901234', NULL, NULL, NULL);
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (1, 1, 'ACTIVE', '2025-10-03 12:52:38.358789', '2025-10-03 12:52:38.358789');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (2, 2, 'ACTIVE', '2025-10-03 12:52:38.358789', '2025-10-03 12:52:38.358789');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (3, 3, 'CHECKED_OUT', '2025-10-05 13:28:45.563791', '2025-10-05 18:53:56.984592');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (4, 7, 'ACTIVE', '2025-10-05 14:15:00.879578', '2025-10-05 14:15:00.879578');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (5, 3, 'CHECKED_OUT', '2025-10-05 18:53:57.002850', '2025-10-05 18:56:41.682083');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (6, 3, 'CHECKED_OUT', '2025-10-05 18:56:41.690120', '2025-10-05 19:06:16.476793');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (7, 3, 'CHECKED_OUT', '2025-10-05 19:06:16.486250', '2025-10-05 19:06:40.403299');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (8, 3, 'CHECKED_OUT', '2025-10-05 19:06:40.413146', '2025-10-06 09:17:05.790479');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (9, 3, 'CHECKED_OUT', '2025-10-06 09:17:05.817128', '2025-10-06 09:32:37.889280');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (10, 3, 'CHECKED_OUT', '2025-10-06 09:32:37.897408', '2025-10-06 09:48:07.602258');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (11, 3, 'CHECKED_OUT', '2025-10-06 09:48:07.614641', '2025-10-06 10:03:13.483929');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (12, 3, 'CHECKED_OUT', '2025-10-06 10:03:13.492278', '2025-10-06 10:12:11.655576');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (13, 3, 'CHECKED_OUT', '2025-10-06 10:12:11.665345', '2025-10-06 10:12:25.911717');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (14, 3, 'CHECKED_OUT', '2025-10-06 10:12:25.915895', '2025-10-06 10:24:13.327377');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (15, 3, 'CHECKED_OUT', '2025-10-06 10:24:13.337851', '2025-10-06 10:34:32.963811');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (16, 3, 'CHECKED_OUT', '2025-10-06 10:34:32.972206', '2025-10-06 10:35:55.241296');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (17, 3, 'CHECKED_OUT', '2025-10-06 10:35:55.249537', '2025-10-06 13:58:23.647137');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (18, 3, 'CHECKED_OUT', '2025-10-06 13:58:23.660782', '2025-10-06 14:23:54.457324');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (19, 3, 'CHECKED_OUT', '2025-10-06 14:23:54.465295', '2025-10-06 14:34:59.954616');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (20, 3, 'CHECKED_OUT', '2025-10-06 14:34:59.963851', '2025-10-06 14:49:40.012057');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (21, 3, 'CHECKED_OUT', '2025-10-06 14:49:40.022194', '2025-10-06 14:50:44.664011');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (22, 3, 'CHECKED_OUT', '2025-10-06 14:50:44.676561', '2025-10-06 14:52:17.811252');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (23, 3, 'CHECKED_OUT', '2025-10-06 14:52:17.821071', '2025-10-06 15:03:21.769956');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (24, 3, 'CHECKED_OUT', '2025-10-06 15:03:21.780885', '2025-10-06 20:57:52.247419');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (25, 3, 'CHECKED_OUT', '2025-10-06 20:57:52.264042', '2025-10-06 20:59:09.795735');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (26, 3, 'CHECKED_OUT', '2025-10-06 20:59:09.805764', '2025-10-06 20:59:58.267623');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (27, 3, 'CHECKED_OUT', '2025-10-06 20:59:58.270871', '2025-10-06 21:00:13.491520');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (28, 3, 'CHECKED_OUT', '2025-10-06 21:00:13.499260', '2025-10-06 21:10:28.627905');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (29, 3, 'CHECKED_OUT', '2025-10-06 21:10:28.635633', '2025-10-06 21:12:10.615562');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (30, 3, 'CHECKED_OUT', '2025-10-06 21:12:10.623389', '2025-10-06 21:13:46.054867');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (31, 3, 'CHECKED_OUT', '2025-10-06 21:13:46.062133', '2025-10-07 12:50:27.106470');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (32, 3, 'CHECKED_OUT', '2025-10-07 12:50:27.116811', '2025-10-09 09:37:09.554044');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (33, 3, 'CHECKED_OUT', '2025-10-09 09:37:09.574535', '2025-10-09 13:50:56.312643');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (34, 3, 'CHECKED_OUT', '2025-10-09 13:50:56.328199', '2025-10-09 13:51:54.322267');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (35, 3, 'CHECKED_OUT', '2025-10-09 13:51:54.329619', '2025-10-09 13:57:10.636581');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (36, 3, 'CHECKED_OUT', '2025-10-09 13:57:10.644869', '2025-10-09 14:51:31.188225');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (37, 3, 'CHECKED_OUT', '2025-10-09 14:51:31.201274', '2025-10-09 19:00:13.870923');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (38, 3, 'CHECKED_OUT', '2025-10-09 19:00:13.877580', '2025-10-09 19:13:10.205164');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (39, 3, 'CHECKED_OUT', '2025-10-09 19:13:10.207267', '2025-10-09 19:59:26.466076');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (40, 3, 'CHECKED_OUT', '2025-10-09 19:59:26.482981', '2025-10-09 20:00:00.585872');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (41, 3, 'CHECKED_OUT', '2025-10-09 20:00:00.593327', '2025-10-09 20:28:01.869843');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (42, 3, 'CHECKED_OUT', '2025-10-09 20:28:01.878493', '2025-10-10 14:27:24.920463');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (43, 3, 'CHECKED_OUT', '2025-10-10 14:27:24.933840', '2025-10-10 14:56:52.620541');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (44, 3, 'CHECKED_OUT', '2025-10-10 14:56:52.628792', '2025-10-14 11:54:14.188396');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (45, 9, 'CHECKED_OUT', '2025-10-12 09:06:46.078597', '2025-10-12 09:07:03.472233');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (46, 9, 'CHECKED_OUT', '2025-10-12 09:07:03.482919', '2025-10-12 09:07:33.257819');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (47, 9, 'CHECKED_OUT', '2025-10-12 09:07:33.265962', '2025-10-12 09:14:41.610333');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (48, 9, 'ACTIVE', '2025-10-12 09:14:41.617833', '2025-10-12 09:14:41.617833');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (49, 3, 'CHECKED_OUT', '2025-10-14 11:54:14.207579', '2025-10-15 08:51:19.206406');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (50, 3, 'CHECKED_OUT', '2025-10-15 08:51:19.223681', '2025-10-15 08:53:17.436948');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (51, 3, 'CHECKED_OUT', '2025-10-15 08:53:17.462870', '2025-10-15 09:05:05.920968');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (52, 3, 'CHECKED_OUT', '2025-10-15 09:05:05.927563', '2025-10-15 09:25:59.436924');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (53, 3, 'CHECKED_OUT', '2025-10-15 09:25:59.444978', '2025-10-16 10:23:13.205345');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (54, 3, 'CHECKED_OUT', '2025-10-16 10:23:13.223916', '2025-10-17 09:30:48.774908');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (55, 3, 'CHECKED_OUT', '2025-10-17 09:30:48.795908', '2025-10-17 09:35:04.989475');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (56, 3, 'CHECKED_OUT', '2025-10-17 09:35:04.998970', '2025-10-17 09:39:46.285201');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (57, 3, 'CHECKED_OUT', '2025-10-17 09:39:46.293795', '2025-10-17 09:42:48.878261');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (58, 3, 'CHECKED_OUT', '2025-10-17 09:42:48.886274', '2025-10-17 09:49:59.491337');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (59, 3, 'CHECKED_OUT', '2025-10-17 09:49:59.498987', '2025-10-17 09:58:17.892470');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (60, 3, 'CHECKED_OUT', '2025-10-17 09:58:17.902260', '2025-10-17 10:04:05.681063');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (61, 3, 'CHECKED_OUT', '2025-10-17 10:04:05.689581', '2025-10-17 10:09:48.099216');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (62, 3, 'CHECKED_OUT', '2025-10-17 10:09:48.105841', '2025-10-17 10:17:04.223041');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (63, 3, 'CHECKED_OUT', '2025-10-17 10:17:04.230989', '2025-10-17 10:20:40.491107');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (64, 3, 'CHECKED_OUT', '2025-10-17 10:20:40.503347', '2025-10-17 10:29:22.419219');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (65, 3, 'CHECKED_OUT', '2025-10-17 10:29:22.427891', '2025-10-17 10:31:29.719000');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (66, 3, 'CHECKED_OUT', '2025-10-17 10:31:29.727842', '2025-10-17 10:43:52.261551');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (67, 3, 'CHECKED_OUT', '2025-10-17 10:43:52.270425', '2025-10-17 10:49:56.305881');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (68, 3, 'CHECKED_OUT', '2025-10-17 10:49:56.313619', '2025-10-17 11:02:10.879824');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (69, 3, 'CHECKED_OUT', '2025-10-17 11:02:10.889789', '2025-10-17 11:13:17.974602');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (70, 3, 'CHECKED_OUT', '2025-10-17 11:13:17.981946', '2025-10-17 11:17:52.059978');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (71, 3, 'CHECKED_OUT', '2025-10-17 11:17:52.069447', '2025-10-17 11:21:26.046164');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (72, 3, 'CHECKED_OUT', '2025-10-17 11:21:26.054780', '2025-10-17 11:24:14.776713');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (73, 3, 'ACTIVE', '2025-10-17 11:24:14.784972', '2025-10-17 11:24:14.784972');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (74, 10, 'CHECKED_OUT', '2025-10-27 12:42:58.033301', '2025-10-27 12:43:32.854721');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (75, 10, 'CHECKED_OUT', '2025-10-27 12:43:32.874802', '2025-10-27 12:45:18.263675');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (76, 10, 'CHECKED_OUT', '2025-10-27 12:45:18.270255', '2025-10-27 12:58:24.126554');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (77, 10, 'CHECKED_OUT', '2025-10-27 12:58:24.142988', '2025-10-27 13:03:58.119352');
-INSERT INTO Cart (`MaGH`, `MaKH`, `TrangThai`, `CreatedAt`, `UpdatedAt`) VALUES (78, 10, 'ACTIVE', '2025-10-27 13:03:58.126652', '2025-10-27 13:03:58.126652');
-INSERT INTO CartItem (`MaCTGH`, `MaGH`, `MaBT`, `SoLuong`, `DonGia`, `ThanhTien`, `GhiChu`) VALUES (1, 1, 2, 2, 25000.00, 50000.00, 'Ít đá');
-INSERT INTO CartItem (`MaCTGH`, `MaGH`, `MaBT`, `SoLuong`, `DonGia`, `ThanhTien`, `GhiChu`) VALUES (2, 1, 5, 1, 27000.00, 27000.00, NULL);
-INSERT INTO CartItem (`MaCTGH`, `MaGH`, `MaBT`, `SoLuong`, `DonGia`, `ThanhTien`, `GhiChu`) VALUES (12, 4, 11, 1, 22000.00, 26000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO CartItem (`MaCTGH`, `MaGH`, `MaBT`, `SoLuong`, `DonGia`, `ThanhTien`, `GhiChu`) VALUES (13, 48, 4, 1, 22000.00, 22000.00, 'Đường: Bình thường; Đá: Bình thường');
-INSERT INTO SelectedTopping (`MaCTGH`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (1, 1, 1, 5000.00, 5000.00);
-INSERT INTO SelectedTopping (`MaCTGH`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (1, 3, 1, 4000.00, 4000.00);
-INSERT INTO SelectedTopping (`MaCTGH`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (2, 2, 1, 6000.00, 6000.00);
-INSERT INTO SelectedTopping (`MaCTGH`, `MaTopping`, `SoLuong`, `DonGia`, `ThanhTien`) VALUES (12, 3, 1, 4000.00, 4000.00);
-INSERT INTO AppliedPromotion (`MaKM`, `MaSP`, `PhanTramGiam`) VALUES (1, 3, 15);
-INSERT INTO AppliedPromotion (`MaKM`, `MaSP`, `PhanTramGiam`) VALUES (1, 4, 5);
-INSERT INTO AppliedPromotion (`MaKM`, `MaSP`, `PhanTramGiam`) VALUES (1, 8, 15);
-INSERT INTO AppliedPromotion (`MaKM`, `MaSP`, `PhanTramGiam`) VALUES (5, 1, 10);
-INSERT INTO AppliedPromotion (`MaKM`, `MaSP`, `PhanTramGiam`) VALUES (6, 1, 10);
+-- 1. Categories
+INSERT INTO `categories` (`id`, `name`, `description`) 
+VALUES 
+(1, 'Trà sữa', 'Các loại trà sữa đặc biệt'),
+(2, 'Trà trái cây', 'Trà kết hợp trái cây tươi'),
+(3, 'Nước ép', 'Nước ép hoa quả nguyên chất'),
+(4, 'Đá bào', 'Thức uống mát lạnh tê tái'),
+(5, 'Cà phê', 'Cà phê nguyên chất');
+
+-- 2. Product Sizes
+INSERT INTO `product_sizes` (`id`, `name`, `price_adjustment`, `status`)
+VALUES
+(1, 'S', 0.00, 'ACTIVE'),
+(2, 'M', 0.00, 'ACTIVE'),
+(3, 'L', 0.00, 'ACTIVE');
+
+-- 3. Toppings
+INSERT INTO `toppings` (`id`, `name`, `extra_price`, `status`, `image_url`)
+VALUES
+(1, 'Trân châu đen', 5000.00, 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450324/Tran-Chau-Den_uyp7ow.png'),
+(2, 'Trân châu trắng', 6000.00, 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450365/tr%C3%A2n_ch%C3%A2u_tr%E1%BA%AFng_nskmtg.jpg'),
+(3, 'Thạch dừa 3Q', 4000.00, 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761450391/th%E1%BA%A1ch_d%E1%BB%ABa_ng5tks.jpg'),
+(4, 'Kem Trứng', 10000.00, 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566324/r4sunw3gbi9jquxig9rp.png');
+
+-- 4. Products
+INSERT INTO `products` (`id`, `category_id`, `name`, `description`, `status`, `image_url`)
+VALUES
+(1, 1, 'Trà Sữa Truyền Thống', 'Trà sữa vị truyền thống', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761572005/lwl2sjs8wxr9ssxinfwy.png'),
+(2, 1, 'Trà Sữa Matcha', 'Trà sữa vị matcha xanh', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449668/Tr%C3%A0_s%E1%BB%AFa_matcha_uwnvw6.png'),
+(3, 2, 'Trà Đào Cam Sả', 'Trà đào cam sả thơm mát', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449752/Tr%C3%A0_%C4%91%C3%A0o_cam_s%E1%BA%A3_benjcb.png'),
+(4, 3, 'Nước ép cam', 'Nước ép cam tươi', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449818/N%C6%B0%E1%BB%9Bc_%C3%A9p_cam_oyn7hh.png'),
+(5, 5, 'Cold Brew trái cây', 'Cà phê dịu nhẹ, mát lạnh, có hương trái cây', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449850/Cold_Drew_tr%C3%A1i_c%C3%A2y_kecbh2.png'),
+(7, 5, 'Americano', 'Cà phê nguyên chất', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449892/Americano_ywnwmn.png'),
+(8, 2, 'Trà đào', 'Trà olong vị đào', 'ACTIVE', 'https://res.cloudinary.com/dvxxd3vox/image/upload/v1761449960/%C3%94_long_%C4%91%C3%A0o_wwtnis.png'),
+(10, 1, 'Trà sữa rang muối', 'Đặc sản mới', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566204/j0bknbsqzku94nokujwf.png'),
+(15, 1, 'Hồng Trà', 'Nhiều trà ít sữa', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566129/cyijqkg0auraqsvu4rff.png'),
+(16, 2, 'Trà Kem', 'Kem bùi béo', 'ACTIVE', 'https://res.cloudinary.com/dawrd4avx/image/upload/v1761566273/e6j2lgaxyqmr6hime4kf.png');
+
+-- 5. Product Variants
+INSERT INTO `product_variants` (`id`, `product_id`, `size_id`, `price`, `status`)
+VALUES
+(1, 1, 1, 20000.00, 'ACTIVE'),
+(2, 1, 2, 25000.00, 'ACTIVE'),
+(3, 1, 3, 30000.00, 'ACTIVE'),
+(4, 2, 1, 22000.00, 'ACTIVE'),
+(5, 2, 2, 27000.00, 'ACTIVE'),
+(6, 2, 3, 32000.00, 'ACTIVE'),
+(7, 3, 1, 25000.00, 'ACTIVE'),
+(8, 3, 2, 30000.00, 'ACTIVE'),
+(9, 3, 3, 35000.00, 'ACTIVE'),
+(10, 4, 1, 18000.00, 'ACTIVE'),
+(11, 4, 2, 22000.00, 'ACTIVE'),
+(12, 4, 3, 27000.00, 'ACTIVE'),
+(14, 8, 1, 18000.00, 'ACTIVE'),
+(15, 8, 2, 20000.00, 'ACTIVE'),
+(16, 8, 3, 22000.00, 'ACTIVE'),
+(17, 7, 3, 24000.00, 'ACTIVE'),
+(20, 5, 2, 45000.00, 'ACTIVE'),
+(21, 10, 1, 25000.00, 'ACTIVE'),
+(22, 10, 2, 27000.00, 'ACTIVE'),
+(23, 10, 3, 29000.00, 'ACTIVE'),
+(28, 15, 1, 20000.00, 'ACTIVE'),
+(29, 15, 2, 18000.00, 'ACTIVE'),
+(30, 16, 1, 20000.00, 'ACTIVE');
+
+-- 6. Promotions
+INSERT INTO `promotions` (`id`, `name`, `code`, `description`, `start_date`, `end_date`, `usage_limit`, `status`, `is_public`)
+VALUES
+(1, 'Khuyến mãi mùa Noel', 'NOEL2025', 'Mùa Noel, giảm giá đậm sâu', '2025-11-01', '2025-12-31', 100, 'ACTIVE', 1),
+(2, 'Năm mới - Tuổi mới', 'NEWYEAR2026', 'Ưu đãi toàn menu', '2026-01-01', '2026-01-10', 200, 'ACTIVE', 1),
+(5, 'Valentine', 'VALENTINE', 'Khuyến mãi lễ tình nhân', '2026-02-01', '2026-02-20', 50, 'ACTIVE', 1);
+
+-- 7. Customers (Password: password)
+INSERT INTO `customers` (`id`, `username`, `password_hash`, `email`, `full_name`, `phone`, `status`, `created_at`)
+VALUES
+(1, 'phuoc', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'khanh@example.com', 'Nguyễn Phước Tài', '0912345678', 'ACTIVE', '2025-10-01 00:00:00'),
+(2, 'tai', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'tai@example.com', 'Tài Phước', '0987654321', 'ACTIVE', '2025-10-01 00:00:00'),
+(3, 'sang', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'dinhsang1105@gmail.com', 'Phan Đình Sáng', '123123123', 'ACTIVE', '2025-10-01 00:00:00'),
+(9, 'hoang', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'phuochoa2021vg@gmail.com', 'Hồng Phước Hòa', '12512235', 'ACTIVE', '2025-10-01 00:00:00'),
+(10, 'noname012', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'daisyprof205@gmail.com', 'sáng phan', '0123554158', 'ACTIVE', '2025-10-01 00:00:00');
+
+-- 8. Employees (Password: password)
+INSERT INTO `employees` (`id`, `username`, `password_hash`, `email`, `full_name`, `phone`, `role`, `status`, `created_at`)
+VALUES
+(1, 'admin', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'admin@trasua.com', 'Nguyễn Quản Lý', '0900000001', 'ADMIN', 'ACTIVE', '2025-10-01 00:00:00'),
+(3, 'phuochoa', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'hoahp@gmail.com', 'Hong Phuoc Hoa', '0999888777', 'STAFF', 'ACTIVE', '2025-10-01 00:00:00'),
+(5, 'noname', '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.TVuHOn2', 'sangphan@gmail.com', 'Nguyễn A', '5246624422', 'STAFF', 'ACTIVE', '2025-10-01 00:00:00');
+
+-- 9. Addresses
+INSERT INTO `addresses` (`id`, `customer_id`, `label`, `address_line`, `is_default`)
+VALUES
+(1, 1, 'Nhà riêng', '123 Đường ABC, Quận 1, TP.HCM', 1),
+(2, 3, 'Công ty', '456 Đường XYZ, Quận Thủ Đức, TP.HCM', 1),
+(3, 10, 'Nhà riêng', 'Số 1, Đường Vĩnh Viễn, Quận 10, TP.HCM', 1);
+
+-- 10. Orders
+INSERT INTO `orders` (`id`, `customer_id`, `employee_id`, `promotion_id`, `address_id`, `created_at`, `status`)
+VALUES
+(1, 1, 1, 1, 1, '2025-10-03 12:52:38', 'DELIVERED'),
+(2, 3, 3, NULL, 2, '2025-10-05 13:54:38', 'DELIVERED'),
+(14, 3, 3, NULL, 2, '2025-10-05 19:03:37', 'DELIVERED');
+
+-- 11. Order Items
+INSERT INTO `order_items` (`id`, `order_id`, `variant_id`, `quantity`, `unit_price`, `note`)
+VALUES
+(1, 1, 2, 2, 25000.00, 'Nóng'),
+(2, 1, 5, 1, 27000.00, NULL),
+(3, 2, 14, 2, 18000.00, NULL),
+(17, 14, 7, 1, 25000.00, NULL);
+
+-- 12. Ordered Toppings
+INSERT INTO `ordered_toppings` (`id`, `order_item_id`, `topping_id`, `quantity`, `price`)
+VALUES
+(1, 1, 1, 1, 5000.00),
+(2, 1, 3, 1, 4000.00),
+(3, 2, 2, 1, 6000.00);
+
+-- 13. Payments
+INSERT INTO `payments` (`id`, `order_id`, `status`, `method`, `amount`, `paid_at`)
+VALUES
+(1, 1, 'PAID', 'CASH', 59000.00, '2025-10-03 13:00:00'),
+(2, 2, 'PAID', 'CASH', 36000.00, '2025-10-05 14:00:00'),
+(14, 14, 'PAID', 'CASH', 25000.00, '2025-10-06 10:32:29');
+
+-- 14. Reviews
+INSERT INTO `reviews` (`id`, `customer_id`, `product_id`, `order_id`, `stars`, `comment`, `created_at`)
+VALUES
+(1, 1, 1, 1, 5, 'Rất ngon!', '2025-10-03 13:05:00'),
+(2, 3, 8, 2, 5, 'Trà đào thơm lắm', '2025-10-05 14:10:00');
+
+-- 15. Wishlists
+INSERT INTO `wishlists` (`id`, `customer_id`, `product_id`, `added_at`)
+VALUES
+(1, 3, 1, '2025-10-06 09:00:00'),
+(2, 3, 3, '2025-10-06 09:05:00');

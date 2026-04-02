@@ -6,7 +6,7 @@ import com.alotra.entity.enums.ToppingStatus;
 import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
-import com.alotra.service.CloudinaryService;
+import com.alotra.service.infrastructure.CloudinaryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;

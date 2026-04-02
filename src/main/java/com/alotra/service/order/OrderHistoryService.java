@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.order;
 
 import com.alotra.dto.OrderDto;
 import com.alotra.entity.*;
@@ -120,5 +120,8 @@ public class OrderHistoryService {
         public Integer quantity;
         public java.math.BigDecimal unitPrice;
         public java.math.BigDecimal total;
+    }
+    public List<Order> findByCustomer(Integer customerId) {
+        return orderRepository.findByCustomerId(customerId);
     }
 }

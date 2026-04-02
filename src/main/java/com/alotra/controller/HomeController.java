@@ -3,9 +3,8 @@ package com.alotra.controller;
 import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Promotion;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.service.ProductService;
-import com.alotra.service.CategoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.alotra.service.product.ProductFacade;
+import com.alotra.service.product.CategoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,17 +16,22 @@ import java.util.List;
 
 @Controller
 public class HomeController {
-    @Autowired
-    private ProductService productService;
-    @Autowired 
-    private PromotionRepository promotionRepository;
-    @Autowired 
-    private CategoryService categoryService;
+    private final ProductFacade productFacade;
+    private final PromotionRepository promotionRepository;
+    private final CategoryService categoryService;
+
+    public HomeController(ProductFacade productFacade, 
+                          PromotionRepository promotionRepository, 
+                          CategoryService categoryService) {
+        this.productFacade = productFacade;
+        this.promotionRepository = promotionRepository;
+        this.categoryService = categoryService;
+    }
 
     @GetMapping("/")
     public String homePage(Model model) {
         model.addAttribute("pageTitle", "AloTra - Trang Chủ");
-        List<ProductDTO> bestSellers = productService.findBestSellers();
+        List<ProductDTO> bestSellers = productFacade.getHomeProducts();
         model.addAttribute("bestSellers", bestSellers);
 
         List<Promotion> promos = promotionRepository.findByStatusAndDeletedAtIsNullOrderByStartDateDesc(com.alotra.entity.enums.PromotionStatus.ACTIVE);
@@ -51,8 +55,8 @@ public class HomeController {
         model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
         var categories = categoryService.findActive();
         model.addAttribute("categories", categories);
-        List<ProductDTO> initial = productService.listByCategoryAndSearch(categoryId, search);
-        model.addAttribute("products", initial);
+        List<ProductDTO> products = productFacade.searchProducts(categoryId, search);
+        model.addAttribute("products", products);
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("search", search);
         return "products/product_list";

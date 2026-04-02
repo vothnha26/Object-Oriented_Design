@@ -7,7 +7,7 @@ import com.alotra.repository.CategoryRepository;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ToppingRepository;
 import com.alotra.storage.ImageStorageService;
-import com.alotra.service.StatsService;
+import com.alotra.service.analytics.StatsService;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

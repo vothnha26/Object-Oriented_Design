@@ -1,9 +1,10 @@
-package com.alotra.service;
+package com.alotra.service.interaction;
 
 import com.alotra.entity.*;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.repository.*;
+import com.alotra.service.proxy.ReviewOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("reviewOperationsReal")
-public class ReviewService {
+public class ReviewService implements ReviewOperations {
     public static final Duration EDIT_WINDOW = Duration.ofMinutes(15);
 
     private final ReviewRepository reviewRepo;

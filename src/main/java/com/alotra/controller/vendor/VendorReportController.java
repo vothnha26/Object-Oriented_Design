@@ -1,9 +1,9 @@
 package com.alotra.controller.vendor;
 
 import com.alotra.security.EmployeeUserDetails;
-import com.alotra.service.EmployeeService;
-import com.alotra.service.ShiftReportService;
-import com.alotra.service.ShiftReportService.ShiftReport;
+import com.alotra.service.account.EmployeeService;
+import com.alotra.service.analytics.ShiftReportService;
+import com.alotra.service.analytics.ShiftReportService.ShiftReport;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;

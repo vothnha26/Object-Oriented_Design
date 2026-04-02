@@ -2,7 +2,7 @@ package com.alotra.controller.admin;
 
 import com.alotra.entity.Customer;
 import com.alotra.entity.enums.CustomerStatus;
-import com.alotra.service.CustomerService;
+import com.alotra.service.account.CustomerService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

@@ -10,7 +10,7 @@ import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ProductSizeRepository;
 import com.alotra.repository.OrderItemRepository;
-import com.alotra.service.CloudinaryService;
+import com.alotra.service.infrastructure.CloudinaryService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

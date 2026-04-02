@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.infrastructure;
 
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;

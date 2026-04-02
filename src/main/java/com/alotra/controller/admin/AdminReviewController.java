@@ -4,7 +4,7 @@ import com.alotra.entity.Review;
 import com.alotra.entity.Employee;
 import com.alotra.repository.ReviewRepository;
 import com.alotra.repository.EmployeeRepository;
-import com.alotra.service.EmailService;
+import com.alotra.service.infrastructure.EmailService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

@@ -7,7 +7,7 @@ import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.security.CustomerUserDetails;
-import com.alotra.service.OrderHistoryService;
+import com.alotra.service.order.OrderHistoryService;
 import com.alotra.repository.OrderRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

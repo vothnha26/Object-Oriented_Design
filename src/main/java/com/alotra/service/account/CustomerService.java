@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.account;
 
 import com.alotra.entity.Customer;
 import com.alotra.entity.enums.CustomerStatus;

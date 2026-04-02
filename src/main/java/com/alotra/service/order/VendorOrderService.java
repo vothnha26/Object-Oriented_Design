@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.order;
 
 import com.alotra.dto.OrderDto;
 import com.alotra.entity.Order;
@@ -85,5 +85,10 @@ public class VendorOrderService {
             dto.setCustomerPhone(o.getCustomer().getPhone());
         }
         return dto;
+    }
+    public List<Order> findByVendor(Integer vendorId) {
+        // Current domain doesn't link vendor to order directly yet, 
+        // returning all as placeholder for vendor-centric view
+        return orderRepository.findAll();
     }
 }

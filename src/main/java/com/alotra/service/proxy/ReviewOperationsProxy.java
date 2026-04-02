@@ -30,13 +30,8 @@ public class ReviewOperationsProxy implements ReviewOperations {
     }
 
     @Override
-    public Map<Integer, Review> findByCustomerAndLineIds(Integer customerId, List<Integer> lineIds) {
-        return real.findByCustomerAndLineIds(customerId, lineIds);
-    }
-
-    @Override
-    public Map<Integer, Review> findExistingByCustomerAndLines(Integer customerId, List<Integer> lineIds) {
-        return real.findExistingByCustomerAndLines(customerId, lineIds);
+    public Map<Integer, Review> findByCustomerAndProductIds(Integer customerId, List<Integer> productIds) {
+        return real.findByCustomerAndProductIds(customerId, productIds);
     }
 
     @Override
@@ -50,8 +45,8 @@ public class ReviewOperationsProxy implements ReviewOperations {
     }
 
     @Override
-    public void submitReview(Customer customer, Integer orderLineId, int stars, String comment) {
-        real.submitReview(customer, orderLineId, stars, comment);
+    public void submitReview(Customer customer, Integer productId, Integer orderId, int stars, String comment) {
+        real.submitReview(customer, productId, orderId, stars, comment);
     }
 
     @Override

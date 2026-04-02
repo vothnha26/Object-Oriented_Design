@@ -10,15 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 public interface ReviewOperations {
-    Map<Integer, Review> findByCustomerAndLineIds(Integer customerId, List<Integer> lineIds);
-
-    Map<Integer, Review> findExistingByCustomerAndLines(Integer customerId, List<Integer> lineIds);
+    Map<Integer, Review> findByCustomerAndProductIds(Integer customerId, List<Integer> productIds);
 
     boolean canEdit(Review r);
 
     boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus);
 
-    void submitReview(Customer customer, Integer orderLineId, int stars, String comment);
+    void submitReview(Customer customer, Integer productId, Integer orderId, int stars, String comment);
 
     Review updateIfAllowed(Customer customer, Integer reviewId, int stars, String comment);
 

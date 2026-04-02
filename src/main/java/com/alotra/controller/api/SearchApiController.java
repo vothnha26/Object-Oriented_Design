@@ -2,8 +2,8 @@ package com.alotra.controller.api;
 
 import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Category;
-import com.alotra.service.CategoryService;
-import com.alotra.service.ProductService;
+import com.alotra.service.product.CategoryService;
+import com.alotra.service.product.ProductService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.product;
 
 import com.alotra.entity.Category;
 import com.alotra.repository.CategoryRepository;

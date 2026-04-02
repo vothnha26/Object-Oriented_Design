@@ -1,7 +1,7 @@
 package com.alotra.controller.api;
 
 import com.alotra.dto.ProductDTO;
-import com.alotra.service.ProductService;
+import com.alotra.service.product.ProductService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.product;
 
 import com.alotra.dto.ProductDTO;
 import com.alotra.repository.ProductRepository;

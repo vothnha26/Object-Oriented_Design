@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.order;
 
 import com.alotra.entity.*;
 import com.alotra.entity.enums.PaymentMethod;

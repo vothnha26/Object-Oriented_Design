@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.infrastructure;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;

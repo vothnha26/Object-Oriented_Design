@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.product;
 
 import com.alotra.entity.Topping;
 import com.alotra.repository.ToppingRepository;
@@ -29,5 +29,9 @@ public class ToppingService {
         if (id != null) {
             toppingRepository.deleteById(id);
         }
+    }
+
+    public List<Topping> findActive() {
+        return toppingRepository.findByDeletedAtIsNull();
     }
 }

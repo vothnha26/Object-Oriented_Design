@@ -1,8 +1,8 @@
 package com.alotra.controller.account;
 
 import com.alotra.entity.Customer;
-import com.alotra.service.CustomerService;
-import com.alotra.service.ReviewService;
+import com.alotra.service.account.CustomerService;
+import com.alotra.service.proxy.ReviewOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -11,10 +11,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/account/reviews")
 public class AccountReviewController {
-    private final ReviewService reviewService;
+    private final ReviewOperations reviewService;
     private final CustomerService customerService;
 
-    public AccountReviewController(ReviewService reviewService, CustomerService customerService) {
+    public AccountReviewController(ReviewOperations reviewService, CustomerService customerService) {
         this.reviewService = reviewService;
         this.customerService = customerService;
     }

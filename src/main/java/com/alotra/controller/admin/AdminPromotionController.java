@@ -3,7 +3,7 @@ package com.alotra.controller.admin;
 import com.alotra.entity.Promotion;
 import com.alotra.entity.enums.PromotionStatus;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.service.CloudinaryService;
+import com.alotra.service.infrastructure.CloudinaryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;

@@ -2,8 +2,8 @@ package com.alotra.web;
 
 import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Category;
-import com.alotra.service.CategoryService;
-import com.alotra.service.ProductService;
+import com.alotra.service.product.CategoryService;
+import com.alotra.service.product.ProductService;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 

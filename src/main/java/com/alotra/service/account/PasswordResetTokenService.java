@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.account;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

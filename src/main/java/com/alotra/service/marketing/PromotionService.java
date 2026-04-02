@@ -1,4 +1,4 @@
-package com.alotra.service;
+package com.alotra.service.marketing;
 
 import com.alotra.entity.*;
 import com.alotra.repository.*;
