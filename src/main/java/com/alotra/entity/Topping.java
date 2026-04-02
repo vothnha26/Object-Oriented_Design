@@ -6,28 +6,29 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Topping")
+@Table(name = "toppings")
 public class Topping {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaTopping")
     private Integer id;
 
-    @Column(name = "TenTopping", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(name = "GiaThem", nullable = false)
+    @Column(name = "extra_price", nullable = false)
     private BigDecimal extraPrice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "TrangThai", nullable = false)
-    private ToppingStatus status = ToppingStatus.AVAILABLE;
+    @Column(nullable = false)
+    private ToppingStatus status = ToppingStatus.ACTIVE;
 
-    @Column(name = "UrlAnh")
+    @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "DeletedAt")
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    public boolean isAvailable() { return status == ToppingStatus.ACTIVE && deletedAt == null; }
 
     // Getters and Setters
     public Integer getId() { return id; }
@@ -42,7 +43,4 @@ public class Topping {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-
-    // Business methods
-    public boolean isAvailable() { return status == ToppingStatus.AVAILABLE && deletedAt == null; }
 }

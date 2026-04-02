@@ -6,28 +6,28 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "ProductSize")
+@Table(name = "product_sizes")
 public class ProductSize {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id")
     private Integer id;
 
-    @Column(name = "Name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "PriceAdjustment", nullable = false)
+    @Column(name = "price_adjustment", nullable = false)
     private BigDecimal priceAdjustment = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "Status", nullable = false)
+    @Column(nullable = false)
     private ProductStatus status = ProductStatus.ACTIVE;
 
-    @Column(name = "DeletedAt")
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     public boolean isActive() { return status == ProductStatus.ACTIVE && deletedAt == null; }
 
+    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }

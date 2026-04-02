@@ -1,4 +1,3 @@
-// 📁 com/alotra/repository/ProductRepository.java
 package com.alotra.repository;
 
 import java.math.BigDecimal;
@@ -20,68 +19,59 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
         String getName();
         BigDecimal getPrice();
         String getImageUrl();
-        // New: total sold quantity (only paid orders)
         Long getSoldQty();
     }
 
-    // Top 20 best sellers by total quantity sold (paid orders only). Includes products with zero sales.
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, " +
-            " MIN(b.Price) AS price, COALESCE(SUM(CASE WHEN p.Status='PAID' THEN ct.SoLuong ELSE 0 END),0) AS soldQty " +
-            "FROM Product sp " +
-            "LEFT JOIN ProductVariant b ON b.ProductId = sp.MaSP " +
-            "LEFT JOIN OrderItem ct ON ct.MaBT = b.Id " +
-            "LEFT JOIN Orders dh ON dh.MaDH = ct.MaDH " +
-            "LEFT JOIN Payment p ON p.OrderId = dh.MaDH " +
-            "WHERE sp.TrangThai = 'ACTIVE' AND sp.DeletedAt IS NULL " +
-            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
-            "ORDER BY soldQty DESC, sp.MaSP DESC LIMIT 20", nativeQuery = true)
+    @Query(value = "SELECT sp.id AS id, sp.name AS name, sp.image_url AS imageUrl, " +
+            " MIN(b.price) AS price, COALESCE(SUM(CASE WHEN p.status='PAID' THEN ct.quantity ELSE 0 END),0) AS soldQty " +
+            "FROM products sp " +
+            "LEFT JOIN product_variants b ON b.product_id = sp.id " +
+            "LEFT JOIN order_items ct ON ct.variant_id = b.id " +
+            "LEFT JOIN orders dh ON dh.id = ct.order_id " +
+            "LEFT JOIN payments p ON p.order_id = dh.id " +
+            "WHERE sp.status = 'ACTIVE' AND sp.deleted_at IS NULL " +
+            "GROUP BY sp.id, sp.name, sp.image_url " +
+            "ORDER BY soldQty DESC, sp.id DESC LIMIT 20", nativeQuery = true)
     List<BestSellerProjection> findBestSellersNative();
 
-    // New: list products by category (null = all)
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.Price) AS price " +
-            "FROM Product sp LEFT JOIN ProductVariant b ON b.ProductId = sp.MaSP " +
-            "WHERE sp.TrangThai = 'ACTIVE' AND sp.DeletedAt IS NULL " +
-            "AND (:categoryId IS NULL OR sp.MaDM = :categoryId) " +
-            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
-            "ORDER BY sp.MaSP DESC", nativeQuery = true)
+    @Query(value = "SELECT sp.id AS id, sp.name AS name, sp.image_url AS imageUrl, MIN(b.price) AS price " +
+            "FROM products sp LEFT JOIN product_variants b ON b.product_id = sp.id " +
+            "WHERE sp.status = 'ACTIVE' AND sp.deleted_at IS NULL " +
+            "AND (:categoryId IS NULL OR sp.category_id = :categoryId) " +
+            "GROUP BY sp.id, sp.name, sp.image_url " +
+            "ORDER BY sp.id DESC", nativeQuery = true)
     List<BestSellerProjection> findListByCategoryNative(@Param("categoryId") Integer categoryId);
 
     List<Product> findByDeletedAtIsNull();
     List<Product> findByDeletedAtIsNotNull();
 
-    // New: count active products by category (for delete guard)
     long countByCategoryAndDeletedAtIsNull(Category category);
 
-    // New: filter active products by category id
     List<Product> findByCategory_IdAndDeletedAtIsNull(Integer categoryId);
 
-    // New: keyword search by product or category name (case-insensitive)
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.Price) AS price " +
-            "FROM Product sp " +
-            "LEFT JOIN ProductVariant b ON b.ProductId = sp.MaSP " +
-            "LEFT JOIN Category dm ON dm.MaDM = sp.MaDM " +
-            "WHERE sp.TrangThai = 'ACTIVE' AND sp.DeletedAt IS NULL " +
-            "AND (LOWER(sp.TenSP) LIKE LOWER(CONCAT('%', :kw, '%')) OR LOWER(dm.TenDM) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
-            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
-            "ORDER BY sp.MaSP DESC LIMIT 20", nativeQuery = true)
+    @Query(value = "SELECT sp.id AS id, sp.name AS name, sp.image_url AS imageUrl, MIN(b.price) AS price " +
+            "FROM products sp " +
+            "LEFT JOIN product_variants b ON b.product_id = sp.id " +
+            "LEFT JOIN categories dm ON dm.id = sp.category_id " +
+            "WHERE sp.status = 'ACTIVE' AND sp.deleted_at IS NULL " +
+            "AND (LOWER(sp.name) LIKE LOWER(CONCAT('%', :kw, '%')) OR LOWER(dm.name) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
+            "GROUP BY sp.id, sp.name, sp.image_url " +
+            "ORDER BY sp.id DESC LIMIT 20", nativeQuery = true)
     List<BestSellerProjection> searchByKeywordNative(@Param("kw") String keyword);
 
-    // New: search by category and keyword (combined filter)
-    @Query(value = "SELECT sp.MaSP AS id, sp.TenSP AS name, sp.UrlAnh AS imageUrl, MIN(b.Price) AS price " +
-            "FROM Product sp " +
-            "LEFT JOIN ProductVariant b ON b.ProductId = sp.MaSP " +
-            "LEFT JOIN Category dm ON dm.MaDM = sp.MaDM " +
-            "WHERE sp.TrangThai = 'ACTIVE' AND sp.DeletedAt IS NULL " +
-            "AND (:categoryId IS NULL OR sp.MaDM = :categoryId) " +
-            "AND (LOWER(sp.TenSP) LIKE LOWER(CONCAT('%', :kw, '%')) OR LOWER(dm.TenDM) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
-            "GROUP BY sp.MaSP, sp.TenSP, sp.UrlAnh " +
-            "ORDER BY sp.MaSP DESC LIMIT 20", nativeQuery = true)
+    @Query(value = "SELECT sp.id AS id, sp.name AS name, sp.image_url AS imageUrl, MIN(b.price) AS price " +
+            "FROM products sp " +
+            "LEFT JOIN product_variants b ON b.product_id = sp.id " +
+            "LEFT JOIN categories dm ON dm.id = sp.category_id " +
+            "WHERE sp.status = 'ACTIVE' AND sp.deleted_at IS NULL " +
+            "AND (:categoryId IS NULL OR sp.category_id = :categoryId) " +
+            "AND (LOWER(sp.name) LIKE LOWER(CONCAT('%', :kw, '%')) OR LOWER(dm.name) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
+            "GROUP BY sp.id, sp.name, sp.image_url " +
+            "ORDER BY sp.id DESC LIMIT 20", nativeQuery = true)
     List<BestSellerProjection> searchByCategoryAndKeywordNative(@Param("categoryId") Integer categoryId, @Param("kw") String keyword);
 
-    // New: find active product by name (case-insensitive) for duplicate check
     Product findByNameIgnoreCaseAndDeletedAtIsNull(String name);
 
-    // === Admin: search with optional filters (keyword/category/status) among non-deleted products ===
     @Query("SELECT p FROM Product p WHERE p.deletedAt IS NULL " +
             "AND (:kw IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :kw, '%'))) " +
             "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +

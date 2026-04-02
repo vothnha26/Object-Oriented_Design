@@ -1,141 +1,75 @@
 package com.alotra.controller.admin;
 
-import com.alotra.entity.AppliedPromotion;
 import com.alotra.entity.Promotion;
-import com.alotra.entity.Product;
-import com.alotra.service.PromotionService;
-import com.alotra.storage.ImageStorageService;
-import jakarta.validation.Valid;
+import com.alotra.entity.enums.PromotionStatus;
+import com.alotra.repository.PromotionRepository;
+import com.alotra.service.CloudinaryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.time.LocalDate;
 import java.util.List;
 
 @Controller
 @RequestMapping("/admin/promotions")
 public class AdminPromotionController {
-    private final PromotionService promotionService;
-    private final ImageStorageService storageService;
+    private final PromotionRepository promotionRepo;
+    private final CloudinaryService cloudinaryService;
 
-    public AdminPromotionController(PromotionService promotionService, ImageStorageService storageService) {
-        this.promotionService = promotionService;
-        this.storageService = storageService;
+    public AdminPromotionController(PromotionRepository promotionRepo,
+                                   CloudinaryService cloudinaryService) {
+        this.promotionRepo = promotionRepo;
+        this.cloudinaryService = cloudinaryService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("pageTitle", "Sự kiện khuyến mãi");
+        List<Promotion> items = promotionRepo.findByDeletedAtIsNull();
+        model.addAttribute("items", items);
+        model.addAttribute("pageTitle", "Khuyến mãi");
         model.addAttribute("currentPage", "promotions");
-        model.addAttribute("items", promotionService.findActive());
         return "admin/promotion-list";
     }
 
-    @GetMapping("/new")
-    public String createForm(Model model) {
-        model.addAttribute("pageTitle", "Thêm sự kiện");
+    @GetMapping("/add")
+    public String addForm(Model model) {
+        model.addAttribute("pageTitle", "Thêm khuyến mãi");
         model.addAttribute("currentPage", "promotions");
-        model.addAttribute("item", new Promotion());
+        model.addAttribute("promotion", new Promotion());
         return "admin/promotion-form";
     }
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable Integer id, Model model) {
-        Promotion item = promotionService.findById(id).orElseThrow();
-        model.addAttribute("pageTitle", "Sửa sự kiện");
+        Promotion p = promotionRepo.findById(id).orElseThrow();
+        model.addAttribute("pageTitle", "Sửa khuyến mãi");
         model.addAttribute("currentPage", "promotions");
-        model.addAttribute("item", item);
+        model.addAttribute("promotion", p);
         return "admin/promotion-form";
     }
 
     @PostMapping("/save")
-    public String save(@ModelAttribute("item") @Valid Promotion item,
-                       BindingResult result,
+    public String save(@ModelAttribute Promotion promotion,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
-                       Model model,
                        RedirectAttributes ra) {
-        LocalDate s = item.getStartDate();
-        LocalDate e = item.getEndDate();
-        if (s != null && e != null && e.isBefore(s)) {
-            result.rejectValue("endDate", "date.invalid", "Ngày kết thúc phải >= ngày bắt đầu");
+        if (imageFile != null && !imageFile.isEmpty()) {
+            String url = cloudinaryService.uploadFile(imageFile);
+            promotion.setImageUrl(url);
         }
-        if (result.hasErrors()) {
-            model.addAttribute("pageTitle", item.getId() == null ? "Thêm sự kiện" : "Sửa sự kiện");
-            model.addAttribute("currentPage", "promotions");
-            return "admin/promotion-form";
-        }
-        try {
-            if (imageFile != null && !imageFile.isEmpty()) {
-                String url = storageService.uploadImage(imageFile);
-                item.setImageUrl(url);
-            } else if (item.getId() != null) {
-                promotionService.findById(item.getId()).ifPresent(old -> item.setImageUrl(old.getImageUrl()));
-            }
-        } catch (Exception ex) {
-            result.rejectValue("imageUrl", "upload.error", "Lỗi tải ảnh: " + ex.getMessage());
-            model.addAttribute("pageTitle", item.getId() == null ? "Thêm sự kiện" : "Sửa sự kiện");
-            model.addAttribute("currentPage", "promotions");
-            return "admin/promotion-form";
-        }
-        boolean isNew = (item.getId() == null);
-        promotionService.save(item);
-        ra.addFlashAttribute("message", isNew ? "Đã thêm sự kiện khuyến mãi." : "Đã cập nhật sự kiện khuyến mãi.");
+        if (promotion.getStatus() == null) promotion.setStatus(PromotionStatus.ACTIVE);
+        promotionRepo.save(promotion);
+        ra.addFlashAttribute("message", "Đã lưu khuyến mãi");
         return "redirect:/admin/promotions";
     }
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
-        var promoOpt = promotionService.findById(id);
-        if (promoOpt.isEmpty()) {
-            ra.addFlashAttribute("error", "Không tìm thấy sự kiện khuyến mãi.");
-            return "redirect:/admin/promotions";
-        }
-        Promotion p = promoOpt.get();
-        if (promotionService.listAssignments(id).size() > 0) {
-            ra.addFlashAttribute("error", "Sự kiện đang áp dụng sản phẩm, không thể xóa. Vui lòng gỡ áp dụng trước.");
-            return "redirect:/admin/promotions";
-        }
-        p.setDeletedAt(java.time.LocalDateTime.now());
-        promotionService.save(p);
-        ra.addFlashAttribute("message", "Đã chuyển sự kiện vào thùng rác.");
+        promotionRepo.findById(id).ifPresent(p -> {
+            p.setDeletedAt(java.time.LocalDateTime.now());
+            promotionRepo.save(p);
+        });
+        ra.addFlashAttribute("message", "Đã chuyển khuyến mãi vào thùng rác");
         return "redirect:/admin/promotions";
-    }
-
-    @GetMapping("/{id}/products")
-    public String manageProducts(@PathVariable Integer id, Model model) {
-        Promotion promo = promotionService.findById(id).orElseThrow();
-        List<AppliedPromotion> assigned = promotionService.listAssignments(id);
-        List<Product> unassigned = promotionService.listUnassignedProducts(id);
-        model.addAttribute("pageTitle", "Áp sản phẩm - " + promo.getName());
-        model.addAttribute("currentPage", "promotions");
-        model.addAttribute("promo", promo);
-        model.addAttribute("assigned", assigned);
-        model.addAttribute("unassigned", unassigned);
-        return "admin/promotion-products";
-    }
-
-    @PostMapping("/{id}/products")
-    public String addProduct(@PathVariable Integer id,
-                             @RequestParam("productId") Integer productId,
-                             @RequestParam("percent") Integer percent,
-                             RedirectAttributes ra) {
-        try {
-            promotionService.assignProduct(id, productId, percent);
-            ra.addFlashAttribute("message", "Đã áp dụng sản phẩm vào sự kiện.");
-        } catch (IllegalArgumentException ex) {
-            ra.addFlashAttribute("error", ex.getMessage());
-        }
-        return "redirect:/admin/promotions/" + id + "/products";
-    }
-
-    @GetMapping("/{id}/products/{productId}/remove")
-    public String removeProduct(@PathVariable Integer id, @PathVariable Integer productId, RedirectAttributes ra) {
-        promotionService.unassignProduct(id, productId);
-        ra.addFlashAttribute("message", "Đã gỡ sản phẩm khỏi sự kiện.");
-        return "redirect:/admin/promotions/" + id + "/products";
     }
 }

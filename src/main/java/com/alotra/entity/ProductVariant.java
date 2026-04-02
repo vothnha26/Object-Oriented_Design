@@ -1,33 +1,31 @@
 package com.alotra.entity;
 
 import com.alotra.entity.enums.ProductStatus;
-import java.math.BigDecimal;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "ProductVariant")
+@Table(name = "product_variants")
 public class ProductVariant {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "Id")
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ProductId", nullable = false)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ProductSizeId", nullable = false)
+    @JoinColumn(name = "size_id", nullable = false)
     private ProductSize size;
 
-    @Column(name = "Price", nullable = false)
+    @Column(nullable = false)
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "Status", nullable = false)
+    @Column(nullable = false)
     private ProductStatus status = ProductStatus.ACTIVE;
 
-    // === Business methods ===
     public boolean isActive() { return status == ProductStatus.ACTIVE; }
 
     // Getters and Setters

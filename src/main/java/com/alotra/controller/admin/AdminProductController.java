@@ -57,12 +57,12 @@ public class AdminProductController {
     public String list(Model model,
             @RequestParam(value = "kw", required = false) String kw,
             @RequestParam(value = "categoryId", required = false) Integer categoryId,
-            @RequestParam(value = "status", required = false) Integer status) {
+            @RequestParam(value = "status", required = false) String status) {
         String keyword = (kw != null && !kw.isBlank()) ? kw.trim() : null;
         ProductStatus statusEnum = null;
-        if (status != null) {
+        if (status != null && !status.isBlank()) {
             try {
-                statusEnum = ProductStatus.fromValue(status);
+                statusEnum = ProductStatus.valueOf(status.toUpperCase());
             } catch (Exception ignored) {
             }
         }
@@ -83,7 +83,7 @@ public class AdminProductController {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty())
             return ResponseEntity.notFound().build();
-        List<ProductVariant> list = variantRepository.findByProductFetchingSize(productOpt.get());
+        List<ProductVariant> list = variantRepository.findByProduct(productOpt.get());
         List<Map<String, Object>> data = new ArrayList<>();
         for (ProductVariant v : list) {
             Map<String, Object> m = new HashMap<>();
@@ -118,7 +118,7 @@ public class AdminProductController {
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", p);
         model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
-        model.addAttribute("variants", variantRepository.findByProductFetchingSize(p));
+        model.addAttribute("variants", variantRepository.findByProduct(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
     }
@@ -129,7 +129,7 @@ public class AdminProductController {
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
             @RequestParam(value = "variantSizeId", required = false) List<Integer> variantSizeIds,
             @RequestParam(value = "variantPrice", required = false) List<BigDecimal> variantPrices,
-            @RequestParam(value = "variantStatus", required = false) List<Integer> variantStatuses,
+            @RequestParam(value = "variantStatus", required = false) List<String> variantStatuses,
             RedirectAttributes ra) {
         String name = product.getName() != null ? product.getName().trim() : null;
         product.setName(name);
@@ -158,28 +158,27 @@ public class AdminProductController {
 
         if (variantSizeIds != null && !variantSizeIds.isEmpty()) {
             int n = variantSizeIds.size();
-            int pn = variantPrices != null ? variantPrices.size() : 0;
-            int sn = variantStatuses != null ? variantStatuses.size() : 0;
-            int limit = Math.min(n, Math.min(pn, Math.max(sn, n)));
             Set<Integer> seenSizeIds = new HashSet<>();
-            for (int i = 0; i < limit; i++) {
+            for (int i = 0; i < n; i++) {
                 Integer sizeId = variantSizeIds.get(i);
                 BigDecimal price = (variantPrices != null && i < variantPrices.size()) ? variantPrices.get(i) : null;
-                Integer statusVal = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i)
-                        : 1;
-                if (sizeId == null || price == null)
-                    continue;
-                if (price.signum() < 0)
-                    continue;
-                if (!seenSizeIds.add(sizeId))
-                    continue;
+                String statusStr = (variantStatuses != null && i < variantStatuses.size()) ? variantStatuses.get(i) : "ACTIVE";
+                
+                if (sizeId == null || price == null) continue;
+                if (price.signum() < 0) continue;
+                if (!seenSizeIds.add(sizeId)) continue;
+                
                 ProductVariant v = new ProductVariant();
                 v.setProduct(product);
                 ProductSize sz = new ProductSize();
                 sz.setId(sizeId);
                 v.setSize(sz);
                 v.setPrice(price);
-                v.setStatus(ProductStatus.fromValue(statusVal != null ? statusVal : 1));
+                try {
+                    v.setStatus(ProductStatus.valueOf(statusStr.toUpperCase()));
+                } catch (Exception e) {
+                    v.setStatus(ProductStatus.ACTIVE);
+                }
                 variantRepository.save(v);
             }
         }
@@ -206,7 +205,6 @@ public class AdminProductController {
             return "redirect:/admin/products";
         }
 
-        // Use Command Pattern to support Undo
         AdminCommand cmd = new SoftDeleteProductCommand(productRepository, p.getId());
         commandInvoker.execute(cmd);
 
@@ -229,7 +227,7 @@ public class AdminProductController {
     public String addVariant(@PathVariable Integer id,
             @RequestParam("sizeId") Integer sizeId,
             @RequestParam("price") BigDecimal price,
-            @RequestParam(value = "status", defaultValue = "1") Integer status,
+            @RequestParam(value = "status", defaultValue = "ACTIVE") String status,
             RedirectAttributes ra) {
         Optional<Product> productOpt = productRepository.findById(id);
         if (productOpt.isEmpty()) {
@@ -243,7 +241,11 @@ public class AdminProductController {
         v.setProduct(p);
         v.setSize(size);
         v.setPrice(price);
-        v.setStatus(ProductStatus.fromValue(status));
+        try {
+            v.setStatus(ProductStatus.valueOf(status.toUpperCase()));
+        } catch (Exception e) {
+            v.setStatus(ProductStatus.ACTIVE);
+        }
         variantRepository.save(v);
         return "redirect:/admin/products/edit/" + id;
     }
@@ -254,7 +256,7 @@ public class AdminProductController {
             variantRepository.deleteById(variantId);
             ra.addFlashAttribute("message", "Đã xóa biến thể.");
         } catch (DataIntegrityViolationException ex) {
-            ra.addFlashAttribute("error", "Không thể xóa biến thể vì đang được tham chiếu trong đơn hàng/giỏ hàng.");
+            ra.addFlashAttribute("error", "Không thể xóa biến thể vì đang được tham chiếu trong đơn hàng.");
         } catch (Exception ex) {
             ra.addFlashAttribute("error", "Không thể xóa biến thể: " + ex.getMessage());
         }

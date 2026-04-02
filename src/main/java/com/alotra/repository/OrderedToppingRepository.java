@@ -1,8 +1,9 @@
 package com.alotra.repository;
 
 import com.alotra.entity.OrderedTopping;
-import com.alotra.entity.OrderedToppingId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface OrderedToppingRepository extends JpaRepository<OrderedTopping, OrderedToppingId> {
+@Repository
+public interface OrderedToppingRepository extends JpaRepository<OrderedTopping, Integer> {
 }

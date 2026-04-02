@@ -1,18 +1,14 @@
 package com.alotra.entity.enums;
 
 public enum ToppingStatus {
-    UNAVAILABLE(0),
-    AVAILABLE(1),
-    DELETED(2);
+    ACTIVE,
+    INACTIVE;
 
-    private final int value;
-    ToppingStatus(int value) { this.value = value; }
-    public int getValue() { return value; }
+    public static final ToppingStatus UNAVAILABLE = INACTIVE;
 
-    public static ToppingStatus fromValue(int v) {
-        for (ToppingStatus s : values()) {
-            if (s.value == v) return s;
-        }
-        return AVAILABLE;
+    public static ToppingStatus fromValue(Integer val) {
+        if (val == null) return ACTIVE;
+        if (val == 1) return ACTIVE;
+        return INACTIVE;
     }
 }

@@ -4,65 +4,77 @@ import com.alotra.entity.enums.PromotionStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
-@Table(name = "Promotion")
+@Table(name = "promotions")
 public class Promotion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaKM")
     private Integer id;
 
-    @Column(name = "TenSuKien", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "MoTa")
+    @Column(unique = true)
+    private String code;
+
     private String description;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Column(name = "NgayBD", nullable = false)
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @Column(name = "NgayKT", nullable = false)
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
+    @Column(name = "usage_limit")
+    private Integer usageLimit;
+
+    @Column(name = "used_count")
+    private Integer usedCount = 0;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "TrangThai", nullable = false)
+    @Column(nullable = false)
     private PromotionStatus status = PromotionStatus.ACTIVE;
 
-    @Column(name = "UrlAnh")
+    @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "LuotXem")
-    private Integer views;
+    @Column(name = "is_public")
+    private boolean isPublic = true;
 
-    @Column(name = "DeletedAt")
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     public boolean isActive() {
         return status == PromotionStatus.ACTIVE
                 && deletedAt == null
-                && (endDate == null || !endDate.isBefore(LocalDate.now()));
+                && (endDate == null || !endDate.isBefore(LocalDate.now()))
+                && (usageLimit == null || usedCount < usageLimit);
     }
 
+    // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public LocalDate getEndDate() { return endDate; }
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public Integer getUsageLimit() { return usageLimit; }
+    public void setUsageLimit(Integer usageLimit) { this.usageLimit = usageLimit; }
+    public Integer getUsedCount() { return usedCount; }
+    public void setUsedCount(Integer usedCount) { this.usedCount = usedCount; }
     public PromotionStatus getStatus() { return status; }
     public void setStatus(PromotionStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public Integer getViews() { return views; }
-    public void setViews(Integer views) { this.views = views; }
+    public boolean isPublic() { return isPublic; }
+    public void setPublic(boolean isPublic) { this.isPublic = isPublic; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

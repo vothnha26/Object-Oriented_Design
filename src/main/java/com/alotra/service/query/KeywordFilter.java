@@ -1,23 +1,28 @@
 package com.alotra.service.query;
 
 import com.alotra.entity.Order;
+import com.alotra.repository.OrderRepository;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class KeywordFilter implements OrderFilterStrategy {
-    private final String keyword;
-
-    public KeywordFilter(String keyword) {
-        this.keyword = keyword != null ? keyword.toLowerCase() : "";
+public class KeywordFilter extends AbstractOrderQuery {
+    public KeywordFilter(OrderRepository repository) {
+        super(repository);
     }
 
     @Override
-    public boolean matches(Order order) {
-        if (keyword.isBlank()) return true;
-        String custName = order.getCustomer() != null && order.getCustomer().getFullName() != null
-            ? order.getCustomer().getFullName().toLowerCase() : "";
-        String phone = order.getShippingInfo() != null && order.getShippingInfo().getReceiverPhone() != null 
-            ? order.getShippingInfo().getReceiverPhone() : "";
-        String address = order.getShippingInfo() != null && order.getShippingInfo().getShippingAddress() != null 
-            ? order.getShippingInfo().getShippingAddress().toLowerCase() : "";
-        return custName.contains(keyword) || phone.contains(keyword) || address.contains(keyword);
+    public List<Order> execute(Object kw, Object list) {
+        String keyword = (String) kw;
+        List<Order> orders = (List<Order>) list;
+        if (keyword == null || keyword.isBlank()) return orders;
+        
+        String lower = keyword.toLowerCase();
+        return orders.stream()
+                .filter(order -> 
+                    (order.getId().toString().contains(keyword)) ||
+                    (order.getCustomer().getFullName() != null && order.getCustomer().getFullName().toLowerCase().contains(lower)) ||
+                    (order.getAddress() != null && order.getAddress().getAddressLine() != null && order.getAddress().getAddressLine().toLowerCase().contains(lower))
+                )
+                .collect(Collectors.toList());
     }
 }

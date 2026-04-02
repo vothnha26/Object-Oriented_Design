@@ -36,6 +36,7 @@ public class AdminReviewController {
         return "admin/reviews";
     }
 
+    @PostMapping("/{id}/delete")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
         if (id != null) {
             reviewRepository.findById(id).ifPresent(reviewRepository::delete);
@@ -57,7 +58,6 @@ public class AdminReviewController {
         String who = auth != null ? auth.getName() : "admin";
         String content = (reply != null && !reply.isBlank()) ? reply.trim() : null;
         review.setAdminReply(content);
-        review.setAdminRepliedAt(content != null ? LocalDateTime.now() : null);
         Employee replier = employeeRepository.findByUsername(who).orElse(null);
         review.setRepliedBy(content != null ? replier : null);
         reviewRepository.save(review);

@@ -1,11 +1,11 @@
 package com.alotra.dto;
 
 import java.math.BigDecimal;
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public class OrderDto {
     private Integer id;
-    private OffsetDateTime createdAt;
+    private LocalDateTime createdAt;
     private String status;
     private BigDecimal total;
     private String customerName;
@@ -19,7 +19,7 @@ public class OrderDto {
 
     // Getters
     public Integer getId() { return id; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
     public String getStatus() { return status; }
     public BigDecimal getTotal() { return total; }
     public String getCustomerName() { return customerName; }
@@ -33,7 +33,7 @@ public class OrderDto {
 
     // Setters
     public void setId(Integer id) { this.id = id; }
-    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setStatus(String status) { this.status = status; }
     public void setTotal(BigDecimal total) { this.total = total; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }

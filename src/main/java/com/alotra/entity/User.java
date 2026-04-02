@@ -1,6 +1,7 @@
 package com.alotra.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @MappedSuperclass
 public abstract class User {
@@ -8,22 +9,23 @@ public abstract class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Integer id;
 
-    @Column(name = "Username", nullable = false, unique = true)
+    @Column(name = "username", nullable = false, unique = true)
     protected String username;
 
-    @Column(name = "MatKhauHash", nullable = false)
+    @Column(name = "password_hash", nullable = false)
     protected String passwordHash;
 
-    @Column(name = "Email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true)
     protected String email;
 
+    @Column(name = "full_name")
     protected String fullName;
 
-    @Column(name = "SoDienThoai", unique = true)
+    @Column(name = "phone", unique = true)
     protected String phone;
 
-    @Column(name = "NgayTao", nullable = false, updatable = false)
-    protected java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+    @Column(name = "created_at", nullable = false, updatable = false)
+    protected LocalDateTime createdAt = LocalDateTime.now();
 
     public abstract String getDisplayName();
     public abstract boolean isActive();
@@ -41,6 +43,6 @@ public abstract class User {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
-    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

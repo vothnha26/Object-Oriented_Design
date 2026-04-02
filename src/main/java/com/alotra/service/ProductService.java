@@ -2,9 +2,7 @@ package com.alotra.service;
 
 import com.alotra.dto.ProductDTO;
 import com.alotra.repository.ProductRepository;
-import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.discount.DiscountStrategy;
-import com.alotra.discount.PercentDiscountStrategy;
 import com.alotra.discount.NoDiscountStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,19 +17,13 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    @Autowired
-    private AppliedPromotionRepository appliedPromotionRepository;
-
     public List<ProductDTO> findBestSellers() {
         return productRepository.findBestSellersNative().stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = null;
                     
-                    // Use DiscountStrategy instead of applyPercent
-                    DiscountStrategy discount = (percent != null && percent > 0) 
-                        ? new PercentDiscountStrategy(percent) 
-                        : new NoDiscountStrategy();
+                    DiscountStrategy discount = new NoDiscountStrategy();
                     BigDecimal finalPrice = discount.apply(minBase);
                     
                     ProductDTO dto = new ProductDTO(
@@ -51,12 +43,9 @@ public class ProductService {
         return productRepository.findListByCategoryNative(categoryId).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = null;
                     
-                    // Use DiscountStrategy instead of applyPercent
-                    DiscountStrategy discount = (percent != null && percent > 0) 
-                        ? new PercentDiscountStrategy(percent) 
-                        : new NoDiscountStrategy();
+                    DiscountStrategy discount = new NoDiscountStrategy();
                     BigDecimal finalPrice = discount.apply(minBase);
                     
                     ProductDTO dto = new ProductDTO(
@@ -78,12 +67,9 @@ public class ProductService {
         return productRepository.searchByKeywordNative(kw).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = null;
                     
-                    // Use DiscountStrategy instead of applyPercent
-                    DiscountStrategy discount = (percent != null && percent > 0) 
-                        ? new PercentDiscountStrategy(percent) 
-                        : new NoDiscountStrategy();
+                    DiscountStrategy discount = new NoDiscountStrategy();
                     BigDecimal finalPrice = discount.apply(minBase);
                     
                     ProductDTO dto = new ProductDTO(
@@ -108,12 +94,9 @@ public class ProductService {
         return productRepository.searchByCategoryAndKeywordNative(categoryId, kw).stream()
                 .map(row -> {
                     BigDecimal minBase = row.getPrice();
-                    Integer percent = row.getId() != null ? appliedPromotionRepository.findActiveMaxDiscountPercentForProduct(row.getId()) : null;
+                    Integer percent = null;
                     
-                    // Use DiscountStrategy instead of applyPercent
-                    DiscountStrategy discount = (percent != null && percent > 0) 
-                        ? new PercentDiscountStrategy(percent) 
-                        : new NoDiscountStrategy();
+                    DiscountStrategy discount = new NoDiscountStrategy();
                     BigDecimal finalPrice = discount.apply(minBase);
                     
                     ProductDTO dto = new ProductDTO(

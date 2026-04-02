@@ -4,40 +4,39 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "OrderedTopping")
+@Table(name = "ordered_toppings")
 public class OrderedTopping {
-    @EmbeddedId
-    private OrderedToppingId id = new OrderedToppingId();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("orderItemId")
-    @JoinColumn(name = "MaCT")
-    private OrderItem orderLine;
+    @JoinColumn(name = "order_item_id", nullable = false)
+    private OrderItem orderItem;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("toppingId")
-    @JoinColumn(name = "MaTopping")
+    @JoinColumn(name = "topping_id", nullable = false)
     private Topping topping;
 
-    @Column(name = "SoLuong", nullable = false)
+    @Column(nullable = false)
     private Integer quantity = 1;
 
-    @Column(name = "DonGia", nullable = false)
-    private BigDecimal unitPrice;
+    @Column(nullable = false)
+    private BigDecimal price;
 
-    @Column(name = "ThanhTien", nullable = false)
-    private BigDecimal lineTotal;
+    public BigDecimal getToppingTotal() {
+        return price.multiply(BigDecimal.valueOf(quantity));
+    }
 
-    public OrderedToppingId getId() { return id; }
-    public void setId(OrderedToppingId id) { this.id = id; }
-    public OrderItem getOrderLine() { return orderLine; }
-    public void setOrderLine(OrderItem orderLine) { this.orderLine = orderLine; }
+    // Getters and Setters
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
+    public OrderItem getOrderItem() { return orderItem; }
+    public void setOrderItem(OrderItem orderItem) { this.orderItem = orderItem; }
     public Topping getTopping() { return topping; }
     public void setTopping(Topping topping) { this.topping = topping; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
-    public BigDecimal getUnitPrice() { return unitPrice; }
-    public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
-    public BigDecimal getLineTotal() { return lineTotal; }
-    public void setLineTotal(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
 }

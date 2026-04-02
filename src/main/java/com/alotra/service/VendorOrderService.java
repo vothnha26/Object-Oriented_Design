@@ -1,119 +1,89 @@
 package com.alotra.service;
 
-import com.alotra.entity.enums.OrderStatus;
-import org.springframework.jdbc.core.JdbcTemplate;
-import com.alotra.service.command.AdminCommand;
-import com.alotra.service.command.AdminCommandInvoker;
-import com.alotra.service.command.UpdateOrderStatusCommand;
-import org.springframework.stereotype.Service;
-
-import com.alotra.service.query.AbstractOrderQuery;
-import com.alotra.service.query.OrderFilterStrategy;
-import com.alotra.service.query.StatusOrderFilter;
-import com.alotra.repository.OrderRepository;
 import com.alotra.dto.OrderDto;
+import com.alotra.entity.Order;
+import com.alotra.entity.enums.OrderStatus;
+import com.alotra.repository.OrderRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZoneId;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class VendorOrderService {
-    private static final ZoneId HCM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
-    private final JdbcTemplate jdbc;
-    private final AdminCommandInvoker commandInvoker;
     private final OrderRepository orderRepository;
 
-    public VendorOrderService(JdbcTemplate jdbc, AdminCommandInvoker commandInvoker, OrderRepository orderRepository) {
-        this.jdbc = jdbc;
-        this.commandInvoker = commandInvoker;
+    public VendorOrderService(OrderRepository orderRepository) {
         this.orderRepository = orderRepository;
     }
 
-    public Map<String, Object> getDashboardCounts() {
-        Map<String, Object> m = new HashMap<>();
-        m.put("pending", countByStatus(OrderStatus.PENDING.name()));
-        m.put("preparing", countByStatus(OrderStatus.PREPARING.name()));
-        m.put("shipping", countByStatus(OrderStatus.DELIVERING.name()));
-
-        // Today orders (MySQL syntax)
-        String sqlToday = "SELECT COUNT(*) FROM Orders WHERE DATE(NgayLap) = CURDATE()";
-        Integer today = jdbc.queryForObject(sqlToday, Integer.class);
-        m.put("today", today == null ? 0 : today);
-        return m;
-    }
-
-    public int countByStatus(String status) {
-        // Table: Orders, Column: TrangThaiDonHang
-        Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM Orders WHERE TrangThaiDonHang = ?", Integer.class,
-                status);
-        return n == null ? 0 : n;
-    }
-
-    public List<OrderDto> listOrders(String status, String kw, Integer limit) {
-        OrderStatus targetStatus = null;
-        if (status != null && !status.isBlank()) {
-            try {
-                targetStatus = OrderStatus.valueOf(status);
-            } catch (Exception ignored) {
-            }
-        }
-
-        final OrderStatus finalStatus = targetStatus;
-        AbstractOrderQuery query = new AbstractOrderQuery(orderRepository) {
-            @Override
-            protected OrderFilterStrategy getFilter() {
-                if (finalStatus != null) {
-                    return new StatusOrderFilter(finalStatus);
-                }
-                // If no specific status, return all orders by using a dummy filter
-                return o -> true;
-            }
-        };
-
-        return query.execute(kw, limit != null && limit > 0 ? limit : 50);
-    }
-
-    public void updateStatus(Integer id, String newStatus) {
-        AdminCommand cmd = new UpdateOrderStatusCommand(jdbc, id, newStatus);
-        commandInvoker.execute(cmd);
-    }
-
-    public void updateStatus(Integer id, OrderStatus newStatus) {
-        updateStatus(id, newStatus.name());
-    }
-
-    public OrderStatus nextStatus(OrderStatus current) {
-        if (current == null)
-            return OrderStatus.PENDING;
-        return switch (current) {
-            case PENDING -> OrderStatus.PREPARING;
-            case PREPARING -> OrderStatus.DELIVERING;
-            case DELIVERING -> OrderStatus.DELIVERED;
-            default -> current;
-        };
-    }
-
-    public boolean canCancel(String current) {
-        if (current == null)
-            return false;
-        return OrderStatus.PENDING.name().equals(current) || OrderStatus.PREPARING.name().equals(current);
+    public List<OrderDto> listAllOrders() {
+        return orderRepository.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public List<OrderDto> listTodayOrders() {
-        AbstractOrderQuery query = new AbstractOrderQuery(orderRepository) {
-            @Override
-            protected OrderFilterStrategy getFilter() {
-                return o -> {
-                    if (o.getCreatedAt() == null)
-                        return false;
-                    java.time.LocalDate orderDate = o.getCreatedAt().atZone(HCM_ZONE).toLocalDate();
-                    java.time.LocalDate today = java.time.LocalDate.now(HCM_ZONE);
-                    return orderDate.equals(today);
-                };
-            }
-        };
-        return query.execute(null, null);
+        LocalDateTime start = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        return orderRepository.findByCreatedAtBetween(start, end).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<OrderDto> listOrders(String status, String kw, Integer limit) {
+        List<Order> list = orderRepository.findAll();
+        return list.stream()
+                .filter(o -> status == null || status.isBlank() || o.getStatus().name().equalsIgnoreCase(status))
+                .filter(o -> kw == null || kw.isBlank() || o.getId().toString().contains(kw) || 
+                            (o.getCustomer() != null && o.getCustomer().getFullName().toLowerCase().contains(kw.toLowerCase())))
+                .limit(limit != null ? limit : Long.MAX_VALUE)
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public Map<String, Long> getDashboardCounts() {
+        Map<String, Long> counts = new HashMap<>();
+        List<Order> all = orderRepository.findAll();
+        counts.put("TOTAL", (long) all.size());
+        counts.put("PENDING", all.stream().filter(o -> o.getStatus() == OrderStatus.PENDING).count());
+        counts.put("DELIVERED", all.stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED).count());
+        return counts;
+    }
+
+    @Transactional
+    public void updateStatus(Integer orderId, OrderStatus status) {
+        orderRepository.findById(orderId).ifPresent(o -> {
+            o.setStatus(status);
+            orderRepository.save(o);
+        });
+    }
+
+    public OrderStatus nextStatus(OrderStatus current) {
+        if (current == OrderStatus.PENDING) return OrderStatus.PREPARING;
+        if (current == OrderStatus.PREPARING) return OrderStatus.DELIVERING;
+        if (current == OrderStatus.DELIVERING) return OrderStatus.DELIVERED;
+        return current;
+    }
+
+    public boolean canCancel(String status) {
+        return OrderStatus.PENDING.name().equalsIgnoreCase(status);
+    }
+
+    private OrderDto toDto(Order o) {
+        OrderDto dto = new OrderDto();
+        dto.setId(o.getId());
+        dto.setCreatedAt(o.getCreatedAt());
+        dto.setStatus(o.getStatus().name());
+        dto.setTotal(o.getTotalAmount());
+        if (o.getCustomer() != null) {
+            dto.setCustomerName(o.getCustomer().getFullName());
+            dto.setCustomerPhone(o.getCustomer().getPhone());
+        }
+        return dto;
     }
 }

@@ -3,7 +3,6 @@ package com.alotra.controller;
 import com.alotra.dto.ProductDTO;
 import com.alotra.entity.Promotion;
 import com.alotra.repository.PromotionRepository;
-import com.alotra.repository.AppliedPromotionRepository;
 import com.alotra.service.ProductService;
 import com.alotra.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +22,6 @@ public class HomeController {
     @Autowired 
     private PromotionRepository promotionRepository;
     @Autowired 
-    private AppliedPromotionRepository appliedPromotionRepository;
-    @Autowired 
     private CategoryService categoryService;
 
     @GetMapping("/")
@@ -33,22 +30,15 @@ public class HomeController {
         List<ProductDTO> bestSellers = productService.findBestSellers();
         model.addAttribute("bestSellers", bestSellers);
 
-        List<Promotion> promos = promotionRepository.findTop8ByStatusAndDeletedAtIsNullOrderByStartDateDesc(com.alotra.entity.enums.PromotionStatus.ACTIVE);
+        List<Promotion> promos = promotionRepository.findByStatusAndDeletedAtIsNullOrderByStartDateDesc(com.alotra.entity.enums.PromotionStatus.ACTIVE);
         List<PromotionCard> cards = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (Promotion p : promos) {
-            String eventImg = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : null;
-            String fallbackImg = appliedPromotionRepository.findByPromotion(p).stream()
-                    .map(l -> l.getProduct())
-                    .filter(pr -> pr != null && pr.getImageUrl() != null && !pr.getImageUrl().isBlank())
-                    .map(pr -> pr.getImageUrl())
-                    .findFirst()
-                    .orElse(null);
-            String imageUrl = eventImg != null ? eventImg : (fallbackImg != null ? fallbackImg : "/images/placeholder.png");
+            if (!p.isPublic()) continue;
+            String imageUrl = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : "/images/placeholder.png";
             String period = (p.getStartDate() != null ? df.format(p.getStartDate()) : "?") +
                     " - " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
-            int views = p.getViews() == null ? 0 : p.getViews();
-            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period, views));
+            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period));
         }
         model.addAttribute("promotions", cards);
         return "home/index";
@@ -98,9 +88,8 @@ public class HomeController {
         public String description;
         public String imageUrl;
         public String periodText;
-        public int views;
-        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText, int views) {
-            this.id = id; this.title = title; this.description = description; this.imageUrl = imageUrl; this.periodText = periodText; this.views = views;
+        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText) {
+            this.id = id; this.title = title; this.description = description; this.imageUrl = imageUrl; this.periodText = periodText;
         }
     }
 }

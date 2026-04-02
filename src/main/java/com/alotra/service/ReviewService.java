@@ -1,13 +1,9 @@
 package com.alotra.service;
 
-import com.alotra.entity.OrderItem;
-import com.alotra.entity.Review;
-import com.alotra.entity.Order;
-import com.alotra.entity.Customer;
+import com.alotra.entity.*;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentStatus;
-import com.alotra.repository.OrderItemRepository;
-import com.alotra.repository.ReviewRepository;
+import com.alotra.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,25 +13,23 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("reviewOperationsReal")
-public class ReviewService implements com.alotra.service.proxy.ReviewOperations {
+public class ReviewService {
     public static final Duration EDIT_WINDOW = Duration.ofMinutes(15);
 
     private final ReviewRepository reviewRepo;
-    private final OrderItemRepository orderLineRepo;
+    private final ProductRepository productRepo;
+    private final OrderRepository orderRepo;
 
-    public ReviewService(ReviewRepository reviewRepo, OrderItemRepository orderLineRepo) {
+    public ReviewService(ReviewRepository reviewRepo, ProductRepository productRepo, OrderRepository orderRepo) {
         this.reviewRepo = reviewRepo;
-        this.orderLineRepo = orderLineRepo;
+        this.productRepo = productRepo;
+        this.orderRepo = orderRepo;
     }
 
-    public Map<Integer, Review> findByCustomerAndLineIds(Integer customerId, List<Integer> lineIds) {
-        if (customerId == null || lineIds == null || lineIds.isEmpty()) return Map.of();
-        return reviewRepo.findByCustomer_IdAndOrderLine_IdIn(customerId, lineIds).stream()
-                .collect(Collectors.toMap(d -> d.getOrderLine().getId(), d -> d));
-    }
-
-    public Map<Integer, Review> findExistingByCustomerAndLines(Integer customerId, List<Integer> lineIds) {
-        return findByCustomerAndLineIds(customerId, lineIds);
+    public Map<Integer, Review> findByCustomerAndProductIds(Integer customerId, List<Integer> productIds) {
+        if (customerId == null || productIds == null || productIds.isEmpty()) return Map.of();
+        return reviewRepo.findByCustomerIdAndProductIdIn(customerId, productIds).stream()
+                .collect(Collectors.toMap(r -> r.getProduct().getId(), r -> r));
     }
 
     public boolean canEdit(Review r) {
@@ -48,24 +42,28 @@ public class ReviewService implements com.alotra.service.proxy.ReviewOperations 
     }
 
     @Transactional
-    public void submitReview(Customer customer, Integer orderLineId, int stars, String comment) {
+    public void submitReview(Customer customer, Integer productId, Integer orderId, int stars, String comment) {
         if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1 đến 5");
-        OrderItem line = orderLineRepo.findById(orderLineId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy dòng đơn hàng"));
-        Order order = line.getOrder();
-        if (order == null || order.getCustomer() == null || !Objects.equals(order.getCustomer().getId(), customer.getId())) {
-            throw new SecurityException("Bạn không có quyền đánh giá dòng đơn này");
+        
+        Product product = productRepo.findById(productId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm"));
+        Order order = orderRepo.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
+
+        if (!Objects.equals(order.getCustomer().getId(), customer.getId())) {
+            throw new SecurityException("Bạn không có quyền đánh giá đơn hàng này");
         }
+        
         if (order.getPayment() == null || !isOrderEligibleForReview(order.getStatus(), order.getPayment().getStatus())) {
             throw new IllegalStateException("Chỉ đánh giá được khi đơn đã giao và đã thanh toán");
         }
         
-        reviewRepo.findByCustomer_IdAndOrderLine_Id(customer.getId(), orderLineId).ifPresent(r -> {
-            throw new IllegalStateException("Bạn đã đánh giá dòng này rồi");
+        reviewRepo.findByCustomerIdAndProductIdAndOrderId(customer.getId(), productId, orderId).ifPresent(r -> {
+            throw new IllegalStateException("Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi");
         });
         
         Review rv = new Review();
         rv.setCustomer(customer);
-        rv.setOrderLine(line);
+        rv.setProduct(product);
+        rv.setOrder(order);
         rv.setStars(stars);
         rv.setComment(comment);
         rv.setCreatedAt(LocalDateTime.now());
@@ -99,8 +97,8 @@ public class ReviewService implements com.alotra.service.proxy.ReviewOperations 
         return reviewRepo.findStatsByProductId(productId);
     }
 
-    public java.util.List<Review> listByProduct(Integer productId, Integer limit) {
-        java.util.List<Review> list = reviewRepo.findByProductIdOrderByCreatedAtDesc(productId);
+    public List<Review> listByProduct(Integer productId, Integer limit) {
+        List<Review> list = reviewRepo.findByProductIdOrderByCreatedAtDesc(productId);
         if (limit != null && limit > 0 && list.size() > limit) return list.subList(0, limit);
         return list;
     }

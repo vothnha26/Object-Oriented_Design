@@ -3,36 +3,41 @@ package com.alotra.entity;
 import com.alotra.entity.enums.ProductStatus;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "Product")
+@Table(name = "products")
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "MaSP")
     private Integer id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "MaDM", nullable = false)
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(name = "TenSP", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "MoTa")
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "TrangThai", nullable = false)
+    @Column(nullable = false)
     private ProductStatus status = ProductStatus.ACTIVE;
 
-    @Column(name = "UrlAnh")
+    @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "DeletedAt")
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    // === Business methods ===
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariant> variants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductMedia> media = new ArrayList<>();
+
     public boolean isAvailable() {
         return status == ProductStatus.ACTIVE && deletedAt == null;
     }
@@ -52,4 +57,8 @@ public class Product {
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public List<ProductVariant> getVariants() { return variants; }
+    public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
+    public List<ProductMedia> getMedia() { return media; }
+    public void setMedia(List<ProductMedia> media) { this.media = media; }
 }

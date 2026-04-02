@@ -7,10 +7,10 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
 import com.alotra.repository.OrderRepository;
-import com.alotra.service.query.*;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderHistoryService {
@@ -25,42 +25,13 @@ public class OrderHistoryService {
     }
 
     public List<OrderDto> listOrdersByCustomer(Integer customerId, String status) {
-        return listOrdersByCustomer(customerId, status, null, null, null);
-    }
- 
-    public List<OrderDto> listOrdersByCustomer(final Integer customerId, final String status, final Integer orderId,
-                                                final LocalDateTime from, final LocalDateTime to) {
-        AbstractOrderQuery query = new AbstractOrderQuery(orderRepository) {
-            @Override
-            protected OrderFilterStrategy getFilter() {
-                List<OrderFilterStrategy> filters = new ArrayList<>();
-                filters.add(new CustomerOrderFilter(customerId));
-                
-                if (status != null && !status.isBlank()) {
-                    try {
-                        filters.add(new StatusOrderFilter(com.alotra.entity.enums.OrderStatus.valueOf(status)));
-                    } catch (Exception ignored) {}
-                }
-                
-                if (orderId != null) {
-                    filters.add(new OrderIdFilter(orderId));
-                }
-                
-                if (from != null || to != null) {
-                    filters.add(new DateRangeFilter(from, to));
-                }
-                
-                return o -> filters.stream().allMatch(f -> f.matches(o));
-            }
-            
-            @Override
-            protected List<Order> fetchOrders() {
-                // Optimization: fetch only customer orders
-                return repository.findByCustomerId(customerId);
-            }
-        };
-        
-        return query.execute(null, null);
+        List<Order> orders;
+        if (status != null && !status.isBlank()) {
+            orders = orderRepository.findByCustomerIdAndStatus(customerId, com.alotra.entity.enums.OrderStatus.valueOf(status));
+        } else {
+            orders = orderRepository.findByCustomerId(customerId);
+        }
+        return orders.stream().map(this::toDto).collect(Collectors.toList());
     }
 
     public OrderDto getOrderOfCustomer(Integer orderId, Integer customerId) {
@@ -69,12 +40,19 @@ public class OrderHistoryService {
         q.setParameter("id", orderId);
         q.setParameter("cid", customerId);
         List<Order> list = q.getResultList();
-        if (list.isEmpty()) return null;
-        
-        // Use AbstractOrderQuery logic for mapping
-        return new AbstractOrderQuery(orderRepository) {
-            @Override protected OrderFilterStrategy getFilter() { return o -> true; }
-        }.toDto(list.get(0));
+        return list.isEmpty() ? null : toDto(list.get(0));
+    }
+
+    private OrderDto toDto(Order o) {
+        OrderDto dto = new OrderDto();
+        dto.setId(o.getId());
+        dto.setCreatedAt(o.getCreatedAt());
+        dto.setStatus(o.getStatus().name());
+        dto.setTotal(o.getTotalAmount());
+        if (o.getCustomer() != null) {
+            dto.setCustomerName(o.getCustomer().getFullName());
+        }
+        return dto;
     }
 
     public List<OrderItemRow> listOrderItems(Integer orderId) {
@@ -97,7 +75,6 @@ public class OrderHistoryService {
             r.sizeName = sz != null ? sz.getName() : null;
             r.quantity = ct.getQuantity();
             r.unitPrice = ct.getUnitPrice();
-            r.lineDiscount = ct.getLineDiscount();
             r.lineTotal = ct.getLineTotal();
             r.note = ct.getNote();
             out.add(r);
@@ -107,7 +84,7 @@ public class OrderHistoryService {
 
     public List<ItemToppingRow> listOrderedToppings(Integer orderItemId) {
         TypedQuery<com.alotra.entity.OrderedTopping> q = em.createQuery(
-                "SELECT t FROM OrderedTopping t JOIN FETCH t.topping tp WHERE t.orderLine.id = :lid ORDER BY tp.name",
+                "SELECT t FROM OrderedTopping t JOIN FETCH t.topping tp WHERE t.orderItem.id = :lid ORDER BY tp.name",
                 com.alotra.entity.OrderedTopping.class);
         q.setParameter("lid", orderItemId);
         List<com.alotra.entity.OrderedTopping> rows = q.getResultList();
@@ -117,23 +94,15 @@ public class OrderHistoryService {
             com.alotra.entity.Topping tp = t.getTopping();
             r.toppingName = tp != null ? tp.getName() : null;
             r.quantity = t.getQuantity();
-            r.unitPrice = t.getUnitPrice();
-            r.total = t.getLineTotal();
+            r.unitPrice = t.getPrice();
+            r.total = t.getToppingTotal();
             out.add(r);
         }
         return out;
     }
 
     public OrderDto getOrder(Integer orderId) {
-        TypedQuery<Order> q = em.createQuery(
-                "SELECT dh FROM Order dh LEFT JOIN FETCH dh.employee WHERE dh.id = :id", Order.class);
-        q.setParameter("id", orderId);
-        List<Order> list = q.getResultList();
-        if (list.isEmpty()) return null;
-        
-        return new AbstractOrderQuery(orderRepository) {
-            @Override protected OrderFilterStrategy getFilter() { return o -> true; }
-        }.toDto(list.get(0));
+        return orderRepository.findById(orderId).map(this::toDto).orElse(null);
     }
 
     public static class OrderItemRow {
@@ -142,7 +111,6 @@ public class OrderHistoryService {
         public String sizeName;
         public Integer quantity;
         public java.math.BigDecimal unitPrice;
-        public java.math.BigDecimal lineDiscount;
         public java.math.BigDecimal lineTotal;
         public String note;
     }

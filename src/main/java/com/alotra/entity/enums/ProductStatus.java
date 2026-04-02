@@ -1,18 +1,15 @@
 package com.alotra.entity.enums;
 
 public enum ProductStatus {
-    INACTIVE(0),
-    ACTIVE(1),
-    DELETED(2);
+    ACTIVE,
+    INACTIVE,
+    OUT_OF_STOCK;
 
-    private final int value;
-    ProductStatus(int value) { this.value = value; }
-    public int getValue() { return value; }
-
-    public static ProductStatus fromValue(int v) {
-        for (ProductStatus s : values()) {
-            if (s.value == v) return s;
-        }
+    public static ProductStatus fromValue(Integer val) {
+        if (val == null) return ACTIVE;
+        if (val == 1) return ACTIVE;
+        if (val == 0) return INACTIVE;
+        if (val == -1) return OUT_OF_STOCK;
         return ACTIVE;
     }
 }
