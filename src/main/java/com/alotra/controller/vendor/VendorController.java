@@ -150,7 +150,6 @@ public class VendorController {
         orderRepository.findById(id).ifPresent(order -> {
             if (order.getPayment() != null && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 order.getPayment().setStatus(PaymentStatus.PAID);
-                order.getPayment().setPaidAt(LocalDateTime.now());
                 if (current != null && order.getEmployee() == null) {
                     Employee e = new Employee();
                     e.setId(current.getId());

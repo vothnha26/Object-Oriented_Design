@@ -18,7 +18,6 @@ public class PromotionService {
     public List<Promotion> findAll() { return promotionRepo.findAll(); }
     public Optional<Promotion> findById(Integer id) { return promotionRepo.findById(id); }
     public Promotion save(Promotion p) { return promotionRepo.save(p); }
-    public List<Promotion> findActive() { return promotionRepo.findByDeletedAtIsNull(); }
 
     @Transactional
     public void deleteById(Integer id) {

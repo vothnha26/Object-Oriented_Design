@@ -71,7 +71,7 @@ public class PaymentController {
         for (var it : items) toppings.put(it.id, customerOrderService.listOrderedToppings(it.id));
 
         String addInfo = "ALOTRA DH " + id;
-        String qrUrl = buildVietQrUrl(BANK_CODE, ACCOUNT_NUMBER, order.getTotalAmount().intValue(), addInfo);
+        String qrUrl = buildVietQrUrl(BANK_CODE, ACCOUNT_NUMBER, order.calculateTotal().intValue(), addInfo);
         
         LocalDateTime created = order.getCreatedAt();
         LocalDateTime expiry = (created != null ? created : LocalDateTime.now()).plusMinutes(EXPIRY_MINUTES);
@@ -126,7 +126,6 @@ public class PaymentController {
         Order order = orderRepo.findById(id).orElse(null);
         if (order == null) return ResponseEntity.notFound().build();
         order.getPayment().setStatus(PaymentStatus.PAID);
-        order.getPayment().setPaidAt(LocalDateTime.now());
         orderRepo.save(order);
         return ResponseEntity.ok(Map.of("status", "OK"));
     }

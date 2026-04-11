@@ -3,7 +3,6 @@ package com.alotra.entity;
 import com.alotra.entity.enums.ToppingStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "toppings")
@@ -25,10 +24,7 @@ public class Topping {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    public boolean isAvailable() { return status == ToppingStatus.ACTIVE && deletedAt == null; }
+    public boolean isAvailable() { return status == ToppingStatus.ACTIVE; }
 
     // Getters and Setters
     public Integer getId() { return id; }
@@ -41,6 +37,4 @@ public class Topping {
     public void setStatus(ToppingStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

@@ -40,7 +40,7 @@ public class AdminReportController {
                               Model model) {
         model.addAttribute("pageTitle", "Báo cáo cuối ca");
         model.addAttribute("currentPage", "reports");
-        model.addAttribute("employees", employeeService.findActive());
+        model.addAttribute("employees", employeeService.findAll());
 
         if (from == null) from = LocalDate.now(HCM_ZONE).atStartOfDay();
         if (to == null) to = LocalDateTime.now(HCM_ZONE);

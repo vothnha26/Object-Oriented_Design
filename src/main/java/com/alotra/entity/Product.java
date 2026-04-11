@@ -2,7 +2,6 @@ package com.alotra.entity;
 
 import com.alotra.entity.enums.ProductStatus;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,9 +28,6 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> variants = new ArrayList<>();
 
@@ -39,7 +35,7 @@ public class Product {
     private List<ProductMedia> media = new ArrayList<>();
 
     public boolean isAvailable() {
-        return status == ProductStatus.ACTIVE && deletedAt == null;
+        return status == ProductStatus.ACTIVE;
     }
 
     // Getters and Setters
@@ -55,8 +51,6 @@ public class Product {
     public void setStatus(ProductStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public List<ProductVariant> getVariants() { return variants; }
     public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
     public List<ProductMedia> getMedia() { return media; }

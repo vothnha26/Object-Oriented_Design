@@ -30,6 +30,6 @@ public class CategoryService {
 
     // New: list only active categories (not in trash)
     public List<Category> findActive() {
-        return categoryRepository.findByDeletedAtIsNull();
+        return categoryRepository.findAll();
     }
 }

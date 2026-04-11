@@ -1,12 +1,9 @@
 package com.alotra.service.order;
 
 import com.alotra.entity.*;
-import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -15,57 +12,63 @@ public class CheckoutService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderedToppingRepository orderedToppingRepository;
-    private final AddressRepository addressRepository;
 
     public CheckoutService(OrderRepository orderRepository,
-                          OrderItemRepository orderItemRepository,
-                          OrderedToppingRepository orderedToppingRepository,
-                          AddressRepository addressRepository) {
+            OrderItemRepository orderItemRepository,
+            OrderedToppingRepository orderedToppingRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.orderedToppingRepository = orderedToppingRepository;
-        this.addressRepository = addressRepository;
     }
 
     @Transactional
-    public Order createOrder(Customer customer, Address address, List<OrderItem> items,
-                            String paymentMethod, String note) {
-        if (items == null || items.isEmpty()) {
-            throw new IllegalArgumentException("Chưa có sản phẩm để đặt hàng");
+    public Order saveOrder(Order order) {
+        // Lưu Order gốc
+        Order savedOrder = orderRepository.save(order);
+
+        // Lưu Payment (đã được liên kết trong Entity)
+        if (order.getPayment() != null) {
+            order.getPayment().setOrder(savedOrder);
         }
 
-        // Create order
+        // Lưu OrderItems và Toppings
+        if (order.getItems() != null) {
+            for (OrderItem oi : order.getItems()) {
+                oi.setOrder(savedOrder);
+                OrderItem savedOi = orderItemRepository.save(oi);
+
+                if (oi.getToppings() != null) {
+                    for (OrderedTopping ot : oi.getToppings()) {
+                        ot.setOrderItem(savedOi);
+                        orderedToppingRepository.save(ot);
+                    }
+                }
+            }
+        }
+
+        return savedOrder;
+    }
+
+    /**
+     * @deprecated Dùng CheckoutFacade.processCheckout để quản lý luồng đầy đủ.
+     *             Phương thức này chỉ giữ lại để đảm bảo tương thích với code cũ
+     *             của Member 1.
+     */
+    @Deprecated
+    @Transactional
+    public Order createOrder(Customer customer, Address address, List<OrderItem> items,
+            String paymentMethod, String note) {
         Order order = new Order();
         order.setCustomer(customer);
-        order.setAddress(address);
-
-        // Set payment
-        Payment payment = new Payment();
-        if (paymentMethod != null) {
-            try {
-                payment.setMethod(PaymentMethod.valueOf(paymentMethod.toUpperCase()));
-            } catch (Exception ignored) {}
+        if (address != null) {
+            order.setShippingAddressLine(address.getAddressLine());
         }
+        order.setItems(items);
+
+        Payment payment = new Payment();
         payment.setOrder(order);
-        payment.setAmount(BigDecimal.ZERO); // To be updated
         order.setPayment(payment);
 
-        order = orderRepository.save(order);
-
-        // Persist order items with toppings
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (OrderItem oi : items) {
-            oi.setOrder(order);
-            OrderItem savedOi = orderItemRepository.save(oi);
-            
-            for (OrderedTopping ot : oi.getToppings()) {
-                ot.setOrderItem(savedOi);
-                orderedToppingRepository.save(ot);
-            }
-            totalAmount = totalAmount.add(oi.getLineTotal());
-        }
-
-        payment.setAmount(totalAmount);
-        return orderRepository.save(order);
+        return saveOrder(order);
     }
 }

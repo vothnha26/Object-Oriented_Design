@@ -26,9 +26,11 @@ public class Order {
     @JoinColumn(name = "promotion_id")
     private Promotion promotion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id")
-    private Address address;
+    @Column(name = "shipping_address_line")
+    private String shippingAddressLine;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -47,19 +49,12 @@ public class Order {
         BigDecimal total = items.stream()
                 .map(OrderItem::getLineTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return total;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return calculateTotal();
-    }
-
-    public boolean canCancel() {
-        return status == OrderStatus.PENDING;
-    }
-
-    public boolean isDone() {
-        return status == OrderStatus.DELIVERED;
+        
+        if (discountAmount != null) {
+            total = total.subtract(discountAmount);
+        }
+        
+        return total.compareTo(BigDecimal.ZERO) > 0 ? total : BigDecimal.ZERO;
     }
 
     // Getters and Setters
@@ -71,8 +66,10 @@ public class Order {
     public void setEmployee(Employee employee) { this.employee = employee; }
     public Promotion getPromotion() { return promotion; }
     public void setPromotion(Promotion promotion) { this.promotion = promotion; }
-    public Address getAddress() { return address; }
-    public void setAddress(Address address) { this.address = address; }
+    public String getShippingAddressLine() { return shippingAddressLine; }
+    public void setShippingAddressLine(String shippingAddressLine) { this.shippingAddressLine = shippingAddressLine; }
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public OrderStatus getStatus() { return status; }

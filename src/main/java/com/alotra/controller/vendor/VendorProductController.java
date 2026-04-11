@@ -20,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -66,7 +65,7 @@ public class VendorProductController {
         model.addAttribute("kw", kw);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("status", status);
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         return "vendor/products";
     }
 
@@ -93,7 +92,7 @@ public class VendorProductController {
         model.addAttribute("pageTitle", "Thêm sản phẩm");
         model.addAttribute("currentPage", "vendor-products");
         model.addAttribute("product", new Product());
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("sizes", sizeRepository.findAll());
         return "vendor/product-form";
     }
@@ -109,7 +108,7 @@ public class VendorProductController {
         model.addAttribute("pageTitle", "Sửa sản phẩm");
         model.addAttribute("currentPage", "vendor-products");
         model.addAttribute("product", p);
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("variants", variantRepository.findByProductFetchingSize(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "vendor/product-form";
@@ -129,7 +128,7 @@ public class VendorProductController {
             ra.addFlashAttribute("error", "Tên sản phẩm không được để trống.");
             return product.getId() == null ? "redirect:/vendor/products/add" : ("redirect:/vendor/products/edit/" + product.getId());
         }
-        var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+        var dup = productRepository.findByNameIgnoreCase(name);
         if (dup != null && (product.getId() == null || !java.util.Objects.equals(dup.getId(), product.getId()))) {
             ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
             return product.getId() == null ? "redirect:/vendor/products/add" : ("redirect:/vendor/products/edit/" + product.getId());
@@ -200,13 +199,13 @@ public class VendorProductController {
             usedInOrders = orderItemRepository.countByVariant_Product_Id(p.getId());
         } catch (Exception ignored) {}
         if (usedInOrders > 0) {
-            ra.addFlashAttribute("error", "Không thể xóa sản phẩm vì đã phát sinh đơn hàng.");
-            return "redirect:/vendor/products";
+            p.setStatus(ProductStatus.INACTIVE);
+            productRepository.save(p);
+            ra.addFlashAttribute("message", "Đã chuyển trạng thái sản phẩm thành KHÔNG HOẠT ĐỘNG.");
+        } else {
+            productRepository.delete(p);
+            ra.addFlashAttribute("message", "Đã xóa sản phẩm thành công.");
         }
-        p.setDeletedAt(LocalDateTime.now());
-        p.setStatus(ProductStatus.INACTIVE);
-        productRepository.save(p);
-        ra.addFlashAttribute("message", "Đã chuyển sản phẩm vào thùng rác.");
         return "redirect:/vendor/products";
     }
 

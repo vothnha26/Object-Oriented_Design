@@ -21,7 +21,7 @@ public class KeywordFilter extends AbstractOrderQuery {
                 .filter(order -> 
                     (order.getId().toString().contains(keyword)) ||
                     (order.getCustomer().getFullName() != null && order.getCustomer().getFullName().toLowerCase().contains(lower)) ||
-                    (order.getAddress() != null && order.getAddress().getAddressLine() != null && order.getAddress().getAddressLine().toLowerCase().contains(lower))
+                    (order.getShippingAddressLine() != null && order.getShippingAddressLine().toLowerCase().contains(lower))
                 )
                 .collect(Collectors.toList());
     }

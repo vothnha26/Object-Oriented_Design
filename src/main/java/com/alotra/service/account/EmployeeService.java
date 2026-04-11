@@ -8,7 +8,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,8 +23,6 @@ public class EmployeeService {
 
     public List<Employee> findAll() { return repo.findAll(); }
     public Optional<Employee> findById(Integer id) { return repo.findById(id); }
-
-    public List<Employee> findActive() { return repo.findByDeletedAtIsNull(); }
 
     public Employee saveHandlingPassword(Employee employee) {
         boolean isNew = employee.getId() == null;
@@ -71,20 +68,5 @@ public class EmployeeService {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < len; i++) sb.append(dict.charAt(r.nextInt(dict.length())));
         return sb.toString();
-    }
-
-    public void softDeleteToTrash(Integer id) {
-        repo.findById(id).ifPresent(employee -> {
-            employee.setDeletedAt(LocalDateTime.now());
-            employee.setStatus(EmployeeStatus.INACTIVE);
-            repo.save(employee);
-        });
-    }
-
-    public void restoreFromTrash(Integer id) {
-        repo.findById(id).ifPresent(employee -> {
-            employee.setDeletedAt(null);
-            repo.save(employee);
-        });
     }
 }

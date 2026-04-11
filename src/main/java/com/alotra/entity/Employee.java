@@ -3,7 +3,6 @@ package com.alotra.entity;
 import com.alotra.entity.enums.EmployeeRole;
 import com.alotra.entity.enums.EmployeeStatus;
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "employees")
@@ -16,9 +15,6 @@ public class Employee extends User {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private EmployeeStatus status = EmployeeStatus.ACTIVE;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @Transient
     private String plainPassword;
@@ -45,8 +41,6 @@ public class Employee extends User {
     public void setRole(EmployeeRole role) { this.role = role; }
     public EmployeeStatus getStatus() { return status; }
     public void setStatus(EmployeeStatus status) { this.status = status; }
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public String getPlainPassword() { return plainPassword; }
     public void setPlainPassword(String plainPassword) { this.plainPassword = plainPassword; }
     public String getConfirmPassword() { return confirmPassword; }

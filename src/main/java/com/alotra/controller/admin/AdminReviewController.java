@@ -29,7 +29,7 @@ public class AdminReviewController {
 
     @GetMapping
     public String list(Model model) {
-        List<Review> items = reviewRepository.findAllOrderByCreatedAtDesc();
+        List<Review> items = reviewRepository.findAll();
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Đánh giá sản phẩm");
         model.addAttribute("currentPage", "reviews");

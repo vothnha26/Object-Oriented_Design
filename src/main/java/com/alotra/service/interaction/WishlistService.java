@@ -10,7 +10,7 @@ import java.util.List;
 
 @Service
 @Transactional
-public class WishlistService {
+public class WishlistService implements WishlistOperations {
     private final WishlistRepository wishlistRepository;
 
     public WishlistService(WishlistRepository wishlistRepository) {

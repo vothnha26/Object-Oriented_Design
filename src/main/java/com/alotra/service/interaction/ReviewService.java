@@ -34,8 +34,7 @@ public class ReviewService implements ReviewOperations {
     }
 
     public boolean canEdit(Review r) {
-        if (r == null || r.getCreatedAt() == null) return false;
-        return Duration.between(r.getCreatedAt(), LocalDateTime.now()).compareTo(EDIT_WINDOW) <= 0;
+        return r != null;
     }
 
     public boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus) {
@@ -67,7 +66,6 @@ public class ReviewService implements ReviewOperations {
         rv.setOrder(order);
         rv.setStars(stars);
         rv.setComment(comment);
-        rv.setCreatedAt(LocalDateTime.now());
         reviewRepo.save(rv);
     }
     
@@ -77,7 +75,7 @@ public class ReviewService implements ReviewOperations {
         if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
             throw new SecurityException("Không thể sửa đánh giá của người khác");
         }
-        if (!canEdit(r)) throw new IllegalStateException("Hết thời gian cho phép chỉnh sửa");
+        if (!canEdit(r)) throw new IllegalStateException("Không thể sửa đánh giá");
         if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1..5");
         r.setStars(stars);
         r.setComment((comment != null && !comment.isBlank()) ? comment.trim() : null);
@@ -90,7 +88,7 @@ public class ReviewService implements ReviewOperations {
         if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
             throw new SecurityException("Không thể xóa đánh giá của người khác");
         }
-        if (!canEdit(r)) throw new IllegalStateException("Hết thời gian cho phép xóa");
+        if (!canEdit(r)) throw new IllegalStateException("Không thể xóa đánh giá");
         reviewRepo.delete(r);
     }
 
@@ -99,7 +97,7 @@ public class ReviewService implements ReviewOperations {
     }
 
     public List<Review> listByProduct(Integer productId, Integer limit) {
-        List<Review> list = reviewRepo.findByProductIdOrderByCreatedAtDesc(productId);
+        List<Review> list = reviewRepo.findByProductId(productId);
         if (limit != null && limit > 0 && list.size() > limit) return list.subList(0, limit);
         return list;
     }

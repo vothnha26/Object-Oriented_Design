@@ -179,8 +179,14 @@ public class UsersAdminController {
 
     @GetMapping("/employees/delete/{id}")
     public String deleteEmployee(@PathVariable Integer id, RedirectAttributes ra){
-        employeeService.softDeleteToTrash(id);
-        ra.addFlashAttribute("msg", "Đã chuyển nhân viên vào thùng rác.");
+        try {
+            employeeService.deleteById(id);
+            ra.addFlashAttribute("msg", "Đã xóa nhân viên thành công.");
+        } catch (DataIntegrityViolationException ex) {
+            ra.addFlashAttribute("error", "Không thể xóa vì nhân viên đã phát sinh dữ liệu. Vui lòng khóa thay vì xóa.");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", "Không thể xóa: " + ex.getMessage());
+        }
         return "redirect:/admin/users?tab=employees";
     }
 

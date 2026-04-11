@@ -17,12 +17,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
     Optional<Employee> findByEmail(String email);
     Optional<Employee> findByPhone(String phone);
 
-    @Query("SELECT n FROM Employee n WHERE n.deletedAt IS NULL AND " +
+    @Query("SELECT n FROM Employee n WHERE 1=1 AND " +
             "(:kw IS NULL OR LOWER(n.username) LIKE LOWER(CONCAT('%',:kw,'%')) OR LOWER(n.email) LIKE LOWER(CONCAT('%',:kw,'%')) OR LOWER(n.fullName) LIKE LOWER(CONCAT('%',:kw,'%')) OR n.phone LIKE CONCAT('%',:kw,'%')) AND " +
             "(:role IS NULL OR n.role = :role) AND " +
             "(:status IS NULL OR n.status = :status)")
     List<Employee> search(@Param("kw") String kw, @Param("role") EmployeeRole role, @Param("status") EmployeeStatus status);
-
-    List<Employee> findByDeletedAtIsNull();
-    List<Employee> findByDeletedAtIsNotNull();
 }

@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,7 +55,7 @@ public class AdminController {
 
     @GetMapping("/categories")
     public String showCategories(Model model) {
-        List<Category> categories = categoryRepository.findByDeletedAtIsNull();
+        List<Category> categories = categoryRepository.findAll();
         model.addAttribute("pageTitle", "Danh mục");
         model.addAttribute("currentPage", "categories");
         model.addAttribute("categoryList", categories);
@@ -92,7 +91,7 @@ public class AdminController {
             ra.addFlashAttribute("error", "Tên danh mục không được để trống.");
             return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
         }
-        Category dup = categoryRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+        Category dup = categoryRepository.findByNameIgnoreCase(name);
         if (dup != null && (category.getId() == null || !java.util.Objects.equals(dup.getId(), category.getId()))) {
             ra.addFlashAttribute("error", "Tên danh mục đã tồn tại.");
             return category.getId() == null ? "redirect:/admin/categories/add" : ("redirect:/admin/categories/edit/" + category.getId());
@@ -105,13 +104,12 @@ public class AdminController {
     @GetMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes ra) {
         categoryRepository.findById(id).ifPresentOrElse(c -> {
-            long cnt = productRepository.countByCategoryAndDeletedAtIsNull(c);
+            long cnt = productRepository.countByCategory(c);
             if (cnt > 0) {
                 ra.addFlashAttribute("error", "Không thể xóa danh mục vì còn " + cnt + " sản phẩm đang thuộc danh mục này.");
             } else {
-                c.setDeletedAt(LocalDateTime.now());
-                categoryRepository.save(c);
-                ra.addFlashAttribute("message", "Đã chuyển danh mục vào thùng rác.");
+                categoryRepository.delete(c);
+                ra.addFlashAttribute("message", "Đã xóa danh mục thành công.");
             }
         }, () -> ra.addFlashAttribute("error", "Không tìm thấy danh mục."));
         return "redirect:/admin/categories";
@@ -119,7 +117,7 @@ public class AdminController {
 
     @GetMapping("/toppings")
     public String showToppings(Model model) {
-        List<Topping> toppings = toppingRepository.findByDeletedAtIsNull();
+        List<Topping> toppings = toppingRepository.findAll();
         model.addAttribute("pageTitle", "Topping");
         model.addAttribute("currentPage", "toppings");
         model.addAttribute("toppingList", toppings);
@@ -158,7 +156,7 @@ public class AdminController {
                 ra.addFlashAttribute("error", "Tên topping không được để trống.");
                 return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
             }
-            Topping dup = toppingRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+            Topping dup = toppingRepository.findByNameIgnoreCase(name);
             if (dup != null && (topping.getId() == null || !java.util.Objects.equals(dup.getId(), topping.getId()))) {
                 ra.addFlashAttribute("error", "Tên topping đã tồn tại.");
                 return topping.getId() == null ? "redirect:/admin/toppings/add" : ("redirect:/admin/toppings/edit/" + topping.getId());
@@ -178,11 +176,10 @@ public class AdminController {
     @GetMapping("/toppings/delete/{id}")
     public String deleteTopping(@PathVariable Integer id, RedirectAttributes ra) {
         toppingRepository.findById(id).ifPresent(t -> {
-            t.setDeletedAt(LocalDateTime.now());
-            t.setStatus(ToppingStatus.UNAVAILABLE);
+            t.setStatus(ToppingStatus.INACTIVE);
             toppingRepository.save(t);
         });
-        ra.addFlashAttribute("message", "Đã chuyển topping vào thùng rác.");
+        ra.addFlashAttribute("message", "Đã chuyển trạng thái topping thành KHÔNG HOẠT ĐỘNG.");
         return "redirect:/admin/toppings";
     }
 }

@@ -20,12 +20,9 @@ public interface ReviewRepository extends JpaRepository<Review, Integer> {
     @Query("SELECT AVG(r.stars) as avg, COUNT(r) as cnt FROM Review r WHERE r.product.id = :productId")
     ProductRatingStats findStatsByProductId(@Param("productId") Integer productId);
 
-    List<Review> findByProductIdOrderByCreatedAtDesc(Integer productId);
+    List<Review> findByProductId(Integer productId);
     
     List<Review> findByCustomerIdAndProductIdIn(Integer customerId, List<Integer> productIds);
     
     Optional<Review> findByCustomerIdAndProductIdAndOrderId(Integer customerId, Integer productId, Integer orderId);
-
-    @Query("SELECT r FROM Review r ORDER BY r.createdAt DESC")
-    List<Review> findAllOrderByCreatedAtDesc();
 }

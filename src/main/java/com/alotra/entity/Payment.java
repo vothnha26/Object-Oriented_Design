@@ -30,9 +30,6 @@ public class Payment {
     @Column(name = "transaction_ref")
     private String transactionRef;
 
-    @Column(name = "paid_at")
-    private java.time.LocalDateTime paidAt;
-
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -46,6 +43,4 @@ public class Payment {
     public void setAmount(BigDecimal amount) { this.amount = amount; }
     public String getTransactionRef() { return transactionRef; }
     public void setTransactionRef(String transactionRef) { this.transactionRef = transactionRef; }
-    public java.time.LocalDateTime getPaidAt() { return paidAt; }
-    public void setPaidAt(java.time.LocalDateTime paidAt) { this.paidAt = paidAt; }
 }

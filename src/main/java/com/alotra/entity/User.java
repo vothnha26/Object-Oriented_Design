@@ -1,7 +1,6 @@
 package com.alotra.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @MappedSuperclass
 public abstract class User {
@@ -24,9 +23,6 @@ public abstract class User {
     @Column(name = "phone", unique = true)
     protected String phone;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    protected LocalDateTime createdAt = LocalDateTime.now();
-
     public abstract String getDisplayName();
     public abstract boolean isActive();
 
@@ -43,6 +39,4 @@ public abstract class User {
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

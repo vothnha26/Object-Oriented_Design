@@ -3,13 +3,11 @@ package com.alotra.service.command;
 import com.alotra.entity.Product;
 import com.alotra.entity.enums.ProductStatus;
 import com.alotra.repository.ProductRepository;
-import java.time.LocalDateTime;
 
 public class SoftDeleteProductCommand implements AdminCommand {
     private final ProductRepository productRepository;
     private final Integer productId;
     
-    private LocalDateTime previousDeletedAt;
     private ProductStatus previousStatus;
 
     public SoftDeleteProductCommand(ProductRepository productRepository, Integer productId) {
@@ -21,10 +19,8 @@ public class SoftDeleteProductCommand implements AdminCommand {
     public void execute() {
         Product p = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm"));
-        this.previousDeletedAt = p.getDeletedAt();
         this.previousStatus = p.getStatus();
         
-        p.setDeletedAt(LocalDateTime.now());
         p.setStatus(ProductStatus.INACTIVE);
         productRepository.save(p);
     }
@@ -33,13 +29,12 @@ public class SoftDeleteProductCommand implements AdminCommand {
     public void undo() {
         Product p = productRepository.findById(productId)
             .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm"));
-        p.setDeletedAt(previousDeletedAt);
         p.setStatus(previousStatus);
         productRepository.save(p);
     }
 
     @Override
     public String getDescription() {
-        return "Xóa mềm sản phẩm #" + productId;
+        return "Thay đổi trạng thái sản phẩm #" + productId + " thành KHÔNG HOẠT ĐỘNG";
     }
 }

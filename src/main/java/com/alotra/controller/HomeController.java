@@ -20,9 +20,9 @@ public class HomeController {
     private final PromotionRepository promotionRepository;
     private final CategoryService categoryService;
 
-    public HomeController(ProductFacade productFacade, 
-                          PromotionRepository promotionRepository, 
-                          CategoryService categoryService) {
+    public HomeController(ProductFacade productFacade,
+            PromotionRepository promotionRepository,
+            CategoryService categoryService) {
         this.productFacade = productFacade;
         this.promotionRepository = promotionRepository;
         this.categoryService = categoryService;
@@ -34,15 +34,16 @@ public class HomeController {
         List<ProductDTO> bestSellers = productFacade.getHomeProducts();
         model.addAttribute("bestSellers", bestSellers);
 
-        List<Promotion> promos = promotionRepository.findByStatusAndDeletedAtIsNullOrderByStartDateDesc(com.alotra.entity.enums.PromotionStatus.ACTIVE);
+        List<Promotion> promos = promotionRepository.findByStatus(com.alotra.entity.enums.PromotionStatus.ACTIVE);
         List<PromotionCard> cards = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (Promotion p : promos) {
-            if (!p.isPublic()) continue;
-            String imageUrl = (p.getImageUrl() != null && !p.getImageUrl().isBlank()) ? p.getImageUrl() : "/images/placeholder.png";
-            String period = (p.getStartDate() != null ? df.format(p.getStartDate()) : "?") +
-                    " - " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
-            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period));
+            if (!p.isActive())
+                continue;
+            String imageUrl = "/images/placeholder.png";
+            String period = "Đến " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
+            String desc = "Giảm giá "; // + p.getDiscountValue() + " cho đơn hàng từ " + p.getMinOrderAmount();
+            cards.add(new PromotionCard(p.getId(), p.getCode(), desc, imageUrl, period));
         }
         model.addAttribute("promotions", cards);
         return "home/index";
@@ -50,8 +51,8 @@ public class HomeController {
 
     @GetMapping("/products")
     public String productsPage(@RequestParam(required = false) Integer categoryId,
-                               @RequestParam(required = false) String search,
-                               Model model) {
+            @RequestParam(required = false) String search,
+            Model model) {
         model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
         var categories = categoryService.findActive();
         model.addAttribute("categories", categories);
@@ -92,8 +93,13 @@ public class HomeController {
         public String description;
         public String imageUrl;
         public String periodText;
+
         public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText) {
-            this.id = id; this.title = title; this.description = description; this.imageUrl = imageUrl; this.periodText = periodText;
+            this.id = id;
+            this.title = title;
+            this.description = description;
+            this.imageUrl = imageUrl;
+            this.periodText = periodText;
         }
     }
 }

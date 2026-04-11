@@ -25,7 +25,7 @@ public class AdminPromotionController {
 
     @GetMapping
     public String list(Model model) {
-        List<Promotion> items = promotionRepo.findByDeletedAtIsNull();
+        List<Promotion> items = promotionRepo.findByStatus(PromotionStatus.ACTIVE);
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Khuyến mãi");
         model.addAttribute("currentPage", "promotions");
@@ -53,10 +53,7 @@ public class AdminPromotionController {
     public String save(@ModelAttribute Promotion promotion,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                        RedirectAttributes ra) {
-        if (imageFile != null && !imageFile.isEmpty()) {
-            String url = cloudinaryService.uploadFile(imageFile);
-            promotion.setImageUrl(url);
-        }
+        // imageUrl is no longer in Promotion entity
         if (promotion.getStatus() == null) promotion.setStatus(PromotionStatus.ACTIVE);
         promotionRepo.save(promotion);
         ra.addFlashAttribute("message", "Đã lưu khuyến mãi");
@@ -66,7 +63,7 @@ public class AdminPromotionController {
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
         promotionRepo.findById(id).ifPresent(p -> {
-            p.setDeletedAt(java.time.LocalDateTime.now());
+            p.setStatus(PromotionStatus.INACTIVE);
             promotionRepo.save(p);
         });
         ra.addFlashAttribute("message", "Đã chuyển khuyến mãi vào thùng rác");

@@ -33,4 +33,4 @@ build/
 .vscode/
 
 # Ignore all markdown files
-*.md
+# *.md

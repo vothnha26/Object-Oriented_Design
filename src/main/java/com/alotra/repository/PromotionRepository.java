@@ -8,7 +8,5 @@ import java.util.List;
 
 @Repository
 public interface PromotionRepository extends JpaRepository<Promotion, Integer> {
-    List<Promotion> findByDeletedAtIsNull();
-    List<Promotion> findByStatusAndDeletedAtIsNullOrderByStartDateDesc(PromotionStatus status);
-    List<Promotion> findByDeletedAtIsNotNull();
+    List<Promotion> findByStatus(PromotionStatus status);
 }

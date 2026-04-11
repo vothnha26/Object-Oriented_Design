@@ -73,7 +73,7 @@ public class AdminProductController {
         model.addAttribute("kw", kw);
         model.addAttribute("categoryId", categoryId);
         model.addAttribute("status", status);
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         return "admin/products";
     }
 
@@ -101,7 +101,7 @@ public class AdminProductController {
         model.addAttribute("pageTitle", "Thêm sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", new Product());
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
     }
@@ -117,7 +117,7 @@ public class AdminProductController {
         model.addAttribute("pageTitle", "Sửa sản phẩm");
         model.addAttribute("currentPage", "products");
         model.addAttribute("product", p);
-        model.addAttribute("categories", categoryRepository.findByDeletedAtIsNull());
+        model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("variants", variantRepository.findByProduct(p));
         model.addAttribute("sizes", sizeRepository.findAll());
         return "admin/product-form";
@@ -138,7 +138,7 @@ public class AdminProductController {
             return product.getId() == null ? "redirect:/admin/products/add"
                     : ("redirect:/admin/products/edit/" + product.getId());
         }
-        var dup = productRepository.findByNameIgnoreCaseAndDeletedAtIsNull(name);
+        var dup = productRepository.findByNameIgnoreCase(name);
         if (dup != null && (product.getId() == null || !java.util.Objects.equals(dup.getId(), product.getId()))) {
             ra.addFlashAttribute("error", "Tên sản phẩm đã tồn tại.");
             return product.getId() == null ? "redirect:/admin/products/add"

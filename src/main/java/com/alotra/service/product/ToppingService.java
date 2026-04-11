@@ -32,6 +32,6 @@ public class ToppingService {
     }
 
     public List<Topping> findActive() {
-        return toppingRepository.findByDeletedAtIsNull();
+        return toppingRepository.findAll();
     }
 }

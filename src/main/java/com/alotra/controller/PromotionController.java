@@ -2,6 +2,7 @@ package com.alotra.controller;
 
 import com.alotra.entity.Promotion;
 import com.alotra.repository.PromotionRepository;
+import com.alotra.entity.enums.PromotionStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,7 @@ public class PromotionController {
 
     @GetMapping
     public String list(Model model) {
-        List<Promotion> items = promotionRepo.findByDeletedAtIsNull();
+        List<Promotion> items = promotionRepo.findByStatus(PromotionStatus.ACTIVE);
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Chương trình khuyến mãi");
         return "promotions/promotion_list";
@@ -30,7 +31,7 @@ public class PromotionController {
     public String detail(@PathVariable Integer id, Model model) {
         Promotion p = promotionRepo.findById(id).orElseThrow();
         model.addAttribute("promotion", p);
-        model.addAttribute("pageTitle", p.getName());
+        model.addAttribute("pageTitle", p.getCode());
         return "promotions/promotion_detail";
     }
 }
