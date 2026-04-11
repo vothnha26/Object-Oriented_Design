@@ -1,58 +1,49 @@
-@startuml
-title Sequence Diagram for Task 1: Order Checkout (Builder Pattern)
+@startuml task1_builder_sequence
+title Sequence Diagram for Task 1: Order Creation (Builder Pattern via Factory)
 autonumber
 
-actor Customer
-participant "UI:CheckoutPage" as UI
+actor Client
 participant "CheckoutController" as CC
-participant "CartService" as CS
-participant "OrderBuilder" as OB
+participant "Facade:CheckoutFacade" as CF
+participant "Factory:OrderFactory" as OF
+participant "Builder:OrderBuilder" as OB
 participant "Order" as O
 database DB
 
-Customer -> UI : Submit Checkout Form
-activate UI
-UI -> CC : placeOrder(itemIds, paymentMethod, ...)
+== Checkout Process ==
+Client -> CC : Submit order request
 activate CC
 
-CC -> CS : checkoutWithOptions(customer, itemIds, ...)
-activate CS
+CC -> CF : processCheckout(customer, request)
+activate CF
 
-CS -> CS : getOrCreateActiveCart(customer)
-CS -> DB : findItems(itemIds)
+CF -> OF : createOrder(customer, address, cartItems, note)
+activate OF
 
-note over OB: Member 1: Builder Pattern
-CS -> OB : builder()
+OF -> OB : builder()
 activate OB
-CS -> OB : forCustomer(customer)
-CS -> OB : payBy(paymentMethod)
-CS -> OB : receivingMethod(receivingMethod)
-CS -> OB : shipTo(name, phone, address)
-CS -> OB : withSubtotal(total)
-CS -> OB : build()
+OF -> OB : forCustomer(customer)
+OF -> OB : shipTo(addressLine)
+OF -> OB : withItems(orderItems)
+OF -> OB : build()
 
 OB -> O** : new Order()
-OB -> O : setCustomer, setPayment, setShippingInfo...
-OB --> CS : order
+OB -> O : setCustomer(c), setShippingAddressLine(a)...
+OB --> OF : order
 deactivate OB
 
-CS -> DB : save(order)
+OF --> CF : order
+deactivate OF
+
+CF -> DB : save(order)
 activate DB
-DB --> CS : savedOrder
+DB --> CF : savedOrder
 deactivate DB
 
-loop for each CartItem
-    CS -> DB : save(OrderItem)
-    CS -> DB : save(OrderedTopping)
-end
+CF --> CC : finalOrder
+deactivate CF
 
-CS -> DB : updateCartStatus(CHECKED_OUT)
-CS --> CC : order
-deactivate CS
-
-CC --> UI : Redirect to Success Page
+CC --> Client : Display Order Status / Payment QR
 deactivate CC
-UI --> Customer : Display Order Success
-deactivate UI
 
 @enduml

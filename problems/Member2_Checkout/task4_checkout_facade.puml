@@ -1,0 +1,57 @@
+@startuml task4_checkout_facade
+title Sequence Diagram for Member 2: Checkout Flow (Facade Pattern - Session-based Cart)
+autonumber
+
+actor Client
+participant "CheckoutController" as CC
+participant "Facade:CheckoutFacade" as CF
+participant "Stock:StockService" as SS
+participant "Factory:OrderFactory" as OF
+participant "Price:PriceService" as PS
+participant "Payment:PaymentService" as PY
+participant "Service:CheckoutService" as CS
+
+== Bắt đầu Checkout từ Session/Cookie ==
+Client -> CC : Submit Checkout Form (addressId, paymentMethod, promoCode)
+activate CC
+
+CC -> CC : Extract CartItems from Session/Cookie
+note right: Giỏ hàng được lưu trữ phía Server (Session) \nhoặc giải mã từ Cookie
+
+CC -> CF : processCheckout(customer, checkoutRequest)
+activate CF
+
+CF -> SS : validateStock(request.cartItems)
+activate SS
+SS --> CF : stockOk
+deactivate SS
+
+CF -> OF : createOrder(customer, address, request.cartItems)
+activate OF
+OF -> OF : Use OrderBuilder (Member 1)
+OF --> CF : order
+deactivate OF
+
+CF -> PS : calculateTotal(order, promotionCode)
+activate PS
+PS --> CF : calculatedOrder
+deactivate PS
+
+CF -> PY : processPayment(order, paymentMethod)
+activate PY
+PY --> CF : paymentDone
+deactivate PY
+
+CF -> CS : saveOrder(order)
+activate CS
+CS --> CF : savedOrder
+deactivate CS
+
+CF --> CC : finalOrder
+deactivate CF
+
+CC -> CC : Clear Cart Session/Cookie
+CC --> Client : Redirect to Payment Page (Bank) or Success Page (Cash)
+deactivate CC
+
+@enduml

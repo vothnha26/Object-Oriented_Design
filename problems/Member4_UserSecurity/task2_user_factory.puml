@@ -1,4 +1,4 @@
-@startuml
+@startuml task2_user_factory
 title Sequence Diagram for Member 4: User Creation (Factory Pattern)
 autonumber
 
@@ -12,19 +12,18 @@ participant "Encoder:PasswordEncoder" as ENC
 database DB
 
 == Admin Seeding ==
-CAI -> UF : createAdmin(username, email, password, phone)
+CAI -> UF : createAdmin(username, email, password)
 activate UF
 UF -> ENC : encode(password)
 ENC --> UF : hashed
 UF -> C** : new Customer(status=ACTIVE)
 UF --> CAI : adminEntity
 deactivate UF
-CAI -> DB : save(adminEntity)
 
 == Customer Registration ==
 Admin -> RC : register(form)
 activate RC
-RC -> UF : createCustomer(u, e, name, p, pass, PENDING)
+RC -> UF : createCustomer(u, e, name, p, pass)
 activate UF
 UF -> ENC : encode(pass)
 ENC --> UF : hashed

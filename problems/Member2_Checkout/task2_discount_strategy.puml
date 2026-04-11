@@ -1,16 +1,16 @@
-@startuml
+@startuml task2_discount_strategy
 title Sequence Diagram for Member 2: Discount Calculation (Strategy Pattern)
 autonumber
 
 actor Client
-participant "CartService" as CS
+participant "OrderService" as CS
 participant "DiscountStrategy" as DS
 participant "NoDiscountStrategy" as NDS
 participant "PercentDiscountStrategy" as PDS
 participant "PriceComponent" as PC
 
 == Phase 1: Xác định Chiến lược Giảm giá ==
-CS -> CS : checkoutWithOptions()
+CS -> CS : calculateTotal()
 activate CS
 
 alt Nếu không có khuyến mãi

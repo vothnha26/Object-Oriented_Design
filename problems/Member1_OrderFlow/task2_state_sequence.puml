@@ -1,4 +1,4 @@
-@startuml
+@startuml task2_state_sequence
 title Sequence Diagram for Task 2: Order State Management (State Pattern)
 autonumber
 
@@ -27,15 +27,13 @@ note over OC: Member 1: State Pattern
 VOS -> OC** : new OrderContext(order)
 activate OC
 OC -> PS** : new PendingState()
-OC -> PS : setContext(this)
 deactivate OC
 
-VOS -> OC : nextState()
+VOS -> OC : advance()
 activate OC
-OC -> PS : next(context)
+OC -> PS : advance(context)
 activate PS
 PS -> PRPS** : new PreparingState()
-PS -> PRPS : setContext(context)
 PS -> OC : setState(PreparingState)
 deactivate PS
 deactivate OC

@@ -1,54 +1,54 @@
-@startuml
+@startuml task1_sequence
 title Sequence Diagram for Task 1: Product Pricing (Decorator + Command)
 autonumber
 
 actor Client
 participant "UI:Browser" as UI
-participant "CartController" as CC
+participant "CheckoutController" as CC
 participant "UpdTopCmd:UpdateToppingsCommand" as UTC
-participant ":CartHistoryManager" as CHM
-participant ":CartService" as CS
+participant ":CommandInvoker" as CI
+participant ":CheckoutService" as CS
 participant "NewChain:PriceComponent" as PC
 database DB
 
 == Phase 1: Cập nhật Topping (Command Execution) ==
 Client -> UI : Thay đổi số lượng topping & Submit
 activate UI
-UI -> CC : updateItemToppings(itemId, toppingsMap)
+UI -> CC : updateItemToppings(orderId, itemId, toppingsMap)
 activate CC
 
-CC -> UTC** : new UpdateToppingsCommand(cs, user, itemId, newMap, "Cập nhật topping")
-CC -> CHM : executeCommand(cmd)
-activate CHM
+CC -> UTC** : new UpdateToppingsCommand(cs, orderId, itemId, newMap)
+CC -> CI : execute(cmd)
+activate CI
 
-CHM -> UTC : execute()
+CI -> UTC : execute()
 activate UTC
-UTC -> CS : getCurrentToppingQtys(itemId)
+UTC -> CS : getOrderedToppingQuantities(itemId)
 activate CS
 CS --> UTC : oldToppingMap
 deactivate CS
 
-UTC -> CS : updateToppings(user, itemId, newMap)
+UTC -> CS : updateToppings(orderId, itemId, newMap)
 activate CS
 
-CS -> DB : deleteByCartItem(item)
-CS -> DB : save(new SelectedToppings)
-CS -> CS : recomputeLineTotal(item)
+CS -> DB : deleteByOrderItem(item)
+CS -> DB : save(new OrderedTopping)
+CS -> CS : calculateItemTotal(item)
 activate CS
 CS -> PC** : Build Decorator Chain (Base -> Promo -> Topping -> Qty)
 CS -> PC : calculate()
 PC --> CS : newTotal
-CS -> DB : Update CartItem lineTotal
+CS -> DB : Update OrderItem total
 deactivate CS
 
 CS --> UTC : done
 deactivate CS
-UTC --> CHM : done
+UTC --> CI : done
 deactivate UTC
-CHM --> CC : success
-deactivate CHM
+CI --> CC : success
+deactivate CI
 
-CC --> UI : Redirect to /cart
+CC --> UI : Redirect to /checkout
 deactivate CC
 UI --> Client : Hiển thị giá đã cập nhật
 deactivate UI
@@ -56,23 +56,23 @@ deactivate UI
 == Phase 2: Hoàn tác (Undo) ==
 Client -> UI : Click [Hoàn tác]
 activate UI
-UI -> CC : undo() [GET]
+UI -> CC : undo() [POST]
 activate CC
-CC -> CHM : undo()
-activate CHM
-CHM -> UTC : undo()
+CC -> CI : undo()
+activate CI
+CI -> UTC : undo()
 activate UTC
-UTC -> CS : updateToppings(user, itemId, oldMap)
+UTC -> CS : updateToppings(orderId, itemId, oldMap)
 activate CS
 CS -> DB : Restore previous Toppings state
-CS -> CS : recomputeLineTotal(item)
+CS -> CS : calculateItemTotal(item)
 CS --> UTC : done
 deactivate CS
-UTC --> CHM : done
+UTC --> CI : done
 deactivate UTC
-CHM --> CC : success
-deactivate CHM
-CC --> UI : Redirect to /cart
+CI --> CC : success
+deactivate CI
+CC --> UI : Redirect to /checkout
 deactivate CC
 UI --> Client : Trạng thái & Giá quay về ban đầu
 deactivate UI

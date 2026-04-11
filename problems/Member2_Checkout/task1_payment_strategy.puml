@@ -1,11 +1,11 @@
-@startuml
+@startuml task1_payment_strategy
 title Sequence Diagram for Member 2: Payment Process (Strategy Pattern)
 autonumber
 
 actor Customer
 participant "UI:CheckoutPage" as UI
 participant "CheckoutController" as CC
-participant "CartService" as CS
+participant "CheckoutService" as CS
 participant "PaymentFactory:PaymentStrategyFactory" as PF
 participant "Strategy:PaymentStrategy" as PS
 participant "Order" as O
@@ -13,29 +13,29 @@ database DB
 
 Customer -> UI : Chọn phương thức thanh toán & Đặt hàng
 activate UI
-UI -> CC : placeOrder(itemIds, paymentMethod, ...)
+UI -> CC : placeOrder(items, paymentMethod, ...)
 activate CC
 
-CC -> CS : checkoutWithOptions(customer, itemIds, paymentMethod, ...)
+CC -> CS : placeOrder(customer, items, paymentMethod, ...)
 activate CS
 
 CS -> CS : calculateTotal(items)
 note right: Tính toán tổng tiền sau khi áp dụng Discount Strategy
 
-CS -> PF : getStrategy(paymentMethod)
+CS -> PF : create(paymentMethod)
 activate PF
 PF -> PS** : new CashPaymentStrategy() / new BankTransferPaymentStrategy()
 PF --> CS : strategy
 deactivate PF
 
-CS -> PS : processPayment(finalTotal)
+CS -> PS : processPayment(order)
 activate PS
 PS -> PS : validatePayment(order)
 PS --> CS : done
 deactivate PS
 
 CS -> O** : Initialize Order (via Builder)
-CS -> O : setPaymentStatus(PAID / UNPAID)
+CS -> O : setStatus(PENDING)
 CS -> DB : save(order)
 activate DB
 DB --> CS : saved

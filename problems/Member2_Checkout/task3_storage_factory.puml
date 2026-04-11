@@ -1,4 +1,4 @@
-@startuml
+@startuml task3_storage_factory
 title Sequence Diagram for Member 2: Image Storage (Factory Pattern)
 autonumber
 

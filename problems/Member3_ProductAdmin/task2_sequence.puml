@@ -1,4 +1,4 @@
-@startuml
+@startuml task2_sequence
 title Sequence Diagram for Task 2: Admin Operations (Command Pattern & Undo)
 autonumber
 
@@ -13,11 +13,6 @@ database DB
 Admin -> APC : delete(id)
 activate APC
 
-APC -> REPO : findById(id)
-activate REPO
-REPO --> APC : product
-deactivate REPO
-
 APC -> CMD** : new SoftDeleteProductCommand(repo, id)
 APC -> INV : execute(cmd)
 activate INV
@@ -30,10 +25,10 @@ activate REPO
 REPO --> CMD : p
 deactivate REPO
 
-CMD -> CMD : Save previous state\n(deletedAt, status)
+CMD -> CMD : Save previous status
 CMD -> REPO : save(p)
 activate REPO
-REPO -> DB : UPDATE Product\nSET deletedAt=now, status=INACTIVE
+REPO -> DB : UPDATE Product\nSET status=INACTIVE
 REPO --> CMD : saved
 deactivate REPO
 
@@ -63,10 +58,10 @@ activate REPO
 REPO --> CMD : p
 deactivate REPO
 
-CMD -> CMD : Restore previous state
+CMD -> CMD : Restore previous status
 CMD -> REPO : save(p)
 activate REPO
-REPO -> DB : UPDATE Product\nSET deletedAt=oldVal, status=oldVal
+REPO -> DB : UPDATE Product\nSET status=previousStatus
 REPO --> CMD : saved
 deactivate REPO
 
