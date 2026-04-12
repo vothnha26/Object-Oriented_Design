@@ -6,6 +6,9 @@ import com.alotra.entity.Order;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.dto.PaymentRequest;
+import com.alotra.dto.PaymentResult;
+import com.alotra.payment.SepayPaymentProcessor;
 import com.alotra.security.CustomerUserDetails;
 import com.alotra.service.order.OrderHistoryService;
 import com.alotra.repository.OrderRepository;
@@ -39,14 +42,71 @@ public class PaymentController {
 
     private final OrderRepository orderRepo;
     private final OrderHistoryService customerOrderService;
+    private final SepayPaymentProcessor sepayPaymentProcessor;
 
-    public PaymentController(OrderRepository orderRepo, OrderHistoryService customerOrderService) {
+    public PaymentController(OrderRepository orderRepo, OrderHistoryService customerOrderService, SepayPaymentProcessor sepayPaymentProcessor) {
         this.orderRepo = orderRepo;
         this.customerOrderService = customerOrderService;
+        this.sepayPaymentProcessor = sepayPaymentProcessor;
     }
 
     private boolean isTransferMethod(Object method) {
         return method == PaymentMethod.BANK_TRANSFER;
+    }
+
+    /**
+     * POST /payment/{id}/initiate-sepay
+     * Initiate Sepay payment for an order
+     * Returns redirect URL or QR code for user
+     */
+    @PostMapping("/{id}/initiate-sepay")
+    @ResponseBody
+    public ResponseEntity<?> initiateSepayPayment(@PathVariable Integer id,
+                                                  @AuthenticationPrincipal CustomerUserDetails principal) {
+        try {
+            Order order = orderRepo.findById(id).orElse(null);
+            
+            // Validate: order exists and belongs to current user
+            if (order == null) {
+                return ResponseEntity.notFound().build();
+            }
+            if (principal == null || order.getCustomer() == null || 
+                !java.util.Objects.equals(order.getCustomer().getId(), principal.getId())) {
+                return ResponseEntity.status(403).body(Map.of("error", "Unauthorized"));
+            }
+            
+            // Validate: order can accept Sepay payment
+            if (order.getPayment() == null || order.getPayment().getStatus() == PaymentStatus.PAID) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Order already paid"));
+            }
+            
+            // Create payment request
+            PaymentRequest paymentRequest = new PaymentRequest();
+            paymentRequest.setOrderId(order.getId());
+            paymentRequest.setAmount(order.calculateTotal());
+            paymentRequest.setMethod("SEPAY");
+            
+            // Call Sepay processor to get redirect URL
+            PaymentResult result = sepayPaymentProcessor.initiateSepayPayment(paymentRequest, order);
+            
+            if (result.isSuccess()) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "redirectUrl", result.getRedirectUrl(),
+                    "transactionRef", result.getTransactionRef(),
+                    "message", result.getMessage()
+                ));
+            } else {
+                return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "error", result.getMessage()
+                ));
+            }
+            
+        } catch (Exception e) {
+            System.err.println("[Payment] Error initiating Sepay payment: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Map.of("error", "Internal server error"));
+        }
     }
 
     @GetMapping("/{id}")

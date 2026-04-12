@@ -23,8 +23,8 @@ public class PaymentStrategyFactory {
 
         return switch (method) {
             case CASH -> new CashPaymentStrategy();
-            case BANK_TRANSFER -> new BankTransferPaymentStrategy();
-            // Add more payment methods here as needed
+            case SEPAY -> new SepayPaymentStrategy();
+            // BANK_TRANSFER is handled via SEPAY (bank transfer + VietQR)
             default -> throw new IllegalArgumentException("Unsupported payment method: " + method);
         };
     }

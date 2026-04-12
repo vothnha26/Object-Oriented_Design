@@ -34,3 +34,9 @@ build/
 
 # Ignore all markdown files
 # *.md
+
+# ====================================================================
+# ENVIRONMENT VARIABLES & SECRETS - NEVER COMMIT
+# ====================================================================
+.env
+!.env.example
