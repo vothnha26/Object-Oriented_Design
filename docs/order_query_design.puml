@@ -1,0 +1,94 @@
+@startuml Order_Query_Pipeline_Architecture
+
+' Cấu hình hiển thị giãn cách và chuyên nghiệp
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 100
+
+title Kiến trúc Pipeline Truy vấn Đơn hàng (Template Method + Strategy)
+
+' =============================================
+' STRATEGY: Bộ lọc linh hoạt
+' =============================================
+interface OrderFilterStrategy <<interface>> {
+    + matches(Order) : boolean
+}
+
+class StatusOrderFilter {
+    - status : OrderStatus
+}
+
+class KeywordFilter {
+    - keyword : String
+}
+
+class CustomerOrderFilter {
+    - customerId : Integer
+}
+
+class DateRangeFilter {
+    - start : LocalDateTime
+    - end : LocalDateTime
+}
+
+' Thực thi Strategy
+OrderFilterStrategy <|-- StatusOrderFilter
+OrderFilterStrategy <|-- KeywordFilter
+OrderFilterStrategy <|-- CustomerOrderFilter
+OrderFilterStrategy <|-- DateRangeFilter
+
+' =============================================
+' TEMPLATE METHOD: Quy trình Pipeline
+' =============================================
+abstract class AbstractOrderQuery {
+    # repository : OrderRepository
+    + execute(keyword, limit) : List<OrderDto> {final}
+    # {abstract} getFilter() : OrderFilterStrategy
+    # {abstract} toDto(Order) : OrderDto
+    # fetchOrders() : List<Order> {hook}
+    # getComparator() : Comparator<Order> {hook}
+}
+
+class AvailableOrderQuery {
+    # getFilter() : StatusOrderFilter
+    # toDto(Order) : OrderDto
+}
+
+class CustomerOrderHistoryQuery {
+    - customerId : Integer
+    # fetchOrders() : List<Order> {optimized}
+    # getFilter() : CustomerOrderFilter
+}
+
+' Thực thi Template Method
+AbstractOrderQuery <|-- AvailableOrderQuery
+AbstractOrderQuery <|-- CustomerOrderHistoryQuery
+
+' Mối quan hệ giữa Template Method và Strategy
+AbstractOrderQuery --> OrderFilterStrategy : sử dụng linh hoạt >
+
+' =============================================
+' CLIENT: Service điều phối
+' =============================================
+class VendorOrderService {
+    - availableOrderQuery : AvailableOrderQuery
+    + listOrders(...) : List<OrderDto>
+}
+
+VendorOrderService o-- AvailableOrderQuery : ủy thác (delegates) >
+
+note bottom of AbstractOrderQuery
+  Template Method 'execute()' định nghĩa 
+  pipeline 6 bước cố định (Fetch -> Filter -> Search -> Sort -> Limit -> Map).
+  Subclasses chỉ tập trung vào việc định nghĩa 'Bộ lọc' và 'DTO'.
+end note
+
+@enduml

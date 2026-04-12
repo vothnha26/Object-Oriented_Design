@@ -28,23 +28,20 @@ public class CheckoutFacade {
 
     @Transactional
     public Order processCheckout(Customer customer, CheckoutRequest request) {
-        // 1. Kiểm tra tồn kho (Stock Service)
+        // 1. Kiểm tra tồn kho
         stockService.validateStock(request.getCartItems());
 
-        // 2. Chuyển đổi DTO sang Entity (Order Factory)
-        Address address = addressRepository.findById(request.getAddressId())
-                .orElse(null);
-                
-        // Ghi chú (Note) được gán thông qua OrderFactory cho các OrderItem (theo class_diagram.puml)
+        // 2. Chuyển đổi DTO sang Entity
+        Address address = addressRepository.findById(request.getAddressId()).orElse(null);
         Order order = orderFactory.createOrder(customer, address, request.getCartItems(), request.getNote());
 
-        // 3. Tính toán giá và khuyến mãi (Price Service)
+        // 3. Tính toán giá
         priceService.calculateTotal(order, request.getPromotionCode());
 
-        // 4. Xử lý thanh toán (Payment Service)
+        // 4. Xử lý thanh toán
         paymentService.processPayment(order, request.getPaymentMethod());
 
-        // 5. Lưu đơn hàng thông qua Checkout Service chuyên biệt
+        // 5. Lưu đơn hàng
         return checkoutService.saveOrder(order);
     }
 }

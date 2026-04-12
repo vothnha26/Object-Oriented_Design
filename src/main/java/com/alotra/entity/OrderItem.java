@@ -26,6 +26,9 @@ public class OrderItem {
     @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
+    @Column(name = "line_total")
+    private BigDecimal lineTotal = BigDecimal.ZERO;
+
     private String note;
 
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -49,6 +52,8 @@ public class OrderItem {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
+    public BigDecimal getLineTotalAmount() { return lineTotal; }
+    public void setLineTotalAmount(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
     public List<OrderedTopping> getToppings() { return toppings; }

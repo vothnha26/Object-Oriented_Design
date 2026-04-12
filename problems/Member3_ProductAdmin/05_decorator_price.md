@@ -1,174 +1,87 @@
-# 🔴 Bài toán 5: Tính giá sản phẩm cứng nhắc
+# 🔴 Bài toán 5: Tính giá sản phẩm cứng nhắc (OCP Violation)
 
-## Patterns: **Decorator** + **Strategy**
-## SOLID vi phạm: **OCP**, **SRP**
+## Patterns: **Decorator** + **Strategy** (với Spring DI)
+## SOLID vi phạm: **OCP** (Open/Closed), **SRP** (Single Responsibility)
 
 ---
 
 ## 📌 Vấn đề hiện tại
 
-Giá sản phẩm trong đơn hàng được tính qua nhiều bước nhưng code **không tách rời**, không dễ mở rộng:
+Giá sản phẩm trong đơn hàng được tính qua nhiều bước (giá gốc → topping → số lượng → khuyến mãi). Ban đầu, code sử dụng `if/else` hoặc `switch` trực tiếp trong Service để tính toán:
 
-**`CheckoutService.addItemWithOptions()`** — logic tính giá inline:
 ```java
-// 1. Lấy giá gốc từ variant
-BigDecimal basePrice = variant.getPrice();
-
-// 2. Áp dụng khuyến mãi
-Integer discountPercent = promotionRepo.findActiveMaxDiscountPercentForProduct(variant.getProduct().getId());
-BigDecimal unitPrice = applyPercent(basePrice, discountPercent);
-
-// 3. Tính topping
-BigDecimal toppingTotal = BigDecimal.ZERO;
-for (Map.Entry<Integer, Integer> entry : toppingSelections.entrySet()) {
-    Topping topping = toppingRepo.findById(entry.getKey()).orElse(null);
-    toppingTotal = toppingTotal.add(topping.getExtraPrice().multiply(BigDecimal.valueOf(entry.getValue())));
+// Trong PriceServiceImpl cũ
+if (promo.getType() == PERCENTAGE) {
+    total = total.multiply(rate);
+} else if (promo.getType() == VALUE) {
+    total = total.subtract(amount);
 }
-
-// 4. Tổng = (unitPrice + toppingTotal) × quantity
-BigDecimal lineTotal = unitPrice.add(toppingTotal).multiply(BigDecimal.valueOf(quantity));
+// Thêm loại KM mới (VD: Buy 1 Get 1) -> Phải sửa file này -> Vi phạm OCP
 ```
 
-### ❌ Vấn đề
-1. Logic tính giá **gắn chặt** vào `CheckoutService` → không tái sử dụng khi hiển thị giá trên trang sản phẩm
-2. Thêm loại giảm giá mới (VD: giảm giá thành viên VIP, mua 2 tặng 1, giảm cố định cho đơn hàng) → phải **sửa** method → **vi phạm OCP**
-3. Thứ tự áp dụng giảm giá không linh hoạt (luôn cố định: KM% → topping → qty)
+### ❌ Vấn đề cụ thể
+1. **Vi phạm OCP**: Mỗi khi thêm loại khuyến mãi hoặc phí mới, phải sửa code logic tính tiền chính.
+2. **Vi phạm SRP**: `PriceServiceImpl` vừa quản lý luồng tính tiền, vừa chi tiết hóa cách áp dụng từng loại giảm giá.
+3. **Thiếu linh hoạt**: Khó thay đổi thứ tự áp dụng (VD: giảm giá trước hay sau khi cộng topping).
 
 ---
 
-## ✅ Giải pháp: Decorator Pattern
+## ✅ Giải pháp: Decorator kết hợp Strategy (Spring Plugin)
 
-Mỗi "lớp bọc" giá là một Decorator, có thể xếp chồng linh hoạt:
+Chúng ta sử dụng **Decorator Pattern** để chia nhỏ các bước tính toán thành từng lớp riêng biệt, và dùng **Strategy Pattern** (thông qua `PromotionApplicator`) để tự động chọn đúng Decorator mà không cần `if/else`.
+
+### 1. Cấu trúc Decorator (Tính toán)
+- **PriceComponent**: Interface gốc.
+- **BasePrice**: Giá trị khởi đầu.
+- **ToppingDecorator, QuantityDecorator**: Các lớp bọc tính toán cơ bản.
+- **PromotionDecorator, ValueDiscountDecorator**: Các lớp bọc giảm giá.
+
+### 2. Cấu trúc Strategy Applicator (Lắp ráp - OCP)
+Chúng ta định nghĩa interface `PromotionApplicator`. Spring sẽ tự động thu thập tất cả các "mảnh ghép" này.
 
 ```java
-// ===== Component Interface =====
-public interface PriceComponent {
-    BigDecimal calculate();
-    String getDescription();
+public interface PromotionApplicator {
+    boolean supports(PromotionType type);
+    PriceComponent apply(PriceComponent base, Promotion promotion);
 }
+```
 
-// ===== Base Component =====
-public class BasePrice implements PriceComponent {
-    private final BigDecimal price;
-    
-    public BasePrice(BigDecimal price) {
-        this.price = price;
-    }
-    
-    @Override public BigDecimal calculate() { return price; }
-    @Override public String getDescription() { return "Giá gốc"; }
-}
+### 3. PriceServiceImpl (Điều phối sạch sẽ)
+Service không còn quan tâm có bao nhiêu loại khuyến mãi, nó chỉ yêu cầu các "Applicator" làm việc:
 
-// ===== Abstract Decorator =====
-public abstract class PriceDecorator implements PriceComponent {
-    protected final PriceComponent wrapped;
-    
-    protected PriceDecorator(PriceComponent wrapped) {
-        this.wrapped = wrapped;
-    }
-}
+```java
+@Service
+public class PriceServiceImpl implements PriceService {
+    private final List<PromotionApplicator> applicators; // Tự động inject tất cả Strategy
 
-// ===== Concrete Decorators =====
-public class PromotionDecorator extends PriceDecorator {
-    private final int percent;
-    
-    public PromotionDecorator(PriceComponent wrapped, int percent) {
-        super(wrapped);
-        this.percent = percent;
-    }
-    
-    @Override
-    public BigDecimal calculate() {
-        BigDecimal base = wrapped.calculate();
-        BigDecimal factor = BigDecimal.valueOf(100 - percent)
-                .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-        return base.multiply(factor).setScale(0, RoundingMode.HALF_UP);
-    }
-    
-    @Override
-    public String getDescription() {
-        return wrapped.getDescription() + " → Giảm " + percent + "%";
-    }
-}
+    public void calculateTotal(Order order, String code) {
+        PriceComponent chain = new BasePrice(subTotal);
+        
+        // Strategy Pattern tự động chọn đúng Decorator
+        chain = applicators.stream()
+                .filter(a -> a.supports(promo.getType()))
+                .findFirst()
+                .map(a -> a.apply(chain, promo))
+                .orElse(chain);
 
-public class ToppingDecorator extends PriceDecorator {
-    private final List<OrderedTopping> toppings;
-    
-    public ToppingDecorator(PriceComponent wrapped, List<OrderedTopping> toppings) {
-        super(wrapped);
-        this.toppings = toppings;
-    }
-    
-    @Override
-    public BigDecimal calculate() {
-        BigDecimal base = wrapped.calculate();
-        BigDecimal extra = toppings.stream()
-                .map(t -> t.getPrice().multiply(BigDecimal.valueOf(t.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return base.add(extra);
-    }
-    
-    @Override
-    public String getDescription() {
-        return wrapped.getDescription() + " + Topping";
-    }
-}
-
-public class QuantityDecorator extends PriceDecorator {
-    private final int quantity;
-    
-    public QuantityDecorator(PriceComponent wrapped, int quantity) {
-        super(wrapped);
-        this.quantity = quantity;
-    }
-    
-    @Override
-    public BigDecimal calculate() {
-        return wrapped.calculate().multiply(BigDecimal.valueOf(quantity));
-    }
-    
-    @Override
-    public String getDescription() {
-        return wrapped.getDescription() + " × " + quantity;
-    }
-}
-
-// ===== Decorator mới trong tương lai (OCP!) =====
-public class VipDiscountDecorator extends PriceDecorator {
-    @Override
-    public BigDecimal calculate() {
-        return wrapped.calculate().multiply(BigDecimal.valueOf(0.95)); // VIP giảm 5%
+        BigDecimal finalTotal = chain.calculate();
     }
 }
 ```
 
-### Sử dụng:
+---
 
-```java
-// Trước: logic tính giá inline 20+ dòng
-BigDecimal unitPrice = applyPercent(basePrice, discountPercent);
-BigDecimal lineTotal = unitPrice.add(toppingTotal).multiply(BigDecimal.valueOf(quantity));
+## ✅ Lợi ích
 
-// Sau: chuỗi decorator rõ ràng, dễ mở rộng
-PriceComponent price = new BasePrice(variant.getPrice());
+| Đặc điểm | Trước (if/else) | Sau (Strategy + Decorator) |
+|----------|-----------------|----------------------------|
+| **Thêm loại KM mới** | Sửa file `PriceServiceImpl` | Tạo 1 class mới (Applicator + Decorator) |
+| **Tính mở rộng** | Kém (vi phạm OCP) | Tuyệt vời (Plugin-based) |
+| **Độ phức tạp** | Tăng dần theo số lượng `if` | Giữ nguyên, mỗi file 1 nhiệm vụ duy nhất |
+| **Bảo trì** | Dễ gây bug tại code cũ | An toàn, không chạm vào code đang chạy |
 
-if (discountPercent != null && discountPercent > 0) {
-    price = new PromotionDecorator(price, discountPercent);
-}
-if (!toppings.isEmpty()) {
-    price = new ToppingDecorator(price, toppings);
-}
-price = new QuantityDecorator(price, quantity);
+---
 
-BigDecimal lineTotal = price.calculate();
-// VD kết quả: "Giá gốc → Giảm 20% + Topping × 2"
-```
+## 📋 Sơ đồ Kiến trúc
 
-### Lợi ích
-
-| Trước | Sau |
-|-------|-----|
-| Tính giá inline trong CheckoutService | Decorator chain tái sử dụng |
-| Thêm giảm giá VIP → sửa CheckoutService | Thêm `VipDiscountDecorator` (OCP) |
-| Không debug được từng bước giá | `getDescription()` cho biết từng lớp |
-| Thứ tự cố định | Xếp decorator theo thứ tự tùy ý |
+Kiến trúc này biến hệ thống tính giá thành một **Pipeline** linh hoạt, nơi các quy tắc tính tiền có thể "cắm" thêm vào (Plug-in) bất cứ lúc nào.

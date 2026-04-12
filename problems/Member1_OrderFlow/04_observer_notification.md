@@ -7,149 +7,59 @@
 
 ## 📌 Vấn đề hiện tại
 
-Khi trạng thái đơn hàng thay đổi, hệ thống **KHÔNG** tự động thông báo cho các bên liên quan. Hiện tại:
+Khi trạng thái đơn hàng thay đổi, hệ thống không tự động thông báo cho khách hàng hoặc cập nhật các hệ thống liên quan.
 
 ### Code có vấn đề
 
-**`VendorOrderService.java`** — chỉ update DB, không thông báo ai:
+**`VendorOrderService.java`** — chỉ cập nhật DB:
 ```java
 public void updateStatus(Integer id, OrderStatus newStatus) {
-    jdbc.update("UPDATE orders SET status = ? WHERE id = ?", newStatus.name(), id);
-    // Đã xong — không email, không log, không notification gì cả
-}
-```
-
-**`ShipperOrderService.java`** — tương tự, chỉ set status:
-```java
-order.setStatus(OrderStatus.DELIVERED);
-orderRepository.save(order);
-// Không thông báo cho khách hàng
-```
-
-**`NotificationService.java`** — chỉ **pull-based** (khi user refresh trang), không **push-based**:
-```java
-public Map<String, Object> getCustomerNotifications(Integer customerId) {
-    // Chỉ query DB khi user request → không real-time
+    Order order = orderRepository.findById(id).orElseThrow();
+    order.setStatus(newStatus);
+    orderRepository.save(order);
+    // Kết thúc — không có email hay thông báo nào được gửi đi
 }
 ```
 
 ### ❌ Vấn đề cụ thể
-1. Khách hàng **không biết** đơn đang được pha chế hay đang giao
-2. Vendor **không biết** đơn mới vừa tạo (phải F5 liên tục)
-3. Nếu muốn thêm gửi email khi đơn giao xong → phải **sửa** method `updateStatus()` → **vi phạm OCP**
-4. Logic thông báo nếu thêm vào method hiện tại → `ShipperOrderService` sẽ kiêm luôn gửi mail → **vi phạm SRP**
+1. **Trải nghiệm kém**: Khách hàng không nhận được thông tin về tiến độ đơn hàng.
+2. **Khó mở rộng**: Nếu muốn thêm tính năng gửi SMS hoặc cập nhật kho khi đơn hoàn tất, ta phải sửa trực tiếp code nghiệp vụ → vi phạm OCP.
+3. **Vi phạm SRP**: Service xử lý đơn hàng không nên kiêm nhiệm cả việc gửi email hay thông báo.
 
 ---
 
 ## ✅ Giải pháp: Observer Pattern
 
+Sử dụng cơ chế sự kiện (Event-driven) để tách biệt logic nghiệp vụ đơn hàng và logic thông báo.
+
 ```java
-// ===== Event =====
-public class OrderStatusChangedEvent {
-    private final Order order;
-    private final OrderStatus oldStatus;
-    private final OrderStatus newStatus;
-
-    public OrderStatusChangedEvent(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
-        this.order = order;
-        this.oldStatus = oldStatus;
-        this.newStatus = newStatus;
-    }
-    // getters...
-}
-
 // ===== Observer Interface =====
 public interface OrderEventListener {
-    void onOrderStatusChanged(OrderStatusChangedEvent event);
+    void onOrderStatusChanged(Order order, OrderStatus oldStatus, OrderStatus newStatus);
 }
 
 // ===== Concrete Observers =====
 @Component
-public class CustomerEmailNotifier implements OrderEventListener {
-    private final EmailService emailService;
-    private final CustomerRepository customerRepository;
-
+public class EmailNotifier implements OrderEventListener {
     @Override
-    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
-        Customer customer = event.getOrder().getCustomer();
-        emailService.send(customer.getEmail(),
-            "StarCinema - Đơn hàng #" + event.getOrder().getId(),
-            "Đơn hàng của bạn đã chuyển sang trạng thái: " + event.getNewStatus());
+    public void onOrderStatusChanged(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
+        // Logic gửi email cho khách hàng
     }
 }
 
 @Component
-public class DashboardStatsUpdater implements OrderEventListener {
+public class ActivityLogger implements OrderEventListener {
     @Override
-    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
-        // Invalidate cache dashboard stats
-        // Broadcast WebSocket cho admin biết refresh
+    public void onOrderStatusChanged(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
+        log.info("Order #{} changed from {} to {}", order.getId(), oldStatus, newStatus);
     }
 }
-
-@Component
-public class OrderActivityLogger implements OrderEventListener {
-    @Override
-    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
-        log.info("Đơn #{}: {} → {}", 
-            event.getOrder().getId(), event.getOldStatus(), event.getNewStatus());
-    }
-}
-
-// ===== Subject (phát sự kiện) =====
-@Service
-public class OrderEventPublisher {
-    private final List<OrderEventListener> listeners;
-
-    public OrderEventPublisher(List<OrderEventListener> listeners) {
-        this.listeners = listeners; // Spring auto-inject tất cả implementation
-    }
-
-    public void fireStatusChanged(Order order, OrderStatus oldStatus, OrderStatus newStatus) {
-        OrderStatusChangedEvent event = new OrderStatusChangedEvent(order, oldStatus, newStatus);
-        for (OrderEventListener listener : listeners) {
-            listener.onOrderStatusChanged(event);
-        }
-    }
-}
-```
-
-### Sử dụng trong service:
-
-```java
-// VendorOrderService hoặc ShipperOrderService
-public void updateStatus(Integer id, OrderStatus newStatus) {
-    Order order = orderRepository.findById(id).orElseThrow();
-    OrderStatus oldStatus = order.getStatus();
-    order.setStatus(newStatus);
-    orderRepository.save(order);
-    
-    // 🔔 Phát sự kiện → tất cả observers tự phản ứng
-    eventPublisher.fireStatusChanged(order, oldStatus, newStatus);
-}
-```
-
-### Hoặc dùng Spring ApplicationEvent (built-in Observer):
-
-```java
-// Spring cung cấp sẵn cơ chế Observer
-@Component
-public class CustomerEmailNotifier {
-    @EventListener
-    public void handleOrderStatusChange(OrderStatusChangedEvent event) {
-        // Gửi email...
-    }
-}
-
-// Publish event
-applicationEventPublisher.publishEvent(new OrderStatusChangedEvent(order, old, new));
 ```
 
 ### Lợi ích
 
 | Trước | Sau |
 |-------|-----|
-| Không thông báo gì | Email + log + dashboard + ... |
-| Thêm thông báo SMS → sửa service | Thêm `SmsNotifier implements OrderEventListener` |
-| Service biết về email/log | Service chỉ phát event, không biết ai lắng nghe |
-| Không mở rộng được | Thêm observer bất kỳ lúc nào → OCP |
+| Không thông báo gì | Tự động thông báo qua nhiều kênh |
+| Thêm thông báo mới → sửa service | Thêm Observer mới mà không chạm vào code cũ |
+| Service gánh quá nhiều trách nhiệm | Service chỉ cần phát sự kiện |

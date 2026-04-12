@@ -2,7 +2,8 @@ package com.alotra.entity.enums;
 
 public enum ProductStatus {
     ACTIVE,
-    INACTIVE;
+    INACTIVE,
+    OUT_OF_STOCK;
 
     public static ProductStatus fromValue(Integer val) {
         if (val == null) return ACTIVE;

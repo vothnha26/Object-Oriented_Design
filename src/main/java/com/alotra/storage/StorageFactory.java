@@ -14,10 +14,10 @@ public class StorageFactory {
     @Value("${storage.provider:cloudinary}")
     private String storageProvider;
 
-    @Autowired
+    @Autowired(required = false)
     private CloudinaryAdapter cloudinaryAdapter;
 
-    @Autowired
+    @Autowired(required = false)
     private LocalStorageAdapter localStorageAdapter;
 
     /**
@@ -26,8 +26,10 @@ public class StorageFactory {
      */
     public ImageStorageService getStorageService() {
         if ("local".equalsIgnoreCase(storageProvider)) {
+            if (localStorageAdapter == null) throw new IllegalStateException("LocalStorageAdapter is not configured but provider is 'local'");
             return localStorageAdapter;
         } else if ("cloudinary".equalsIgnoreCase(storageProvider)) {
+            if (cloudinaryAdapter == null) throw new IllegalStateException("CloudinaryAdapter is not configured but provider is 'cloudinary'");
             return cloudinaryAdapter;
         } else {
             throw new IllegalArgumentException("Unsupported storage provider: " + storageProvider);

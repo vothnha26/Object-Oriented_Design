@@ -6,7 +6,8 @@ import com.alotra.entity.Wishlist;
 import java.util.List;
 
 public interface WishlistOperations {
-    List<Wishlist> findByCustomer(Integer customerId);
     void addToWishlist(Customer customer, Product product);
-    void removeFromWishlist(Integer customerId, Integer productId);
+    void removeFromWishlist(Customer customer, Integer productId);
+    List<Wishlist> getCustomerWishlist(Customer customer);
+    boolean isInWishlist(Customer customer, Integer productId);
 }

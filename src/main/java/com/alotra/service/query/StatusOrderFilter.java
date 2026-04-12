@@ -4,14 +4,14 @@ import com.alotra.entity.Order;
 import com.alotra.entity.enums.OrderStatus;
 
 public class StatusOrderFilter implements OrderFilterStrategy {
-    private final OrderStatus targetStatus;
+    private final OrderStatus status;
 
-    public StatusOrderFilter(OrderStatus targetStatus) {
-        this.targetStatus = targetStatus;
+    public StatusOrderFilter(OrderStatus status) {
+        this.status = status;
     }
 
     @Override
     public boolean matches(Order order) {
-        return targetStatus.equals(order.getStatus());
+        return status != null && status.equals(order.getStatus());
     }
 }

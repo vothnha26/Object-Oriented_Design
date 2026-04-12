@@ -7,7 +7,7 @@
 
 ## 📌 Vấn đề hiện tại
 
-Method `processCheckout()` trong `CheckoutService.java` nhận **8 tham số** và chứa logic **90+ dòng** liên tục:
+Method `processCheckout()` trong `CheckoutService.java` nhận quá nhiều tham số và chứa logic xây dựng đối tượng đơn hàng cồng kềnh, khiến code khó đọc và khó bảo trì.
 
 ```java
 public Order processCheckout(
@@ -15,40 +15,33 @@ public Order processCheckout(
     List<Integer> itemIds,
     PaymentMethod paymentMethod,
     String note,
-    String receivingMethod,  // "Ship" | "Pickup"
-    String shipName,
-    String shipPhone,
+    String receivingMethod,
     String shipAddress
 ) {
-    // 90+ dòng logic: validate → build Order → build CTDonHang → build CTDonHangTopping → cleanup cart
+    // 90+ dòng logic: validate → build Order → build LineItems...
 }
 ```
 
 ### ⚠️ Vấn đề cụ thể
-1. **Quá nhiều tham số**: 8 params → khó đọc, dễ nhầm thứ tự.
-2. **Logic xây dựng Order phức tạp**: Set ~15 field, tính toán vận chuyển, xử lý Ship vs Pickup, note composite.
-3. **Vi phạm SRP**: Method vừa validate, vừa build order, vừa build lines, vừa tính topping, vừa cleanup giỏ hàng.
-4. **Khó test**: Không thể test riêng phần tạo Order.
+1. **Quá nhiều tham số**: Dễ nhầm lẫn thứ tự các tham số khi gọi hàm.
+2. **Logic xây dựng phức tạp**: Việc thiết lập nhiều thuộc tính cho `Order` (địa chỉ, giảm giá, trạng thái...) làm loãng logic nghiệp vụ chính.
+3. **Khó kiểm soát địa chỉ**: Địa chỉ cần được lưu dưới dạng chuỗi (Snapshot) tại thời điểm đặt hàng để đảm bảo tính lịch sử.
 
 ---
 
 ## ✅ Giải pháp: Builder Pattern
 
-Tách biệt logic xây dựng đối tượng `Order` ra khỏi Business Service. `OrderBuilder` được tích hợp vào `OrderFactory` để hỗ trợ quá trình chuyển đổi DTO sang Entity một cách minh bạch.
+Tách biệt logic xây dựng đối tượng `Order` phức tạp ra khỏi service chính. `OrderBuilder` hỗ trợ xây dựng đơn hàng theo phong cách Fluent API.
 
 ```java
 public class OrderBuilder {
     private Customer customer;
-    private Employee employee;
-    private Promotion promotion;
-    private String shippingAddressLine;
+    private String shippingAddressLine; // Lưu dạng String Snapshot
     private BigDecimal discountAmount = BigDecimal.ZERO;
     private OrderStatus status = OrderStatus.PENDING;
     private List<OrderItem> items = new ArrayList<>();
 
-    public static OrderBuilder builder() {
-        return new OrderBuilder();
-    }
+    public static OrderBuilder builder() { return new OrderBuilder(); }
 
     public OrderBuilder forCustomer(Customer customer) {
         this.customer = customer;
@@ -60,8 +53,8 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder withDiscount(BigDecimal discountAmount) {
-        this.discountAmount = discountAmount;
+    public OrderBuilder withDiscount(BigDecimal discount) {
+        this.discountAmount = discount;
         return this;
     }
 
@@ -87,25 +80,10 @@ public class OrderBuilder {
 }
 ```
 
-### Sử dụng (Trong OrderFactory):
-
-```java
-public Order createOrder(Customer customer, Address address, List<CartItemDTO> cartItems) {
-    List<OrderItem> orderItems = // ... convert cartItems to OrderItems
-    
-    return OrderBuilder.builder()
-        .forCustomer(customer)
-        .shipTo(address != null ? address.getAddressLine() : null)
-        .withItems(orderItems)
-        .build();
-}
-```
-
 ### Lợi ích
 
 | Trước | Sau |
 |-------|-----|
-| 8 params → nhầm thứ tự | Fluent API → rõ nghĩa |
-| Validation + Build lẫn lộn | Tách riêng logic xây dựng vào Builder |
-| Thêm field → sửa method signature | Thêm field → thêm method builder |
-| Khó test | Builder có thể test độc lập |
+| Khó đọc với 6+ tham số | Rõ nghĩa với Fluent API |
+| Logic build lẫn lộn nghiệp vụ | Tách biệt hoàn toàn khâu tạo đối tượng |
+| Địa chỉ phụ thuộc thực thể | Lưu chuỗi Snapshot an toàn cho dữ liệu cũ |

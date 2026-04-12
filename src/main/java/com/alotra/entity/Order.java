@@ -29,8 +29,17 @@ public class Order {
     @Column(name = "shipping_address_line")
     private String shippingAddressLine;
 
+    @Column(name = "sub_total")
+    private BigDecimal subTotal = BigDecimal.ZERO;
+
     @Column(name = "discount_amount")
     private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee")
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
+    @Column(name = "total_amount")
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -68,8 +77,14 @@ public class Order {
     public void setPromotion(Promotion promotion) { this.promotion = promotion; }
     public String getShippingAddressLine() { return shippingAddressLine; }
     public void setShippingAddressLine(String shippingAddressLine) { this.shippingAddressLine = shippingAddressLine; }
+    public BigDecimal getSubTotal() { return subTotal; }
+    public void setSubTotal(BigDecimal subTotal) { this.subTotal = subTotal; }
     public BigDecimal getDiscountAmount() { return discountAmount; }
     public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+    public BigDecimal getShippingFee() { return shippingFee; }
+    public void setShippingFee(BigDecimal shippingFee) { this.shippingFee = shippingFee; }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public OrderStatus getStatus() { return status; }

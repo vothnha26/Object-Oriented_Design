@@ -1,4 +1,4 @@
-# 🔴 Bài toán 8: Tạo user phân tán & Cloudinary Singleton
+# 🔴 Bài toán 8: Tạo user phân tán & Quản lý OTP tạm thời
 
 ## Patterns: **Factory** + **Singleton**
 ## SOLID vi phạm: **SRP**, **DIP**
@@ -8,142 +8,63 @@
 ## 📌 Vấn đề hiện tại
 
 ### Vấn đề A: Tạo User phân tán (cần Factory)
+Hệ thống có các loại user (`Customer`, `Employee`) nhưng logic khởi tạo nằm rải rác ở nhiều Controller và Initializer, gây khó khăn khi cần thay đổi cấu trúc dữ liệu hoặc quy trình đăng ký.
 
-Hệ thống có **2 loại user** (`Customer`, `Employee`) nhưng không có factory thống nhất. Logic tạo user nằm **rải rác**:
-
-**`CreateAdminInitializer.java`** — tạo Customer thủ công:
-```java
-Customer admin = new Customer();
-admin.setUsername("boss");
-admin.setFullName("Cinema Administrator");
-admin.setEmail("boss@cinema.com");
-admin.setPhone("0900000000");
-admin.setStatus(CustomerStatus.ACTIVE);
-admin.setPasswordHash(encoder.encode("123"));
-customerRepository.save(admin);
-```
-
-**`RegistrationController`** — cũng tạo Customer thủ công với logic khác.
-
-**`UsersAdminController`** — tạo Employee qua `EmployeeService.saveHandlingPassword()`.
-
-→ **Không có nơi tập trung** logic tạo user. Nếu thêm field mới (VD: `avatar`) → phải sửa mọi nơi tạo user.
-
-### Vấn đề B: Cloudinary instance (cần Singleton rõ ràng)
-
-`CloudinaryConfig` tạo bean Cloudinary nhưng Spring quản lý:
-```java
-@Bean
-public Cloudinary cloudinary() {
-    return new Cloudinary(Map.of(
-        "cloud_name", cloudName,
-        "api_key", apiKey,
-        "api_secret", apiSecret
-    ));
-}
-```
-
-Vấn đề: code không rõ ràng đây là Singleton. `CloudinaryService` dùng `@Autowired` field injection thay vì constructor injection → khó test, **vi phạm DIP**.
+### Vấn đề B: Xác thực OTP không cần Database
+Trước đây mã OTP được lưu trực tiếp vào bảng User. Việc này làm phình to Database và không an toàn. Khi bỏ trường `otpCode` trong DB, hệ thống cần một cơ chế lưu trữ tạm thời (Short-lived) để xác thực.
 
 ---
 
 ## ✅ Giải pháp A: Factory Pattern cho User
 
+Tập trung toàn bộ logic khởi tạo và mã hóa mật khẩu vào `UserFactory`.
+
 ```java
-// ===== Interface chung cho User =====
-public interface UserAccount {
-    String getUsername();
-    String getEmail();
-    String getPasswordHash();
-}
-
-// ===== Factory =====
+@Component
 public class UserFactory {
-
     private final PasswordEncoder encoder;
 
     public UserFactory(PasswordEncoder encoder) {
         this.encoder = encoder;
     }
 
-    // Tạo khách hàng (chưa kích hoạt, cần OTP)
-    public Customer createCustomer(String username, String email, String fullName,
-                                     String phone, String plainPassword) {
-        validateCommon(username, email, plainPassword);
+    public Customer createPendingCustomer(String username, String email, String password) {
         Customer customer = new Customer();
         customer.setUsername(username);
         customer.setEmail(email);
-        customer.setFullName(fullName);
-        customer.setPhone(phone);
-        customer.setStatus(CustomerStatus.PENDING); // chưa kích hoạt
-        customer.setPasswordHash(encoder.encode(plainPassword));
+        customer.setPasswordHash(encoder.encode(password));
+        customer.setStatus(CustomerStatus.PENDING); // Đợi xác thực OTP
         return customer;
-    }
-
-    // Tạo admin
-    public Customer createAdmin(String username, String email, String plainPassword) {
-        Customer admin = createCustomer(username, email, "Administrator", null, plainPassword);
-        admin.setStatus(CustomerStatus.ACTIVE); // admin kích hoạt ngay
-        return admin;
-    }
-
-    // Tạo nhân viên (vendor/shipper)
-    public Employee createEmployee(String username, String email, String fullName,
-                                    String phone, EmployeeRole role, String plainPassword) {
-        validateCommon(username, email, plainPassword);
-        Employee employee = new Employee();
-        employee.setUsername(username);
-        employee.setEmail(email);
-        employee.setFullName(fullName);
-        employee.setPhone(phone);
-        employee.setRole(role);
-        employee.setStatus(EmployeeStatus.ACTIVE);
-        employee.setPasswordHash(encoder.encode(plainPassword));
-        return employee;
-    }
-
-    private void validateCommon(String username, String email, String password) {
-        if (username == null || username.isBlank())
-            throw new IllegalArgumentException("Username không được trống");
-        if (email == null || email.isBlank())
-            throw new IllegalArgumentException("Email không được trống");
-        if (password == null || password.length() < 6)
-            throw new IllegalArgumentException("Mật khẩu phải >= 6 ký tự");
     }
 }
 ```
 
-## ✅ Giải pháp B: Singleton Pattern rõ ràng cho Cloudinary
+## ✅ Giải pháp B: OTP qua Session (Web-layer)
+
+Thay vì lưu mã xác thực vào thực thể `User`, ta sử dụng **HttpSession** để lưu trữ tạm thời.
 
 ```java
-// ===== Singleton Configuration =====
-@Configuration
-public class CloudinaryConfig {
-    @Value("${cloudinary.cloud_name}") private String cloudName;
-    @Value("${cloudinary.api_key}") private String apiKey;
-    @Value("${cloudinary.api_secret}") private String apiSecret;
-
-    @Bean  // Spring Singleton scope (default)
-    public Cloudinary cloudinary() {
-        return new Cloudinary(Map.of(
-            "cloud_name", cloudName,
-            "api_key", apiKey,
-            "api_secret", apiSecret
-        ));
-    }
+// Trong RegistrationController
+@PostMapping("/register")
+public String handleRegister(HttpSession session, @RequestParam String email) {
+    String otp = OtpGenerator.generate();
+    // Lưu OTP vào session thay vì DB
+    session.setAttribute("REGISTER_OTP_" + email, otp);
+    session.setMaxInactiveInterval(300); // Hết hạn sau 5 phút
+    
+    emailService.sendOtp(email, otp);
+    return "redirect:/verify";
 }
 
-// ===== Service dùng constructor injection (DIP) =====
-@Service
-public class CloudinaryService {
-    private final Cloudinary cloudinary; // final → Singleton rõ ràng
-
-    // Constructor injection thay vì @Autowired field
-    public CloudinaryService(Cloudinary cloudinary) {
-        this.cloudinary = cloudinary;
+@PostMapping("/verify")
+public String verifyOtp(HttpSession session, @RequestParam String email, @RequestParam String userOtp) {
+    String sessionOtp = (String) session.getAttribute("REGISTER_OTP_" + email);
+    if (userOtp.equals(sessionOtp)) {
+        customerService.activateUser(email);
+        session.removeAttribute("REGISTER_OTP_" + email); // Xóa sau khi dùng
+        return "success";
     }
-
-    public String uploadFile(MultipartFile file) { /* logic upload */ return "url"; }
+    return "error";
 }
 ```
 
@@ -151,7 +72,6 @@ public class CloudinaryService {
 
 | Trước | Sau |
 |-------|-----|
-| Tạo user rải rác 3+ nơi | `UserFactory` tập trung |
-| Thiếu validation khi tạo user | Factory validate đồng nhất |
-| `@Autowired` field injection | Constructor injection (testable) |
-| Singleton ẩn trong Spring | Singleton rõ ràng qua `@Bean` + `final` |
+| OTP lưu vĩnh viễn trong DB | Lưu tạm trong RAM (Session), tự xóa khi hết hạn |
+| Logic tạo user rải rác | `UserFactory` quản lý tập trung |
+| DB bị phình to bởi rác OTP | Database sạch sẽ, chỉ lưu User thật |

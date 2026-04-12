@@ -1,6 +1,7 @@
 package com.alotra.service.query;
 
 import com.alotra.entity.Order;
+import java.util.Objects;
 
 public class CustomerOrderFilter implements OrderFilterStrategy {
     private final Integer customerId;
@@ -11,6 +12,6 @@ public class CustomerOrderFilter implements OrderFilterStrategy {
 
     @Override
     public boolean matches(Order order) {
-        return order.getCustomer() != null && customerId.equals(order.getCustomer().getId());
+        return order.getCustomer() != null && Objects.equals(order.getCustomer().getId(), customerId);
     }
 }

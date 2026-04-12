@@ -28,6 +28,9 @@ public class Product {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> variants = new ArrayList<>();
 
@@ -35,7 +38,7 @@ public class Product {
     private List<ProductMedia> media = new ArrayList<>();
 
     public boolean isAvailable() {
-        return status == ProductStatus.ACTIVE;
+        return status == ProductStatus.ACTIVE && deletedAt == null;
     }
 
     // Getters and Setters
@@ -51,6 +54,8 @@ public class Product {
     public void setStatus(ProductStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public List<ProductVariant> getVariants() { return variants; }
     public void setVariants(List<ProductVariant> variants) { this.variants = variants; }
     public List<ProductMedia> getMedia() { return media; }

@@ -1,0 +1,101 @@
+@startuml Decorator_Pricing_Architecture
+
+' Cấu hình hiển thị giãn cách và chuyên nghiệp
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 100
+
+title Kiến trúc Tính giá sản phẩm (Strategy + Decorator Pattern)
+
+' =============================================
+' CORE COMPONENT (Decorator Pattern)
+' =============================================
+interface PriceComponent <<interface>> {
+    + calculate() : BigDecimal
+}
+
+class BasePrice {
+    - price : BigDecimal
+}
+
+abstract class PriceDecorator {
+    # wrapped : PriceComponent
+}
+
+class ToppingDecorator {
+    - toppings : List<OrderedTopping>
+}
+
+class QuantityDecorator {
+    - quantity : int
+}
+
+class PromotionDecorator {
+    - percent : int
+}
+
+class ValueDiscountDecorator {
+    - discountValue : BigDecimal
+}
+
+' =============================================
+' STRATEGY APPLICATORS (Strategy Pattern)
+' =============================================
+interface PromotionApplicator <<interface>> {
+    + supports(PromotionType) : boolean
+    + apply(PriceComponent, Promotion) : PriceComponent
+}
+
+class PercentagePromotionApplicator {
+    + apply(...) : PriceComponent (returns PromotionDecorator)
+}
+
+class ValuePromotionApplicator {
+    + apply(...) : PriceComponent (returns ValueDiscountDecorator)
+}
+
+' =============================================
+' SERVICE COORDINATOR
+' =============================================
+class PriceServiceImpl {
+    - promotionApplicators : List<PromotionApplicator>
+    + calculateTotal(Order, String)
+    + calculateItemTotal(OrderItem)
+}
+
+' =============================================
+' RELATIONSHIPS (Nét liền dễ nhìn)
+' =============================================
+
+' Decorator Pattern
+PriceComponent <|-- BasePrice
+PriceComponent <|-- PriceDecorator
+PriceDecorator "1" o-- "1" PriceComponent : bọc (wraps) >
+
+PriceDecorator <|-- ToppingDecorator
+PriceDecorator <|-- QuantityDecorator
+PriceDecorator <|-- PromotionDecorator
+PriceDecorator <|-- ValueDiscountDecorator
+
+' Strategy Pattern
+PromotionApplicator <|-- PercentagePromotionApplicator
+PromotionApplicator <|-- ValuePromotionApplicator
+
+' Orchestration
+PriceServiceImpl --> PriceComponent : khởi tạo chuỗi >
+PriceServiceImpl o-- PromotionApplicator : duyệt danh sách Strategy >
+
+note bottom of PriceServiceImpl
+  Service duyệt qua danh sách Applicators để tự động chọn đúng Decorator
+  giảm giá dựa trên loại Khuyến mãi (OCP - Open/Closed Principle).
+end note
+
+@enduml

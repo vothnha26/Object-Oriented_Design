@@ -16,6 +16,9 @@ public class Employee extends User {
     @Column(name = "status", nullable = false)
     private EmployeeStatus status = EmployeeStatus.ACTIVE;
 
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
     @Transient
     private String plainPassword;
 
@@ -41,6 +44,8 @@ public class Employee extends User {
     public void setRole(EmployeeRole role) { this.role = role; }
     public EmployeeStatus getStatus() { return status; }
     public void setStatus(EmployeeStatus status) { this.status = status; }
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public String getPlainPassword() { return plainPassword; }
     public void setPlainPassword(String plainPassword) { this.plainPassword = plainPassword; }
     public String getConfirmPassword() { return confirmPassword; }

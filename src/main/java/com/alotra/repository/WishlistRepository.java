@@ -7,7 +7,7 @@ import java.util.List;
 
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Integer> {
-    List<Wishlist> findByCustomerId(Integer customerId);
+    List<Wishlist> findByCustomerIdOrderByAddedAtDesc(Integer customerId);
     boolean existsByCustomerIdAndProductId(Integer customerId, Integer productId);
     void deleteByCustomerIdAndProductId(Integer customerId, Integer productId);
 }

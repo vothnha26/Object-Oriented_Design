@@ -91,6 +91,15 @@
                                         <span th:if="${product.discountPercent != null and product.discountPercent > 0}"
                                               class="badge bg-danger position-absolute" style="top:8px; left:8px; z-index: 2;"
                                               th:text="${'-' + product.discountPercent + '%'}">-10%</span>
+                                        
+                                        <!-- Wishlist Button -->
+                                        <button class="btn btn-wishlist position-absolute border-0 bg-white shadow-sm rounded-circle p-2" 
+                                                style="top: 8px; right: 8px; z-index: 2; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                                                th:onclick="'toggleWishlist(' + ${product.id} + ', this)'"
+                                                th:title="${principal != null} ? 'Thêm vào yêu thích' : 'Đăng nhập để yêu thích'">
+                                            <i class="fa-heart" th:classappend="${#lists.contains(wishlistProductIds, product.id)} ? 'fas text-danger' : 'far text-secondary'"></i>
+                                        </button>
+
                                         <a th:href="@{'/products/' + ${product.id}}">
                                             <img th:src="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl) ? product.imageUrl : '/images/placeholder.png'}"
                                                  class="card-img-top" th:alt="${product.name}" />
@@ -255,6 +264,41 @@
     <!-- Page Scripts Fragment -->
     <th:block th:fragment="additionalJs">
         <script>
+            function toggleWishlist(productId, btn) {
+                const icon = btn.querySelector('i');
+                const isAdded = icon.classList.contains('fas');
+                const url = isAdded ? '/account/wishlist/remove' : '/account/wishlist/add';
+
+                $.post(url, { productId: productId })
+                    .done(function(data) {
+                        if (isAdded) {
+                            icon.classList.replace('fas', 'far');
+                            icon.classList.replace('text-danger', 'text-secondary');
+                            showToast("Đã xóa khỏi yêu thích", "info");
+                        } else {
+                            icon.classList.replace('far', 'fas');
+                            icon.classList.replace('text-secondary', 'text-danger');
+                            showToast("Đã thêm vào yêu thích", "success");
+                        }
+                    })
+                    .fail(function(xhr) {
+                        if (xhr.status === 401 || xhr.status === 403) {
+                            window.location.href = '/login';
+                        } else {
+                            showToast(xhr.responseJSON?.error || "Đã có lỗi xảy ra", "error");
+                        }
+                    });
+            }
+
+            function showToast(message, type) {
+                // Giả định có hàm showToast chung, nếu không dùng alert tạm
+                if (window.toast) {
+                    window.toast(message, type);
+                } else {
+                    alert(message);
+                }
+            }
+
             $(document).ready(function() {
                 // Promotions progressive reveal
                 const promoGrid = $("#news-promotions .promo-grid");

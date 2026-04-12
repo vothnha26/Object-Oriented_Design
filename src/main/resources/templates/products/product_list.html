@@ -670,6 +670,14 @@
                           class="badge bg-danger position-absolute discount-badge"
                           th:text="${'-' + p.discountPercent + '%'}">-10%</span>
                     
+                    <!-- Wishlist Button -->
+                    <button class="btn btn-wishlist position-absolute border-0 bg-white shadow-sm rounded-circle p-2" 
+                            style="top: 8px; right: 8px; z-index: 2; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                            th:onclick="'toggleWishlist(' + ${p.id} + ', this)'"
+                            th:title="${principal != null} ? 'Thêm vào yêu thích' : 'Đăng nhập để yêu thích'">
+                        <i class="fa-heart" th:classappend="${#lists.contains(wishlistProductIds, p.id)} ? 'fas text-danger' : 'far text-secondary'"></i>
+                    </button>
+
                     <a th:href="@{'/products/' + ${p.id}}">
                         <img th:src="${p.imageUrl != null and !#strings.isEmpty(p.imageUrl) ? p.imageUrl : '/images/placeholder.png'}"
                              class="card-img-top" th:alt="${p.name}" />
@@ -970,6 +978,14 @@
                             ${product.discountPercent && product.discountPercent > 0 ? 
                                 `<span class="badge bg-danger position-absolute discount-badge">-${product.discountPercent}%</span>` : ''}
                             
+                            <!-- Wishlist Button -->
+                            <button class="btn btn-wishlist position-absolute border-0 bg-white shadow-sm rounded-circle p-2" 
+                                    style="top: 12px; right: 12px; z-index: 10; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                                    onclick="toggleWishlist(${product.id}, this)"
+                                    title="Thêm vào yêu thích">
+                                <i class="fa-heart ${window.wishlistProductIds && window.wishlistProductIds.includes(product.id) ? 'fas text-danger' : 'far text-secondary'}"></i>
+                            </button>
+
                             <a href="${base}/products/${product.id}">
                                 <img src="${product.imageUrl || placeholder}" onerror="this.onerror=null;this.src='${placeholder}'" 
                                      class="card-img-top" alt="${product.name}" loading="lazy">

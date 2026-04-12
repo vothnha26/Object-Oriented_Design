@@ -6,10 +6,10 @@ import com.alotra.entity.Wishlist;
 import com.alotra.repository.WishlistRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 
-@Service
-@Transactional
+@Service("wishlistService")
 public class WishlistService implements WishlistOperations {
     private final WishlistRepository wishlistRepository;
 
@@ -17,20 +17,31 @@ public class WishlistService implements WishlistOperations {
         this.wishlistRepository = wishlistRepository;
     }
 
-    public List<Wishlist> findByCustomer(Integer customerId) {
-        return wishlistRepository.findByCustomerId(customerId);
-    }
-
+    @Override
+    @Transactional
     public void addToWishlist(Customer customer, Product product) {
-        if (!wishlistRepository.existsByCustomerIdAndProductId(customer.getId(), product.getId())) {
+        if (!isInWishlist(customer, product.getId())) {
             Wishlist wishlist = new Wishlist();
             wishlist.setCustomer(customer);
             wishlist.setProduct(product);
+            wishlist.setAddedAt(LocalDateTime.now());
             wishlistRepository.save(wishlist);
         }
     }
 
-    public void removeFromWishlist(Integer customerId, Integer productId) {
-        wishlistRepository.deleteByCustomerIdAndProductId(customerId, productId);
+    @Override
+    @Transactional
+    public void removeFromWishlist(Customer customer, Integer productId) {
+        wishlistRepository.deleteByCustomerIdAndProductId(customer.getId(), productId);
+    }
+
+    @Override
+    public List<Wishlist> getCustomerWishlist(Customer customer) {
+        return wishlistRepository.findByCustomerIdOrderByAddedAtDesc(customer.getId());
+    }
+
+    @Override
+    public boolean isInWishlist(Customer customer, Integer productId) {
+        return wishlistRepository.existsByCustomerIdAndProductId(customer.getId(), productId);
     }
 }

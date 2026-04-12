@@ -20,6 +20,19 @@ public class Promotion {
 
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private com.alotra.entity.enums.PromotionType type = com.alotra.entity.enums.PromotionType.VALUE;
+
+    @Column(name = "discount_value")
+    private java.math.BigDecimal discountValue = java.math.BigDecimal.ZERO;
+
+    @Column(name = "discount_rate")
+    private Integer discountRate = 0; // Dùng cho phần trăm (VD: 10 cho 10%)
+
+    @Column(name = "min_order_amount")
+    private java.math.BigDecimal minOrderAmount = java.math.BigDecimal.ZERO;
+
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
@@ -61,6 +74,14 @@ public class Promotion {
     public void setCode(String code) { this.code = code; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public com.alotra.entity.enums.PromotionType getType() { return type; }
+    public void setType(com.alotra.entity.enums.PromotionType type) { this.type = type; }
+    public java.math.BigDecimal getDiscountValue() { return discountValue; }
+    public void setDiscountValue(java.math.BigDecimal discountValue) { this.discountValue = discountValue; }
+    public Integer getDiscountRate() { return discountRate; }
+    public void setDiscountRate(Integer discountRate) { this.discountRate = discountRate; }
+    public java.math.BigDecimal getMinOrderAmount() { return minOrderAmount; }
+    public void setMinOrderAmount(java.math.BigDecimal minOrderAmount) { this.minOrderAmount = minOrderAmount; }
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
     public LocalDate getEndDate() { return endDate; }

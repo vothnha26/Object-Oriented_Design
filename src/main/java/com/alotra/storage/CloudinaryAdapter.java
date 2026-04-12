@@ -2,6 +2,7 @@ package com.alotra.storage;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,7 @@ import java.util.Map;
  */
 @Primary
 @Component("cloudinaryAdapter")
+@ConditionalOnProperty(name = "storage.provider", havingValue = "cloudinary", matchIfMissing = true)
 public class CloudinaryAdapter implements ImageStorageService {
 
     private final Cloudinary cloudinary;

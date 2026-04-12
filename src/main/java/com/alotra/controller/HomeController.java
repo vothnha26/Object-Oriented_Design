@@ -5,6 +5,9 @@ import com.alotra.entity.Promotion;
 import com.alotra.repository.PromotionRepository;
 import com.alotra.service.product.ProductFacade;
 import com.alotra.service.product.CategoryService;
+import com.alotra.service.interaction.WishlistOperations;
+import com.alotra.security.CustomerUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,27 +15,40 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class HomeController {
     private final ProductFacade productFacade;
     private final PromotionRepository promotionRepository;
     private final CategoryService categoryService;
+    private final WishlistOperations wishlistProxy;
 
     public HomeController(ProductFacade productFacade,
             PromotionRepository promotionRepository,
-            CategoryService categoryService) {
+            CategoryService categoryService,
+            WishlistOperations wishlistProxy) {
         this.productFacade = productFacade;
         this.promotionRepository = promotionRepository;
         this.categoryService = categoryService;
+        this.wishlistProxy = wishlistProxy;
     }
 
     @GetMapping("/")
-    public String homePage(Model model) {
+    public String homePage(@AuthenticationPrincipal CustomerUserDetails principal, Model model) {
         model.addAttribute("pageTitle", "AloTra - Trang Chủ");
         List<ProductDTO> bestSellers = productFacade.getHomeProducts();
         model.addAttribute("bestSellers", bestSellers);
+
+        // Fetch wishlist product IDs if logged in
+        List<Integer> wishlistProductIds = Collections.emptyList();
+        if (principal != null) {
+            wishlistProductIds = wishlistProxy.getCustomerWishlist(principal.getCustomer())
+                    .stream().map(w -> w.getProduct().getId()).collect(Collectors.toList());
+        }
+        model.addAttribute("wishlistProductIds", wishlistProductIds);
 
         List<Promotion> promos = promotionRepository.findByStatus(com.alotra.entity.enums.PromotionStatus.ACTIVE);
         List<PromotionCard> cards = new ArrayList<>();
@@ -50,7 +66,8 @@ public class HomeController {
     }
 
     @GetMapping("/products")
-    public String productsPage(@RequestParam(required = false) Integer categoryId,
+    public String productsPage(@AuthenticationPrincipal CustomerUserDetails principal,
+            @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) String search,
             Model model) {
         model.addAttribute("pageTitle", "Sản Phẩm của AloTra");
@@ -60,6 +77,15 @@ public class HomeController {
         model.addAttribute("products", products);
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("search", search);
+
+        // Fetch wishlist product IDs if logged in
+        List<Integer> wishlistProductIds = Collections.emptyList();
+        if (principal != null) {
+            wishlistProductIds = wishlistProxy.getCustomerWishlist(principal.getCustomer())
+                    .stream().map(w -> w.getProduct().getId()).collect(Collectors.toList());
+        }
+        model.addAttribute("wishlistProductIds", wishlistProductIds);
+
         return "products/product_list";
     }
 

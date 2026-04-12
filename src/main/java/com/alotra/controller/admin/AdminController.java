@@ -26,21 +26,34 @@ public class AdminController {
     private final ImageStorageService storageService;
     private final ProductRepository productRepository;
     private final StatsService statsService;
+    private final com.alotra.service.command.AdminCommandInvoker commandInvoker;
 
     public AdminController(CategoryRepository categoryRepository, 
                            ToppingRepository toppingRepository, 
                            com.alotra.storage.StorageFactory storageFactory, 
                            ProductRepository productRepository, 
-                           StatsService statsService) {
+                           StatsService statsService,
+                           com.alotra.service.command.AdminCommandInvoker commandInvoker) {
         this.categoryRepository = categoryRepository;
         this.toppingRepository = toppingRepository;
         this.storageService = storageFactory.getStorageService();
         this.productRepository = productRepository;
         this.statsService = statsService;
+        this.commandInvoker = commandInvoker;
     }
 
     @GetMapping
     public String showAdminRoot() {
+        return "redirect:/admin/dashboard";
+    }
+
+    @PostMapping("/undo")
+    public String undoLastAction(RedirectAttributes ra) {
+        if (commandInvoker.undo()) {
+            ra.addFlashAttribute("message", "Đã hoàn tác thao tác cuối cùng thành công.");
+        } else {
+            ra.addFlashAttribute("error", "Không có thao tác nào để hoàn tác.");
+        }
         return "redirect:/admin/dashboard";
     }
 
@@ -175,11 +188,13 @@ public class AdminController {
 
     @GetMapping("/toppings/delete/{id}")
     public String deleteTopping(@PathVariable Integer id, RedirectAttributes ra) {
-        toppingRepository.findById(id).ifPresent(t -> {
-            t.setStatus(ToppingStatus.INACTIVE);
-            toppingRepository.save(t);
-        });
-        ra.addFlashAttribute("message", "Đã chuyển trạng thái topping thành KHÔNG HOẠT ĐỘNG.");
+        try {
+            com.alotra.service.command.AdminCommand cmd = new com.alotra.service.command.UpdateToppingStatusCommand(toppingRepository, id, ToppingStatus.INACTIVE);
+            commandInvoker.execute(cmd);
+            ra.addFlashAttribute("message", "Đã chuyển trạng thái topping thành KHÔNG HOẠT ĐỘNG. Bạn có thể Hoàn tác nếu muốn.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/toppings";
     }
 }

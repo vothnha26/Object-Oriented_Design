@@ -24,7 +24,8 @@ public class Topping {
     @Column(name = "image_url")
     private String imageUrl;
 
-    public boolean isAvailable() { return status == ToppingStatus.ACTIVE; }
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
 
     // Getters and Setters
     public Integer getId() { return id; }
@@ -37,4 +38,6 @@ public class Topping {
     public void setStatus(ToppingStatus status) { this.status = status; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

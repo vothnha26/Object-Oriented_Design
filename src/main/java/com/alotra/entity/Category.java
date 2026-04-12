@@ -16,7 +16,10 @@ public class Category {
 
     private String description;
 
-    @OneToMany(mappedBy = "category")
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Product> products = new ArrayList<>();
 
     // Getters and Setters
@@ -26,6 +29,8 @@ public class Category {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public List<Product> getProducts() { return products; }
     public void setProducts(List<Product> products) { this.products = products; }
 }

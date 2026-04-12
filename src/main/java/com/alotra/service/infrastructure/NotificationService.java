@@ -48,29 +48,35 @@ public class NotificationService {
     }
 
     private int countUnpaidOrders(Integer customerId) {
-        Integer n = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM DonHang WHERE MaKH = ? AND (PaymentStatus IS NULL OR PaymentStatus <> 'DaThanhToan')",
-                Integer.class, customerId);
+        // Kiểm tra đơn hàng chưa thanh toán (status != PAID trong bảng payments)
+        String sql = "SELECT COUNT(*) FROM orders o " +
+                     "LEFT JOIN payments p ON o.id = p.order_id " +
+                     "WHERE o.customer_id = ? AND (p.status IS NULL OR p.status <> 'PAID')";
+        Integer n = jdbc.queryForObject(sql, Integer.class, customerId);
         return n == null ? 0 : n;
     }
 
     private int countReviewableItems(Integer customerId) {
-        // Count order lines from delivered + paid orders without a review by this customer
-        String sql = "SELECT COUNT(*) FROM CTDonHang ct " +
-                "JOIN DonHang dh ON dh.MaDH = ct.MaDH " +
-                "WHERE dh.MaKH = ? AND dh.TrangThaiDonHang = 'DaGiao' AND dh.PaymentStatus = 'DaThanhToan' " +
-                "AND NOT EXISTS (SELECT 1 FROM DanhGia dg WHERE dg.MaCT = ct.MaCT AND dg.MaKH = dh.MaKH)";
+        // Đếm các mục hàng từ đơn đã giao và đã thanh toán nhưng chưa có đánh giá
+        String sql = "SELECT COUNT(*) FROM order_items oi " +
+                "JOIN orders o ON o.id = oi.order_id " +
+                "JOIN payments p ON o.id = p.order_id " +
+                "WHERE o.customer_id = ? AND o.status = 'DELIVERED' AND p.status = 'PAID' " +
+                "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.product_id = (SELECT product_id FROM product_variants WHERE id = oi.variant_id) AND r.customer_id = o.customer_id)";
         Integer n = jdbc.queryForObject(sql, Integer.class, customerId);
         return n == null ? 0 : n;
     }
 
     private List<Map<String, Object>> listRecentOrders(Integer customerId, int limit) {
-        String sql = "SELECT TOP " + Math.max(1, limit) + " MaDH, TrangThaiDonHang, NgayLap FROM DonHang WHERE MaKH = ? ORDER BY MaDH DESC";
-        return jdbc.query(sql, ps -> ps.setInt(1, customerId), (rs, i) -> {
+        String sql = "SELECT id, status, created_at FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT ?";
+        return jdbc.query(sql, ps -> {
+            ps.setInt(1, customerId);
+            ps.setInt(2, Math.max(1, limit));
+        }, (rs, i) -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("id", rs.getInt("MaDH"));
-            m.put("status", rs.getString("TrangThaiDonHang"));
-            java.sql.Timestamp ts = rs.getTimestamp("NgayLap");
+            m.put("id", rs.getInt("id"));
+            m.put("status", rs.getString("status"));
+            java.sql.Timestamp ts = rs.getTimestamp("created_at");
             m.put("createdAt", ts != null ? ts.toInstant().atZone(HCM_ZONE).toOffsetDateTime() : null);
             return m;
         });

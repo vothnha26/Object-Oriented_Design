@@ -158,10 +158,20 @@
                         </div>
                     </div>
 
-                    <div class="add-bar mt-4 d-flex align-items-center justify-content-between">
+                    <div class="add-bar mt-4 d-flex align-items-center justify-content-between gap-3">
                         <div class="fs-5">Tổng: <strong id="totalText"
                                 th:text="${#numbers.formatDecimal(discountedPrice,0,'COMMA',0,'POINT')} + ' ₫'">0 ₫</strong></div>
-                        <button class="btn btn-success btn-lg" type="submit">Thêm vào giỏ hàng</button>
+                        <div class="d-flex gap-2">
+                            <!-- Wishlist Button -->
+                            <button type="button" class="btn btn-outline-danger btn-lg rounded-pill px-4"
+                                    th:onclick="'toggleWishlist(' + ${product.id} + ', this)'"
+                                    th:title="${principal != null} ? 'Yêu thích' : 'Đăng nhập để yêu thích'">
+                                <i class="fa-heart" th:classappend="${isInWishlist} ? 'fas' : 'far'"></i>
+                            </button>
+                            <button class="btn btn-success btn-lg rounded-pill px-5 flex-grow-1" type="submit">
+                                <i class="fas fa-shopping-cart me-2"></i>Thêm vào giỏ hàng
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

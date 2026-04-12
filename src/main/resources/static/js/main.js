@@ -118,6 +118,38 @@ $(document).ready(function() {
     setInterval(refreshCartCount, 60000);
 
     // ===================================================================
+    // WISHLIST OPERATIONS
+    // ===================================================================
+    window.toggleWishlist = function(productId, btn) {
+        const $icon = $(btn).find('i');
+        const isAdded = $icon.hasClass('fas');
+        const url = isAdded ? api('account/wishlist/remove') : api('account/wishlist/add');
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: { productId: productId },
+            beforeSend: function(xhr){ if (csrfToken && csrfHeader) xhr.setRequestHeader(csrfHeader, csrfToken); },
+            success: function(data) {
+                if (isAdded) {
+                    $icon.removeClass('fas text-danger').addClass('far text-secondary');
+                    showToast("Đã xóa khỏi yêu thích", "info");
+                } else {
+                    $icon.removeClass('far text-secondary').addClass('fas text-danger');
+                    showToast("Đã thêm vào yêu thích", "success");
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401 || xhr.status === 403) {
+                    window.location.href = api('login');
+                } else {
+                    alert(xhr.responseJSON?.error || "Đã có lỗi xảy ra");
+                }
+            }
+        });
+    };
+
+    // ===================================================================
     // ADD TO CART + BUY NOW
     // ===================================================================
     function parseProductIdFromHref(href) {

@@ -7,7 +7,7 @@
 
 ## 📌 Vấn đề hiện tại
 
-Trạng thái đơn hàng (`Order.status`) được quản lý bằng **chuỗi String** và logic chuyển trạng thái nằm **rải rác** trong nhiều file, sử dụng `if/switch` lặp đi lặp lại.
+Trạng thái đơn hàng (`Order.status`) được quản lý bằng các câu lệnh `if/switch` nằm rải rác trong nhiều service, gây khó khăn khi muốn thêm trạng thái mới.
 
 ### Code có vấn đề
 
@@ -28,175 +28,56 @@ public boolean canCancel(OrderStatus current) {
 }
 ```
 
-**`ShipperOrderService.java`** — **copy-paste y hệt** cùng logic:
-```java
-private String getNextStatus(OrderStatus currentStatus) {
-    switch (currentStatus) {
-        case OrderStatus.PENDING: return OrderStatus.PREPARING;
-        case OrderStatus.PREPARING: return OrderStatus.DELIVERING;
-        case OrderStatus.DELIVERING: return OrderStatus.DELIVERED;
-        default: return null;
-    }
-}
-
-private boolean canCancel(OrderStatus status) {
-    return OrderStatus.PENDING.equals(status) || OrderStatus.PREPARING.equals(status);
-}
-```
-
-**`ReviewService.java`** — kiểm tra trạng thái bằng hardcode string:
+**`ReviewService.java`** — kiểm tra trạng thái bằng hardcode logic:
 ```java
 public boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus) {
     return OrderStatus.DELIVERED.equals(orderStatus) && PaymentStatus.PAID.equals(paymentStatus);
 }
 ```
 
-### ❌ Vấn đề cụ thể
+### ⚠️ Vấn đề cụ thể
 
-1. **Vi phạm OCP**: Thêm trạng thái mới (VD: "DangDoiHang") → phải sửa **tất cả** switch/if trong 3+ file
-2. **Vi phạm SRP**: `VendorOrderService` kiêm luôn logic chuyển trạng thái, kiểm tra hủy, validate
-3. **Vi phạm DRY**: Logic `nextStatus()` và `canCancel()` bị **duplicate** giữa `VendorOrderService` và `ShipperOrderService`
-4. **Dễ lỗi**: Dùng magic strings (OrderStatus.PENDING, OrderStatus.DELIVERING) → typo sẽ không bị phát hiện compile-time
-5. **Thiếu validation**: Không kiểm tra chuyển trạng thái bất hợp lệ (VD: DaGiao → ChoXuLy)
+1. **Vi phạm OCP**: Thêm trạng thái mới (VD: "Đang đổi trả") → phải tìm và sửa tất cả các khối `switch/if` ở nhiều file.
+2. **Vi phạm SRP**: Business Service phải gánh thêm logic chuyển đổi trạng thái phức tạp.
+3. **Thiếu validation**: Khó kiểm soát việc chuyển trạng thái bất hợp lệ (VD: Đã giao → Chờ xử lý).
 
 ---
 
 ## ✅ Giải pháp: State Pattern + Command Pattern
 
 ### State Pattern
-Mỗi trạng thái đơn hàng là một **class riêng** implement interface `OrderState`. Đơn hàng giữ reference tới state hiện tại → delegate hành vi.
-
-### Command Pattern
-Mỗi thao tác chuyển trạng thái (advance, cancel, markDelivered) là một **Command** có thể execute + undo.
+Mỗi trạng thái đơn hàng là một **class riêng** implement interface `OrderState`. Đơn hàng giữ tham chiếu tới trạng thái hiện tại và ủy thác hành vi cho class đó.
 
 ### Thiết kế mới
-
-```
-                    «interface»
-                    OrderState
-              ┌─────────────────────┐
-              │ + advance(context)  │
-              │ + cancel(context)   │
-              │ + canCancel(): bool │
-              │ + canReview(): bool │
-              │ + getStatusName()   │
-              └────────┬────────────┘
-                       │ implements
-       ┌───────────────┼────────────────┐──────────────┐──────────────┐
-       ▼               ▼                ▼              ▼              ▼
-   PendingState    PreparingState   DeliveringState   DeliveredState   CancelledState
-  ┌──────────┐  ┌──────────────┐  ┌────────────┐  ┌──────────┐  ┌─────────┐
-  │advance →│  │advance →    │  │advance →  │  │canReview │  │(final) │
-  │Preparing │  │Delivering   │  │Delivered  │  │  = true  │  │canCancel│
-  │canCancel │  │canCancel    │  │canCancel  │  │          │  │ = false│
-  │  = true  │  │  = true     │  │  = false  │  │          │  │        │
-  └──────────┘  └──────────────┘  └────────────┘  └──────────┘  └─────────┘
-```
-
-### Code mẫu sau refactor
 
 ```java
 // ===== Interface =====
 public interface OrderState {
-    void advance(OrderContext context);    // Chuyển trạng thái tiếp
-    void cancel(OrderContext context);     // Hủy đơn
+    void advance(OrderContext context);    // Chuyển sang trạng thái tiếp theo
+    void cancel(OrderContext context);     // Hủy đơn hàng
     boolean canCancel();
     boolean canReview();
     String getStatusName();
 }
 
-// ===== Concrete State =====
+// ===== Concrete States =====
 public class PendingState implements OrderState {
     @Override
-    public void advance(OrderContext ctx) {
-        ctx.setState(new PreparingState());
-    }
+    public void advance(OrderContext ctx) { ctx.setState(new PreparingState()); }
     @Override
-    public void cancel(OrderContext ctx) {
-        ctx.setState(new CancelledState());
-    }
+    public void cancel(OrderContext ctx) { ctx.setState(new CancelledState()); }
     @Override public boolean canCancel() { return true; }
     @Override public boolean canReview() { return false; }
-    @Override public String getStatusName() { return OrderStatus.PENDING.name(); }
+    @Override public String getStatusName() { return "PENDING"; }
 }
 
-public class DeliveringState implements OrderState {
-    @Override
-    public void advance(OrderContext ctx) {
-        ctx.setState(new DeliveredState());
-    }
-    @Override
-    public void cancel(OrderContext ctx) {
-        throw new IllegalStateException("Không thể hủy đơn đang giao");
-    }
-    @Override public boolean canCancel() { return false; }
-    @Override public boolean canReview() { return false; }
-    @Override public String getStatusName() { return OrderStatus.DELIVERING.name(); }
-}
-
-// ===== Context =====
-public class OrderContext {
-    private OrderState state;
-    private Order order;
-
-    public OrderContext(Order order) {
-        this.order = order;
-        this.state = OrderStateFactory.fromString(order.getStatus());
-    }
-    
-    public void advance() { state.advance(this); }
-    public void cancel() { state.cancel(this); }
-    public boolean canCancel() { return state.canCancel(); }
-
-    public OrderState getState() { return state; }
-    public void setState(OrderState state) { this.state = state; }
-}
-
-// ===== Factory tạo State từ String (kết hợp Factory) =====
-public class OrderStateFactory {
-    public static OrderState fromString(OrderStatus status) {
-        return switch (status) {
-            case OrderStatus.PENDING -> new PendingState();
-            case OrderStatus.PREPARING -> new PreparingState();
-            case OrderStatus.DELIVERING -> new DeliveringState();
-            case OrderStatus.DELIVERED -> new DeliveredState();
-            case OrderStatus.CANCELLED -> new CancelledState();
-            default -> throw new IllegalArgumentException("Unknown status: " + status);
-        };
-    }
-}
-```
-
-### Kết hợp Command Pattern cho undo:
-
-```java
-public interface OrderCommand {
-    void execute();
-    void undo();
-}
-
-public class AdvanceOrderCommand implements OrderCommand {
-    private final OrderContext context;
-    private final OrderState previousState;
-
-    public AdvanceOrderCommand(OrderContext context) {
-        this.context = context;
-        this.previousState = context.getState(); // lưu trạng thái cũ
-    }
-
-    @Override
-    public void execute() { context.advance(); }
-
-    @Override
-    public void undo() { context.setState(previousState); }
-}
+// ... các trạng thái khác tương tự
 ```
 
 ### Lợi ích
 
 | Trước | Sau |
 |-------|-----|
-| 3+ file chứa logic switch | 1 interface + 5 state classes |
-| Thêm trạng thái → sửa nhiều file | Thêm trạng thái → tạo 1 class mới |
-| Magic strings → runtime error | Compile-time safety |
-| Không undo được | Command cho phép undo |
+| Logic switch-case rải rác | Tập trung logic vào từng lớp State |
+| Khó mở rộng trạng thái | Chỉ cần tạo thêm lớp State mới (OCP) |
+| Dễ lỗi logic chuyển đổi | Quy tắc chuyển trạng thái được đóng gói minh bạch |

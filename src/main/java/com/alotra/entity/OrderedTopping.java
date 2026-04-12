@@ -24,6 +24,9 @@ public class OrderedTopping {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(name = "total_price")
+    private BigDecimal totalPrice = BigDecimal.ZERO;
+
     public BigDecimal getToppingTotal() {
         return price.multiply(BigDecimal.valueOf(quantity));
     }
@@ -39,4 +42,6 @@ public class OrderedTopping {
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+    public BigDecimal getTotalPrice() { return totalPrice; }
+    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
 }
