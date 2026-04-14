@@ -9,5 +9,6 @@ import com.alotra.entity.enums.PromotionType;
  */
 public interface PromotionApplicator {
     boolean supports(PromotionType type);
+
     PriceComponent apply(PriceComponent base, Promotion promotion);
 }

@@ -1,11 +1,13 @@
-package com.alotra.service.pricing;
+package com.alotra.service.pricing.decorator;
 
+import com.alotra.service.pricing.PriceComponent;
+import com.alotra.service.pricing.PriceDecorator;
 import java.math.BigDecimal;
 
-public class ValueDiscountDecorator extends PriceDecorator {
+public class ValuePromotionDecorator extends PriceDecorator {
     private final BigDecimal discountValue;
 
-    public ValueDiscountDecorator(PriceComponent wrapped, BigDecimal discountValue) {
+    public ValuePromotionDecorator(PriceComponent wrapped, BigDecimal discountValue) {
         super(wrapped);
         this.discountValue = discountValue != null ? discountValue : BigDecimal.ZERO;
     }

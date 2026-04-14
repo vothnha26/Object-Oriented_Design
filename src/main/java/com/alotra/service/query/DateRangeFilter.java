@@ -16,6 +16,10 @@ public class DateRangeFilter implements OrderFilterStrategy {
     public boolean matches(Order order) {
         LocalDateTime created = order.getCreatedAt();
         if (created == null) return false;
-        return !created.isBefore(start) && !created.isAfter(end);
+        
+        boolean afterStart = (start == null) || !created.isBefore(start);
+        boolean beforeEnd = (end == null) || !created.isAfter(end);
+        
+        return afterStart && beforeEnd;
     }
 }

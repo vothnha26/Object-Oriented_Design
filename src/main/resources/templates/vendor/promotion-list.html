@@ -1,48 +1,84 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/vendor-layout :: layout(pageTitle='Sự kiện khuyến mãi', pageContent=~{::pageContent})}">
+      th:replace="~{layouts/vendor-layout :: layout(pageTitle='Quản lý Khuyến mãi', pageContent=~{::pageContent})}">
 <body>
 <div class="page-content" th:fragment="pageContent">
-    <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
-    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Danh sách sự kiện</h5>
-        <a th:href="@{/vendor/promotions/new}" class="btn btn-primary"><i class="fa fa-plus"></i> Thêm</a>
+    <div th:if="${message}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i><span th:text="${message}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <table class="table table-modern table-striped table-hover align-middle">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Tên sự kiện</th>
-            <th>Ngày</th>
-            <th>Trạng thái</th>
-            <th class="text-end">Hành động</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="p : ${items}">
-            <td th:text="${p.id}"></td>
-            <td>
-                <strong th:text="${p.name}"></strong>
-                <div class="small text-muted" th:text="${p.description}"></div>
-            </td>
-            <td th:text="${#temporals.format(p.startDate, 'dd/MM/yyyy')} + ' - ' + ${#temporals.format(p.endDate, 'dd/MM/yyyy')}"></td>
-            <td>
-                <span class="badge" th:text="${p.status==1?'Hoạt động':'Ngừng'}"
-                      th:classappend="${p.status==1?'bg-success':'bg-secondary'}"></span>
-            </td>
-            <td class="text-end">
-                <a th:href="@{'/vendor/promotions/' + ${p.id} + '/products'}" class="btn btn-sm btn-outline-secondary">Áp sản phẩm</a>
-                <a th:href="@{'/vendor/promotions/edit/' + ${p.id}}" class="btn btn-sm btn-outline-primary">Sửa</a>
-                <a th:href="@{'/vendor/promotions/delete/' + ${p.id}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Xóa sự kiện này?')">Xóa</a>
-            </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(items)}">
-            <td colspan="5" class="text-center">Chưa có sự kiện nào.</td>
-        </tr>
-        </tbody>
-    </table>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-success">Danh sách khuyến mãi của cửa hàng</h5>
+            <a th:href="@{/vendor/promotions/new}" class="btn btn-success px-4"><i class="fa fa-plus me-2"></i>Tạo mã mới</a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Mã CODE</th>
+                        <th>Tên chương trình</th>
+                        <th>Mức giảm</th>
+                        <th>Thời gian</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Hành động</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="p : ${items}">
+                        <td class="ps-4">
+                            <code class="fw-bold text-success px-2 py-1 bg-light rounded border border-success-subtle" th:text="${p.code}">CODE</code>
+                        </td>
+                        <td>
+                            <div class="fw-bold" th:text="${p.name}">Tên sự kiện</div>
+                            <div class="small text-muted text-truncate" style="max-width: 200px;" th:text="${p.description}">Mô tả</div>
+                        </td>
+                        <td>
+                            <th:block th:if="${p.type.name() == 'PERCENTAGE'}">
+                                <span class="badge bg-info text-dark" th:text="${p.discountRate + '%'}">10%</span>
+                            </th:block>
+                            <th:block th:if="${p.type.name() == 'VALUE'}">
+                                <span class="badge bg-info text-dark" th:text="${#numbers.formatDecimal(p.discountValue, 0, 'COMMA', 0, 'POINT') + ' ₫'}">20k</span>
+                            </th:block>
+                        </td>
+                        <td class="small">
+                            <div th:text="'Từ: ' + ${#temporals.format(p.startDate, 'dd/MM/yyyy')}"></div>
+                            <div th:text="'Đến: ' + ${#temporals.format(p.endDate, 'dd/MM/yyyy')}"></div>
+                        </td>
+                        <td>
+                            <span th:if="${p.status.name() == 'ACTIVE'}" class="badge bg-success">Đang chạy</span>
+                            <span th:if="${p.status.name() == 'INACTIVE'}" class="badge bg-secondary">Tạm ngưng</span>
+                            <span th:if="${p.status.name() == 'EXPIRED'}" class="badge bg-warning text-dark">Hết hạn</span>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <a th:href="@{'/vendor/promotions/edit/' + ${p.id}}" class="btn btn-sm btn-outline-success" title="Chỉnh sửa">
+                                    <i class="fa fa-edit"></i>
+                                </a>
+                                <a th:href="@{'/vendor/promotions/delete/' + ${p.id}}" class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Bạn có chắc muốn tạm ngưng khuyến mãi này?')" title="Xóa">
+                                    <i class="fa fa-power-off"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(items)}">
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="fa fa-tag fa-3x mb-3 d-block opacity-25"></i>
+                            Cửa hàng chưa có chương trình khuyến mãi nào.
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -1,54 +1,159 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/admin-layout :: layout(pageTitle=${item.id == null ? 'Thêm sự kiện' : 'Sửa sự kiện'}, pageContent=~{::pageContent})}">
+      th:replace="~{layouts/admin-layout :: layout(pageTitle=${item.id == null ? 'Thêm khuyến mãi' : 'Sửa khuyến mãi'}, pageContent=~{::pageContent})}">
 <body>
 <div class="page-content" th:fragment="pageContent">
-    <div class="card">
-        <div class="card-body">
-            <form th:action="@{/admin/promotions/save}" th:object="${item}" method="post" class="row g-3" enctype="multipart/form-data">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0" th:text="${item.id == null ? 'Tạo mã giảm giá (Toàn hóa đơn)' : 'Cập nhật mã giảm giá'}"></h5>
+        </div>
+        <div class="card-body p-4">
+            <form th:action="@{/admin/promotions/save}" th:object="${item}" method="post" class="row g-4" enctype="multipart/form-data">
                 <input type="hidden" th:field="*{id}">
-                <!-- Preserve current image when not uploading: avoid th:field to bypass property introspection -->
                 <input type="hidden" name="imageUrl" th:value="${item.imageUrl}">
                 
-                <div class="col-md-6">
-                    <label class="form-label">Tên sự kiện</label>
-                    <input class="form-control" th:field="*{name}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Ngày bắt đầu</label>
-                    <input type="date" class="form-control" th:field="*{startDate}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Ngày kết thúc</label>
-                    <input type="date" class="form-control" th:field="*{endDate}" required>
-                    <div class="text-danger small" th:if="${#fields.hasErrors('endDate')}" th:errors="*{endDate}"></div>
+                <!-- Thông tin chính -->
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Tên chương trình</label>
+                    <input class="form-control form-control-lg" th:field="*{name}" placeholder="Ví dụ: Tri ân khách hàng tháng 4" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Trạng thái</label>
-                    <select class="form-select" th:field="*{status}">
-                        <option th:value="1">Hoạt động</option>
-                        <option th:value="0">Ngừng</option>
+                    <label class="form-label fw-bold">Mã giảm giá (Promo Code)</label>
+                    <input class="form-control form-control-lg text-uppercase" th:field="*{code}" placeholder="ALOTRA2026" required>
+                </div>
+
+                <!-- Cấu hình giảm giá -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Loại hình giảm giá</label>
+                    <select class="form-select" th:field="*{type}" id="promoType">
+                        <option value="PERCENTAGE">Giảm theo phần trăm (%)</option>
+                        <option value="VALUE">Giảm số tiền cố định (VND)</option>
                     </select>
                 </div>
-                <div class="col-md-8">
-                    <label class="form-label">Mô tả</label>
-                    <textarea class="form-control" th:field="*{description}" rows="3"></textarea>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Ảnh sự kiện</label>
-                    <div class="mb-2">
-                        <img id="previewImg" th:src="${item.imageUrl != null ? item.imageUrl : '/images/placeholder.png'}" alt="Xem trước" class="img-thumbnail" style="max-height: 180px; object-fit: cover;">
+
+                <div class="col-md-4" id="divRate">
+                    <label class="form-label fw-bold">Mức giảm (%)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" th:field="*{discountRate}" min="0" max="100">
+                        <span class="input-group-text">%</span>
                     </div>
-                    <input type="file" class="form-control" name="imageFile" accept="image/*" onchange="(function(e){const f=e.target.files[0];if(f){document.getElementById('previewImg').src=URL.createObjectURL(f);}})(event)">
-                    <div class="text-danger small" th:if="${#fields.hasErrors('imageUrl')}" th:errors="*{imageUrl}"></div>
                 </div>
-                <div class="col-12 d-flex gap-2">
-                    <button class="btn btn-primary" type="submit">Lưu</button>
-                    <a th:href="@{/admin/promotions}" class="btn btn-secondary">Hủy</a>
+
+                <div class="col-md-4" id="divValue" style="display:none">
+                    <label class="form-label fw-bold">Số tiền giảm (VND)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" th:field="*{discountValue}" min="0" step="1000">
+                        <span class="input-group-text">₫</span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Đơn hàng tối thiểu để áp dụng</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" th:field="*{minOrderAmount}" min="0" step="1000">
+                        <span class="input-group-text">₫</span>
+                    </div>
+                </div>
+
+                <!-- Thời gian & Giới hạn -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Ngày bắt đầu</label>
+                    <input type="date" class="form-control" th:name="startDate" 
+                           th:value="${item.startDate != null ? #temporals.format(item.startDate, 'yyyy-MM-dd') : ''}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Ngày kết thúc</label>
+                    <input type="date" class="form-control" th:name="endDate" 
+                           th:value="${item.endDate != null ? #temporals.format(item.endDate, 'yyyy-MM-dd') : ''}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Giới hạn lượt dùng</label>
+                    <input type="number" class="form-control" th:field="*{usageLimit}" placeholder="Để trống nếu không giới hạn">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Trạng thái</label>
+                    <select class="form-select" th:field="*{status}">
+                        <option value="ACTIVE">Đang hoạt động</option>
+                        <option value="INACTIVE">Tạm ngưng</option>
+                    </select>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Mô tả chương trình</label>
+                    <textarea class="form-control" th:field="*{description}" rows="2" placeholder="Nội dung này sẽ hiển thị cho khách hàng..."></textarea>
+                </div>
+
+                <!-- Hình ảnh Banner -->
+                <div class="col-md-12">
+                    <label class="form-label fw-bold">Ảnh Banner khuyến mãi</label>
+                    <div class="d-flex align-items-start gap-4">
+                        <div class="border rounded p-1 bg-light">
+                            <img id="previewImg" th:src="${item.imageUrl != null ? item.imageUrl : '/images/placeholder.png'}" 
+                                 alt="Xem trước" style="width: 320px; height: 120px; object-fit: cover; border-radius: 4px; display: block;">
+                        </div>
+                        <div class="flex-grow-1">
+                            <input type="file" class="form-control" id="imageInput" name="imageFile" accept="image/*">
+                            <ul class="text-muted small mt-2 ps-3">
+                                <li>Tỷ lệ ảnh nên là 16:9 hoặc banner ngang.</li>
+                                <li>Dung lượng tối đa 10MB.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 border-top pt-4 mt-4 d-flex gap-3">
+                    <button class="btn btn-primary px-5 py-2 fw-bold" type="submit">Lưu cấu hình</button>
+                    <a th:href="@{/admin/promotions}" class="btn btn-outline-secondary px-4 py-2">Hủy bỏ</a>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<th:block th:fragment="scripts">
+    <script>
+        // Logic ẩn hiện các trường giảm giá
+        const promoType = document.getElementById('promoType');
+        const divRate = document.getElementById('divRate');
+        const divValue = document.getElementById('divValue');
+
+        function updateFields() {
+            console.log("Current Promo Type:", promoType.value);
+            if (promoType.value === 'PERCENTAGE') {
+                divRate.style.display = 'block';
+                divValue.style.display = 'none';
+            } else {
+                divRate.style.display = 'none';
+                divValue.style.display = 'block';
+            }
+        }
+
+        promoType.addEventListener('change', updateFields);
+        
+        // Cực kỳ quan trọng: Chạy ngay khi load trang để hiển thị đúng dữ liệu cũ
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateFields);
+        } else {
+            updateFields();
+        }
+
+        // Logic Preview ảnh
+        const imageInput = document.getElementById('imageInput');
+        const previewImg = document.getElementById('previewImg');
+
+        if(imageInput) {
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImg.src = e.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    </script>
+</th:block>
 </body>
 </html>

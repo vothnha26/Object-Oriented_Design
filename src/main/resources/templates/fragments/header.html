@@ -90,7 +90,7 @@
                 </ul>
 
                 <!-- Product Categories -->
-                <div th:if="${!#lists.isEmpty(megaMenuCategories)}" class="categories-section">
+                <div th:if="${megaMenuCategories != null and !#lists.isEmpty(megaMenuCategories)}" class="categories-section">
                     <h6 class="sidebar-nav-title">SẢN PHẨM THEO DANH MỤC</h6>
                     <div class="accordion" id="categoryAccordion">
                         <div class="accordion-item" th:each="cat, iterStat : ${megaMenuCategories}">

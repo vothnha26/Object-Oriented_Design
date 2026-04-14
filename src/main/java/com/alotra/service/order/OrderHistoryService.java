@@ -8,7 +8,6 @@ import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
 import com.alotra.repository.OrderRepository;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,11 +46,32 @@ public class OrderHistoryService {
         OrderDto dto = new OrderDto();
         dto.setId(o.getId());
         dto.setCreatedAt(o.getCreatedAt());
-        dto.setStatus(o.getStatus().name());
+        
+        dto.setStatus(o.getStatus().getCode());
+        dto.setStatusDisplay(o.getStatus().getDisplayName());
+        
         dto.setTotal(o.calculateTotal());
         if (o.getCustomer() != null) {
             dto.setCustomerName(o.getCustomer().getFullName());
+            dto.setCustomerPhone(o.getCustomer().getPhone());
         }
+
+        if (o.getPayment() != null) {
+            dto.setPaymentStatus(o.getPayment().getStatus().getCode());
+            dto.setPaymentStatusDisplay(o.getPayment().getStatus().getDisplayName());
+            dto.setPaymentMethod(o.getPayment().getMethod().getCode());
+            dto.setPaymentMethodDisplay(o.getPayment().getMethod().getDisplayName());
+        } else {
+            dto.setPaymentStatus(com.alotra.entity.enums.PaymentStatus.UNPAID.getCode());
+            dto.setPaymentStatusDisplay(com.alotra.entity.enums.PaymentStatus.UNPAID.getDisplayName());
+            dto.setPaymentMethod(com.alotra.entity.enums.PaymentMethod.CASH.getCode());
+            dto.setPaymentMethodDisplay(com.alotra.entity.enums.PaymentMethod.CASH.getDisplayName());
+        }
+        
+        if (o.getShippingAddressLine() != null) {
+            dto.setShippingAddress(o.getShippingAddressLine());
+        }
+
         return dto;
     }
 

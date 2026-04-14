@@ -1,25 +1,25 @@
 package com.alotra.controller;
 
 import com.alotra.dto.CartItemDTO;
-import com.alotra.dto.ProductDTO;
-import com.alotra.entity.Product;
+import com.alotra.entity.Order;
 import com.alotra.entity.ProductVariant;
 import com.alotra.entity.Topping;
-import com.alotra.service.interaction.CartService;
-import com.alotra.service.product.ProductFacade;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
+import com.alotra.service.interaction.CartService;
+import com.alotra.service.order.OrderFactory;
+import com.alotra.service.order.PriceService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/cart")
@@ -28,23 +28,29 @@ public class CartController {
     private final CartService cartService;
     private final ProductVariantRepository variantRepository;
     private final ToppingRepository toppingRepository;
+    private final OrderFactory orderFactory;
+    private final PriceService priceService;
 
     public CartController(CartService cartService, 
                           ProductVariantRepository variantRepository,
-                          ToppingRepository toppingRepository) {
+                          ToppingRepository toppingRepository,
+                          OrderFactory orderFactory,
+                          PriceService priceService) {
         this.cartService = cartService;
         this.variantRepository = variantRepository;
         this.toppingRepository = toppingRepository;
+        this.orderFactory = orderFactory;
+        this.priceService = priceService;
     }
 
     @GetMapping
-    public String viewCart(HttpSession session, Model model) {
+    public String viewCart(HttpSession session, 
+                           @RequestParam(required = false) String promoCode,
+                           Model model) {
         List<CartItemDTO> cartItems = cartService.getCart(session);
         
-        // Enrich DTOs with display information
+        // 1. Tạo danh sách hiển thị cho giao diện
         List<CartItemView> viewItems = new ArrayList<>();
-        BigDecimal subTotal = BigDecimal.ZERO;
-
         for (CartItemDTO item : cartItems) {
             ProductVariant variant = variantRepository.findById(item.getVariantId()).orElse(null);
             if (variant == null) continue;
@@ -57,7 +63,6 @@ public class CartController {
             view.setQuantity(item.getQuantity());
             view.setImageUrl(variant.getProduct().getImageUrl());
 
-            // Load Toppings
             List<ToppingInfo> toppings = new ArrayList<>();
             BigDecimal toppingsTotal = BigDecimal.ZERO;
             if (item.getToppingIds() != null) {
@@ -70,16 +75,19 @@ public class CartController {
                 }
             }
             view.setToppings(toppings);
-            
-            BigDecimal itemTotal = variant.getPrice().add(toppingsTotal).multiply(BigDecimal.valueOf(item.getQuantity()));
-            view.setTotal(itemTotal);
-            subTotal = subTotal.add(itemTotal);
-            
+            view.setTotal(variant.getPrice().add(toppingsTotal).multiply(BigDecimal.valueOf(item.getQuantity())));
             viewItems.add(view);
         }
 
+        // 2. Sử dụng Price Pipeline để tính toán con số thực tế (Subtotal, Discount, Total)
+        Order tempOrder = orderFactory.createOrder(null, null, cartItems, "");
+        priceService.calculateTotal(tempOrder, promoCode);
+
         model.addAttribute("cartItems", viewItems);
-        model.addAttribute("subTotal", subTotal);
+        model.addAttribute("subTotal", tempOrder.getSubTotal());
+        model.addAttribute("discountAmount", tempOrder.getDiscountAmount());
+        model.addAttribute("totalAmount", tempOrder.getTotalAmount());
+        model.addAttribute("promoCode", promoCode);
         model.addAttribute("pageTitle", "Giỏ hàng của bạn");
         
         return "cart/cart";
@@ -91,7 +99,6 @@ public class CartController {
         return "redirect:/cart";
     }
 
-    // Helper classes for view
     public static class CartItemView {
         private Integer variantId;
         private String productName;
@@ -102,7 +109,6 @@ public class CartController {
         private String imageUrl;
         private List<ToppingInfo> toppings;
 
-        // Getters/Setters
         public Integer getVariantId() { return variantId; }
         public void setVariantId(Integer variantId) { this.variantId = variantId; }
         public String getProductName() { return productName; }

@@ -1,5 +1,6 @@
-package com.alotra.service.pricing;
+package com.alotra.service.pricing.component;
 
+import com.alotra.service.pricing.PriceComponent;
 import java.math.BigDecimal;
 
 /**
@@ -7,7 +8,7 @@ import java.math.BigDecimal;
  * Calculates base price as unitPrice * quantity.
  */
 public class BasePriceComponent implements PriceComponent {
-    
+
     private final BigDecimal unitPrice;
     private final Integer quantity;
 

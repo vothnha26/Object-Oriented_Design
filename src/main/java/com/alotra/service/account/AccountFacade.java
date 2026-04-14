@@ -29,6 +29,14 @@ public class AccountFacade {
         customerService.save(customer);
     }
 
+    public void changePassword(String username, String newPassword) {
+        Customer customer = customerService.findByUsername(username);
+        if (customer == null) throw new IllegalArgumentException("Khách hàng không tồn tại");
+        
+        customer.setPasswordHash(passwordEncoder.encode(newPassword));
+        customerService.save(customer);
+    }
+
     public void registerCustomer(String username, String email, String fullName, String phone, String password) {
         if (customerService.findByUsername(username) != null) {
             throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");

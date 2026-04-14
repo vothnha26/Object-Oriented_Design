@@ -2,68 +2,51 @@ package com.alotra.service.order;
 
 import com.alotra.entity.Order;
 import com.alotra.entity.OrderItem;
-import com.alotra.entity.Promotion;
-import com.alotra.service.pricing.*;
+import com.alotra.service.pricing.PriceComponent;
+import com.alotra.service.pricing.OrderPriceProcessor;
+import com.alotra.service.pricing.component.BasePrice;
+import com.alotra.service.pricing.decorator.ToppingDecorator;
+import com.alotra.service.pricing.decorator.QuantityDecorator;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PriceServiceImpl implements PriceService {
 
-    private final com.alotra.repository.PromotionRepository promotionRepository;
-    private final List<PromotionApplicator> promotionApplicators;
+    private final List<OrderPriceProcessor> processors;
 
-    public PriceServiceImpl(com.alotra.repository.PromotionRepository promotionRepository,
-                            List<PromotionApplicator> promotionApplicators) {
-        this.promotionRepository = promotionRepository;
-        this.promotionApplicators = promotionApplicators;
+    public PriceServiceImpl(List<OrderPriceProcessor> processors) {
+        // Sắp xếp các Processor theo thứ tự getOrder() để đảm bảo đúng quy trình
+        this.processors = processors.stream()
+                .sorted(Comparator.comparingInt(OrderPriceProcessor::getOrder))
+                .collect(Collectors.toList());
     }
 
     @Override
     public void calculateTotal(Order order, String promotionCode) {
-        BigDecimal subTotal = BigDecimal.ZERO;
-        
+        // 1. Tính toán giá trị từng Item trước (Topping, Quantity)
         for (OrderItem item : order.getItems()) {
             calculateItemTotal(item);
-            subTotal = subTotal.add(item.getLineTotalAmount());
         }
-        
-        order.setSubTotal(subTotal);
-        
-        // --- Xử lý Khuyến mãi linh hoạt (OCP) ---
-        PriceComponent finalPriceChain = new BasePrice(subTotal);
-        BigDecimal discountAmount = BigDecimal.ZERO;
 
-        if (promotionCode != null && !promotionCode.isBlank()) {
-            var promoOpt = promotionRepository.findByCode(promotionCode);
-            if (promoOpt.isPresent() && promoOpt.get().isActive()) {
-                Promotion promo = promoOpt.get();
-                
-                if (subTotal.compareTo(promo.getMinOrderAmount()) >= 0) {
-                    order.setPromotion(promo);
-                    
-                    // TÌM APPLICATOR PHÙ HỢP TRONG DANH SÁCH (KHÔNG DÙNG SWITCH/IF)
-                    final PriceComponent currentChain = finalPriceChain;
-                    finalPriceChain = promotionApplicators.stream()
-                            .filter(applicator -> applicator.supports(promo.getType()))
-                            .findFirst()
-                            .map(applicator -> applicator.apply(currentChain, promo))
-                            .orElse(currentChain);
-                    
-                    discountAmount = subTotal.subtract(finalPriceChain.calculate());
-                }
-            }
+        // 2. Chạy qua Pipeline (Chain of Responsibility) để tính toán Order Total
+        PriceComponent chain = null; 
+        for (OrderPriceProcessor processor : processors) {
+            chain = processor.process(chain, order, promotionCode);
         }
-        
-        order.setDiscountAmount(discountAmount);
-        BigDecimal shipping = order.getShippingFee() != null ? order.getShippingFee() : BigDecimal.ZERO;
-        
-        BigDecimal total = finalPriceChain.calculate().add(shipping);
-        order.setTotalAmount(total.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : total);
-        
-        if (order.getPayment() != null) {
-            order.getPayment().setAmount(order.getTotalAmount());
+
+        // 3. Gán kết quả cuối cùng vào đơn hàng
+        if (chain != null) {
+            BigDecimal total = chain.calculate();
+            order.setTotalAmount(total.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : total);
+            
+            // Cập nhật số tiền thanh toán nếu có thông tin Payment
+            if (order.getPayment() != null) {
+                order.getPayment().setAmount(order.getTotalAmount());
+            }
         }
     }
 

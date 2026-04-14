@@ -23,11 +23,11 @@ public class OrderFactory {
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItemDTO itemDto : cartItems) {
             OrderItem orderItem = createOrderItem(itemDto);
+            // Ghi chú được gán vào từng OrderItem theo thiết kế PUML
             orderItem.setNote(note);
             orderItems.add(orderItem);
         }
-
-        return com.alotra.builder.OrderBuilder.builder()
+        return OrderBuilder.builder()
                 .forCustomer(customer)
                 .shipTo(address != null ? address.getAddressLine() : null)
                 .withItems(orderItems)

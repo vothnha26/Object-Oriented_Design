@@ -1,6 +1,12 @@
-@startuml Decorator_Pricing_Architecture
+@startuml Decorator_Pricing_Pipeline_Architecture
 
-' Cấu hình hiển thị giãn cách và chuyên nghiệp
+!pragma layout smetana
+
+' Cấu hình để các đường nối vuông vức và thẳng thớm
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
 skinparam classAttributeIconSize 0
 skinparam classFontSize 13
 skinparam classHeaderBackgroundColor #4A90D9
@@ -9,93 +15,171 @@ skinparam classBorderColor #2C5F8A
 skinparam classBackgroundColor #F0F7FF
 skinparam stereotypeCBackgroundColor #E8F4FD
 skinparam ArrowColor #2C5F8A
-skinparam linetype ortho
-skinparam nodesep 100
-skinparam ranksep 100
 
-title Kiến trúc Tính giá sản phẩm (Strategy + Decorator Pattern)
+title Kiến trúc Hệ thống Tính giá (Pipeline + Chain of Responsibility + Decorator)
 
 ' =============================================
-' CORE COMPONENT (Decorator Pattern)
+' 1. CORE COMPONENT (Decorator Pattern)
 ' =============================================
-interface PriceComponent <<interface>> {
-    + calculate() : BigDecimal
-}
+package "Core Pricing (Decorator)" {
+    interface PriceComponent <<interface>> {
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-class BasePrice {
-    - price : BigDecimal
-}
+    class BasePrice {
+        - price : BigDecimal
+        + BasePrice(price: BigDecimal)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-abstract class PriceDecorator {
-    # wrapped : PriceComponent
-}
+    abstract class PriceDecorator {
+        # wrapped : PriceComponent
+        # PriceDecorator(wrapped: PriceComponent)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-class ToppingDecorator {
-    - toppings : List<OrderedTopping>
-}
+    class ToppingDecorator {
+        - toppings : List<OrderedTopping>
+        + ToppingDecorator(wrapped: PriceComponent, toppings: List<OrderedTopping>)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-class QuantityDecorator {
-    - quantity : int
-}
+    class QuantityDecorator {
+        - quantity : int
+        + QuantityDecorator(wrapped: PriceComponent, quantity: int)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-class PromotionDecorator {
-    - percent : int
-}
+    class PercentagePromotionDecorator {
+        - percent : int
+        + PercentagePromotionDecorator(wrapped: PriceComponent, percent: int)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 
-class ValueDiscountDecorator {
-    - discountValue : BigDecimal
+    class ValuePromotionDecorator {
+        - discountValue : BigDecimal
+        + ValuePromotionDecorator(wrapped: PriceComponent, discountValue: BigDecimal)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
+
+    class ShippingDecorator {
+        - shippingFee : BigDecimal
+        + ShippingDecorator(wrapped: PriceComponent, shippingFee: BigDecimal)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
+
+    class RoundingDecorator {
+        + RoundingDecorator(wrapped: PriceComponent)
+        + calculate() : BigDecimal
+        + getDescription() : String
+    }
 }
 
 ' =============================================
-' STRATEGY APPLICATORS (Strategy Pattern)
+' 2. PIPELINE (Chain of Responsibility Pattern)
 ' =============================================
-interface PromotionApplicator <<interface>> {
-    + supports(PromotionType) : boolean
-    + apply(PriceComponent, Promotion) : PriceComponent
-}
+package "Pipeline (Chain of Responsibility)" {
+    interface OrderPriceProcessor <<interface>> {
+        + getOrder() : int
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
 
-class PercentagePromotionApplicator {
-    + apply(...) : PriceComponent (returns PromotionDecorator)
-}
+    class ItemSubtotalProcessor {
+        + getOrder() : 10
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
 
-class ValuePromotionApplicator {
-    + apply(...) : PriceComponent (returns ValueDiscountDecorator)
+    class PromotionProcessor {
+        - promotionRepository : PromotionRepository
+        - promotionApplicators : List<PromotionApplicator>
+        + PromotionProcessor(repo: PromotionRepository, applicators: List<PromotionApplicator>)
+        + getOrder() : 20
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class ShippingProcessor {
+        + getOrder() : 30
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class RoundingProcessor {
+        + getOrder() : 100
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
 }
 
 ' =============================================
-' SERVICE COORDINATOR
+' 3. STRATEGY APPLICATORS (Strategy Pattern)
+' =============================================
+package "Strategy Applicators" {
+    interface PromotionApplicator <<interface>> {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+
+    class PercentagePromotionApplicator {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+
+    class ValuePromotionApplicator {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+}
+
+' =============================================
+' 4. SERVICE COORDINATOR
 ' =============================================
 class PriceServiceImpl {
-    - promotionApplicators : List<PromotionApplicator>
-    + calculateTotal(Order, String)
-    + calculateItemTotal(OrderItem)
+    - processors : List<OrderPriceProcessor>
+    + PriceServiceImpl(processors: List<OrderPriceProcessor>)
+    + calculateTotal(order: Order, promoCode: String) : void
+    + calculateItemTotal(item: OrderItem) : void
 }
 
 ' =============================================
-' RELATIONSHIPS (Nét liền dễ nhìn)
+' RELATIONSHIPS
 ' =============================================
 
 ' Decorator Pattern
 PriceComponent <|-- BasePrice
 PriceComponent <|-- PriceDecorator
-PriceDecorator "1" o-- "1" PriceComponent : bọc (wraps) >
+PriceDecorator "1" o-- "1" PriceComponent : bọc
 
 PriceDecorator <|-- ToppingDecorator
 PriceDecorator <|-- QuantityDecorator
-PriceDecorator <|-- PromotionDecorator
-PriceDecorator <|-- ValueDiscountDecorator
+PriceDecorator <|-- PercentagePromotionDecorator
+PriceDecorator <|-- ValuePromotionDecorator
+PriceDecorator <|-- ShippingDecorator
+PriceDecorator <|-- RoundingDecorator
+
+' Pipeline / Chain of Responsibility
+OrderPriceProcessor <|-- ItemSubtotalProcessor
+OrderPriceProcessor <|-- PromotionProcessor
+OrderPriceProcessor <|-- ShippingProcessor
+OrderPriceProcessor <|-- RoundingProcessor
 
 ' Strategy Pattern
 PromotionApplicator <|-- PercentagePromotionApplicator
 PromotionApplicator <|-- ValuePromotionApplicator
+PromotionProcessor o-- PromotionApplicator : sử dụng
 
-' Orchestration
-PriceServiceImpl --> PriceComponent : khởi tạo chuỗi >
-PriceServiceImpl o-- PromotionApplicator : duyệt danh sách Strategy >
+' Execution
+PriceServiceImpl o-- OrderPriceProcessor : executes
 
 note bottom of PriceServiceImpl
-  Service duyệt qua danh sách Applicators để tự động chọn đúng Decorator
-  giảm giá dựa trên loại Khuyến mãi (OCP - Open/Closed Principle).
+  Hệ thống sử dụng Pipeline để xây dựng chuỗi Decorator động.
+  Cho phép mở rộng logic tính giá (VAT, phí dịch vụ...) 
+  chỉ bằng cách thêm Processor mới mà không sửa code cũ.
 end note
 
 @enduml

@@ -13,9 +13,10 @@ public class KeywordFilter implements OrderFilterStrategy {
     public boolean matches(Order order) {
         if (keyword.isEmpty()) return true;
         
+        String idStr = order.getId() != null ? order.getId().toString() : "";
         String customerName = order.getCustomer() != null ? order.getCustomer().getFullName().toLowerCase() : "";
         String address = order.getShippingAddressLine() != null ? order.getShippingAddressLine().toLowerCase() : "";
         
-        return customerName.contains(keyword) || address.contains(keyword);
+        return idStr.contains(keyword) || customerName.contains(keyword) || address.contains(keyword);
     }
 }

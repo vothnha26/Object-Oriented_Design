@@ -32,11 +32,13 @@ public class AdminPromotionController {
         return "admin/promotion-list";
     }
 
-    @GetMapping("/add")
+    @GetMapping({"/add", "/new"})
     public String addForm(Model model) {
         model.addAttribute("pageTitle", "Thêm khuyến mãi");
         model.addAttribute("currentPage", "promotions");
-        model.addAttribute("promotion", new Promotion());
+        Promotion p = new Promotion();
+        model.addAttribute("promotion", p);
+        model.addAttribute("item", p); // Match template variable name
         return "admin/promotion-form";
     }
 
@@ -46,6 +48,7 @@ public class AdminPromotionController {
         model.addAttribute("pageTitle", "Sửa khuyến mãi");
         model.addAttribute("currentPage", "promotions");
         model.addAttribute("promotion", p);
+        model.addAttribute("item", p); // Match template variable name
         return "admin/promotion-form";
     }
 
@@ -53,10 +56,28 @@ public class AdminPromotionController {
     public String save(@ModelAttribute Promotion promotion,
                        @RequestParam(value = "imageFile", required = false) MultipartFile imageFile,
                        RedirectAttributes ra) {
-        // imageUrl is no longer in Promotion entity
+        
+        // Xử lý upload ảnh nếu có file mới
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                String imageUrl = cloudinaryService.uploadFile(imageFile);
+                promotion.setImageUrl(imageUrl);
+            } catch (Exception e) {
+                ra.addFlashAttribute("error", "Lỗi tải ảnh: " + e.getMessage());
+                return "redirect:/admin/promotions/new";
+            }
+        } else if (promotion.getId() != null) {
+            // Nếu là sửa và không upload ảnh mới, giữ lại ảnh cũ
+            promotionRepo.findById(promotion.getId()).ifPresent(old -> {
+                if (promotion.getImageUrl() == null || promotion.getImageUrl().isBlank()) {
+                    promotion.setImageUrl(old.getImageUrl());
+                }
+            });
+        }
+
         if (promotion.getStatus() == null) promotion.setStatus(PromotionStatus.ACTIVE);
         promotionRepo.save(promotion);
-        ra.addFlashAttribute("message", "Đã lưu khuyến mãi");
+        ra.addFlashAttribute("message", "Đã lưu khuyến mãi thành công");
         return "redirect:/admin/promotions";
     }
 

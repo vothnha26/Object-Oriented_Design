@@ -64,20 +64,20 @@
                                     <td th:text="${o.createdAt != null ? #temporals.format(o.createdAt, 'dd/MM/yyyy HH:mm') : ''}"></td>
                                     <td>
                                         <span class="badge"
-                                              th:text="${o.status.name() == 'PENDING' ? 'Chờ xử lý' : (o.status.name() == 'PREPARING' ? 'Đang pha chế' : (o.status.name() == 'DELIVERING' ? 'Đang giao' : (o.status.name() == 'DELIVERED' ? 'Đã giao' : (o.status.name() == 'CANCELLED' ? 'Đã hủy' : o.status))))}"
-                                              th:classappend="${o.status.name() == 'PENDING' ? 'bg-warning' : (o.status.name() == 'PREPARING' ? 'bg-primary' : (o.status.name() == 'DELIVERING' ? 'bg-info' : (o.status.name() == 'DELIVERED' ? 'bg-success' : 'bg-secondary')))}"></span>
+                                              th:text="${o.statusDisplay}"
+                                              th:classappend="${o.status == 'ChoXuLy' ? 'bg-warning text-dark' : (o.status == 'DangPhaChe' ? 'bg-primary' : (o.status == 'DangGiao' ? 'bg-info' : (o.status == 'DaGiao' ? 'bg-success' : 'bg-secondary')))}"></span>
                                     </td>
                                     <td>
                                         <span class="badge"
-                                              th:text="${o.paymentStatus.name() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}"
-                                              th:classappend="${o.paymentStatus.name() == 'PAID' ? 'bg-success' : 'bg-secondary'}"></span>
+                                              th:text="${o.paymentStatusDisplay}"
+                                              th:classappend="${o.paymentStatus == 'DaThanhToan' ? 'bg-success' : 'bg-secondary'}"></span>
                                     </td>
                                     <td class="text-end" th:text="${#numbers.formatDecimal(o.total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                     <td class="text-end">
                                         <div class="d-inline-flex gap-1">
                                             <a th:href="@{'/account/orders/' + ${o.id}}" class="btn btn-sm btn-outline-primary">Xem</a>
                                             <!-- Allow cancel only when status is ChoXuLy -->
-                                            <form th:if="${o.status.name() == 'PENDING'}" th:action="@{'/payment/' + ${o.id} + '/cancel'}" method="post" onsubmit="return confirm('Hủy đơn này?');">
+                                            <form th:if="${o.status == 'ChoXuLy'}" th:action="@{'/payment/' + ${o.id} + '/cancel'}" method="post" onsubmit="return confirm('Hủy đơn này?');">
                                                 <button class="btn btn-sm btn-outline-danger" type="submit">Hủy</button>
                                             </form>
                                         </div>

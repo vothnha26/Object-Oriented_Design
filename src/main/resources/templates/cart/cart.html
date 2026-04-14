@@ -70,7 +70,7 @@
                     <a th:href="@{/products}" class="btn btn-outline-secondary rounded-pill">
                         <i class="fas fa-arrow-left me-2"></i>Tiếp tục mua sắm
                     </a>
-                    <form th:action="@{/api/cart/clear}" method="post">
+                    <form th:action="@{/cart/clear}" method="post">
                         <button type="submit" class="btn btn-link text-danger text-decoration-none" onclick="return confirm('Xóa toàn bộ giỏ hàng?')">
                             <i class="fas fa-trash-alt me-2"></i>Xóa giỏ hàng
                         </button>
@@ -86,16 +86,34 @@
                             <span class="text-muted">Tạm tính</span>
                             <span class="fw-bold" th:text="${#numbers.formatDecimal(subTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
                         </div>
+                        <div th:if="${discountAmount != null and discountAmount > 0}" class="d-flex justify-content-between mb-3">
+                            <span class="text-muted">Giảm giá <span th:if="${promoCode}" class="badge bg-success small" th:text="${promoCode}"></span></span>
+                            <span class="text-danger fw-bold" th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        </div>
                         <div class="d-flex justify-content-between mb-3">
                             <span class="text-muted">Phí vận chuyển</span>
                             <span class="text-success fw-bold">Miễn phí</span>
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between mb-4">
-                            <span class="h5">Tổng tiền</span>
-                            <span class="h5 text-success fw-bold" th:text="${#numbers.formatDecimal(subTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        
+                        <!-- Promo Code Section -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-muted">MÃ GIẢM GIÁ</label>
+                            <div class="input-group shadow-sm rounded">
+                                <input type="text" id="promoCodeInput" class="form-control border-end-0" th:value="${promoCode}" placeholder="Nhập mã ưu đãi...">
+                                <button class="btn btn-success" type="button" onclick="applyPromo()">Áp dụng</button>
+                            </div>
+                            <div id="promoMsg" class="small mt-2" style="display:none"></div>
+                            <div th:if="${promoCode}" class="mt-2">
+                                <a th:href="@{/cart}" class="text-decoration-none small text-danger"><i class="fas fa-times-circle me-1"></i>Gỡ bỏ mã giảm giá</a>
+                            </div>
                         </div>
-                        <a th:href="@{/checkout}" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold">
+
+                        <div class="d-flex justify-content-between mb-4">
+                            <span class="h5">Tổng thanh toán</span>
+                            <span class="h5 text-success fw-bold" th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                        </div>
+                        <a id="btnCheckout" th:href="@{/checkout(promoCode=${promoCode})}" class="btn btn-success btn-lg w-100 rounded-pill py-3 fw-bold">
                             TIẾN HÀNH ĐẶT HÀNG
                         </a>
                     </div>
@@ -103,6 +121,40 @@
             </div>
         </div>
     </div>
+
+    <!-- Script xử lý mã giảm giá -->
+    <script th:inline="javascript">
+        function applyPromo() {
+            const code = document.getElementById('promoCodeInput').value.trim();
+            const msgDiv = document.getElementById('promoMsg');
+            const baseUrl = /*[[@{/cart}]]*/ '/cart';
+
+            if (!code) {
+                msgDiv.style.display = 'block';
+                msgDiv.className = 'small mt-1 text-danger';
+                msgDiv.innerText = 'Vui lòng nhập mã ưu đãi!';
+                return;
+            }
+
+            // Gọi API kiểm tra mã
+            $.get(window.ctx + 'api/promotions/check', { code: code })
+                .done(function(data) {
+                    if (data.valid) {
+                        // Nếu hợp lệ, reload lại trang kèm theo mã để Backend tính giá
+                        window.location.href = baseUrl + "?promoCode=" + encodeURIComponent(code);
+                    } else {
+                        msgDiv.style.display = 'block';
+                        msgDiv.className = 'small mt-1 text-danger';
+                        msgDiv.innerText = data.message || 'Mã không hợp lệ hoặc đã hết hạn.';
+                    }
+                })
+                .fail(function() {
+                    msgDiv.style.display = 'block';
+                    msgDiv.className = 'small mt-1 text-danger';
+                    msgDiv.innerText = 'Không thể kết nối đến máy chủ.';
+                });
+        }
+    </script>
 </th:block>
 
 <th:block th:fragment="additionalJs">

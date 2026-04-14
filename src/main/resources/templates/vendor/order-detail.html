@@ -100,6 +100,11 @@
                     <h6 class="card-title">Xử lý đơn</h6>
                     <div class="d-flex flex-wrap gap-2">
                         <a th:href="@{'/vendor/orders/' + ${order.id} + '/invoice'}" target="_blank" class="btn btn-outline-secondary">In hóa đơn</a>
+                        <form th:action="@{/vendor/orders/undo}" method="post">
+                            <input type="hidden" name="from" value="detail">
+                            <input type="hidden" name="orderId" th:value="${order.id}">
+                            <button class="btn btn-outline-secondary" type="submit">Hoan tac</button>
+                        </form>
                         <form th:action="@{'/vendor/orders/' + ${order.id} + '/advance'}" method="post">
                             <input type="hidden" name="from" value="detail">
                             <button class="btn btn-primary" type="submit"

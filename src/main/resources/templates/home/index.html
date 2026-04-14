@@ -189,7 +189,7 @@
                          data-aos="zoom-in"
                          th:attr="data-aos-delay=${iterStat.index * 150}">
                     <a class="promo-thumb" th:href="@{'/promotions/' + ${p.id}}">
-                        <img th:src="${p.imageUrl != null ? p.imageUrl : '/images/placeholder.png'}" th:alt="${p.title}" />
+                        <img th:src="@{${p.imageUrl}}" th:alt="${p.title}" />
                     </a>
                     <div class="promo-body">
                         <div class="promo-meta">

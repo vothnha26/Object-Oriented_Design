@@ -38,10 +38,6 @@ enum PromotionStatus {
     INACTIVE
     EXPIRED
 }
-enum PromotionType {
-    VALUE
-    PERCENTAGE
-}
 enum ToppingStatus {
     ACTIVE
     INACTIVE
@@ -74,7 +70,8 @@ abstract class User {
     - String email
     - String fullName
     - String phone
-    - LocalDateTime createdAt
+    + getDisplayName() : String
+    + isActive() : boolean
 }
 
 class Customer {
@@ -84,7 +81,7 @@ class Customer {
 class Employee {
     - EmployeeStatus status
     - EmployeeRole role
-    - LocalDateTime deletedAt
+    + isAdmin() : boolean
 }
 
 User <|-- Customer
@@ -110,7 +107,7 @@ class Wishlist {
 }
 
 Customer "1" --> "*" Address : manages
-Customer "1" --> "*" Wishlist : manages
+Customer "1" -- "*" Wishlist : manages
 
 ' =============================================
 ' TRUNG TÂM: ORDER & PAYMENT
@@ -119,7 +116,7 @@ class Order {
     - Integer id
     - LocalDateTime createdAt
     - OrderStatus status
-    - String shippingAddressLine
+    + calculateTotal() : BigDecimal
 }
 
 class Payment {
@@ -128,7 +125,6 @@ class Payment {
     - PaymentMethod method
     - BigDecimal amount
     - String transactionRef
-    - LocalDateTime paidAt
 }
 
 Order "*" --> "1" Customer : placed by
@@ -146,7 +142,6 @@ class Category {
     - Integer id
     - String name
     - String description
-    - LocalDateTime deletedAt
 }
 
 class Product {
@@ -155,7 +150,7 @@ class Product {
     - String description
     - ProductStatus status
     - String imageUrl
-    - LocalDateTime deletedAt
+    + isAvailable() : boolean
 }
 
 class ProductSize {
@@ -168,7 +163,7 @@ class ProductVariant {
     - Integer id
     - BigDecimal price
     - ProductStatus status
-    - LocalDateTime deletedAt
+    + isActive() : boolean
 }
 
 class Topping {
@@ -177,7 +172,6 @@ class Topping {
     - BigDecimal extraPrice
     - ToppingStatus status
     - String imageUrl
-    - LocalDateTime deletedAt
 }
 
 class ProductMedia {
@@ -190,10 +184,6 @@ class Promotion {
     - String name
     - String code
     - String description
-    - PromotionType type
-    - BigDecimal discountValue
-    - Integer discountRate
-    - BigDecimal minOrderAmount
     - LocalDate startDate
     - LocalDate endDate
     - Integer usageLimit
@@ -201,7 +191,7 @@ class Promotion {
     - PromotionStatus status
     - String imageUrl
     - boolean isPublic
-    - LocalDateTime deletedAt
+    + isActive() : boolean
 }
 
 Category "1" o-- "*" Product : contains
@@ -213,7 +203,6 @@ Product ..> ProductStatus
 ProductVariant ..> ProductStatus
 Topping ..> ToppingStatus
 Promotion ..> PromotionStatus
-Promotion ..> PromotionType
 Wishlist "*" --> "1" Product : references
 Order "*" --> "0..1" Promotion : applies
 
@@ -225,17 +214,19 @@ class OrderItem {
     - Integer quantity
     - BigDecimal unitPrice
     - String note
+    + getLineTotal() : BigDecimal
 }
 
 class OrderedTopping {
     - Integer quantity
     - BigDecimal price
+    + getToppingTotal() : BigDecimal
 }
 
 Order "1" *-- "many" OrderItem : contains
 OrderItem "*" --> "1" ProductVariant : references
 OrderItem "1" *-- "many" OrderedTopping : contains toppings
-OrderedTopping "*" --> "1" Topping : references
+OrderedTopping "*" o-- "1" Topping
 
 ' =============================================
 ' REVIEW GROUP
@@ -245,53 +236,12 @@ class Review {
     - Integer stars
     - String comment
     - String adminReply
-    - LocalDateTime createdAt
+    + hasReply() : boolean
 }
 
 Review "*" --> "1" Customer : written by
 Review "*" --> "1" Product : evaluates
 Review "0..1" --> "1" Order : verified purchase
 Review "*" --> "0..1" Employee : replied by
-
-' =============================================
-' KIẾN TRÚC TÍNH GIÁ (STRATEGY + DECORATOR)
-' =============================================
-interface PriceComponent <<interface>> {
-    + calculate() : BigDecimal
-}
-
-abstract class PriceDecorator {
-    # wrapped : PriceComponent
-}
-
-class BasePrice {
-    - price : BigDecimal
-}
-
-PriceComponent <|-- BasePrice
-PriceComponent <|-- PriceDecorator
-PriceDecorator o-- PriceComponent : decorates
-
-PriceDecorator <|-- PromotionDecorator
-PriceDecorator <|-- ValueDiscountDecorator
-PriceDecorator <|-- ToppingDecorator
-PriceDecorator <|-- QuantityDecorator
-
-interface PromotionApplicator <<interface>> {
-    + supports(PromotionType) : boolean
-    + apply(PriceComponent, Promotion) : PriceComponent
-}
-
-class PercentagePromotionApplicator {
-}
-
-class ValuePromotionApplicator {
-}
-
-PromotionApplicator <|-- PercentagePromotionApplicator
-PromotionApplicator <|-- ValuePromotionApplicator
-
-PriceServiceImpl --> PriceComponent : coordinates
-PriceServiceImpl o-- PromotionApplicator : uses list of
 
 @enduml

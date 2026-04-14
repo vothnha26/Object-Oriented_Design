@@ -15,7 +15,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title mb-3">Thông tin cá nhân</h5>
-                    <form th:action="@{/account/profile}" th:object="${form}" method="post" class="row g-3">
+                    <form th:action="@{/account/profile/update}" th:object="${form}" method="post" class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Họ tên</label>
                             <input class="form-control" th:field="*{fullName}" required />
@@ -46,12 +46,59 @@
                         </div>
                     </form>
                     <div class="mt-4 small text-muted">
-                        <div><strong>Tài khoản:</strong> <span th:text="${kh.username}"></span></div>
+                        <div><strong>Tài khoản:</strong> <span th:text="${customer.username}"></span></div>
                         <div><strong>Trạng thái:</strong>
-                            <span class="badge" th:text="${kh.status==1?'Hoạt động':'Khóa'}"
-                                  th:classappend="${kh.status==1?'bg-success':'bg-secondary'}"></span>
+                            <span class="badge" th:text="${customer.status.name() == 'ACTIVE' ? 'Hoạt động' : 'Khóa'}"
+                                  th:classappend="${customer.status.name() == 'ACTIVE' ? 'bg-success' : 'bg-secondary'}"></span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Quản lý địa chỉ -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Sổ địa chỉ</h5>
+                    
+                    <div th:if="${#lists.isEmpty(addresses)}" class="text-muted small mb-3">
+                        Bạn chưa có địa chỉ lưu sẵn.
+                    </div>
+                    
+                    <ul class="list-group list-group-flush mb-4" th:if="${not #lists.isEmpty(addresses)}">
+                        <li class="list-group-item d-flex justify-content-between align-items-start px-0" th:each="addr : ${addresses}">
+                            <div class="ms-2 me-auto">
+                                <div class="fw-bold">
+                                    <span th:text="${addr.label}"></span>
+                                    <span th:if="${addr.isDefault}" class="badge bg-success ms-1" style="font-size: 0.7rem;">Mặc định</span>
+                                </div>
+                                <span class="small text-muted" th:text="${addr.addressLine}"></span>
+                            </div>
+                            <form th:action="@{'/account/addresses/delete/' + ${addr.id}}" method="post">
+                                <button type="submit" class="btn btn-sm btn-link text-danger" onclick="return confirm('Xóa địa chỉ này?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+
+                    <h6 class="fw-bold small mb-2">Thêm địa chỉ mới</h6>
+                    <form th:action="@{/account/addresses/add}" method="post" class="row g-2">
+                        <div class="col-md-4">
+                            <input class="form-control form-control-sm" name="label" placeholder="Tên gợi nhớ (VD: Nhà riêng)" required />
+                        </div>
+                        <div class="col-md-6">
+                            <input class="form-control form-control-sm" name="addressLine" placeholder="Địa chỉ chi tiết" required />
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-sm btn-primary w-100" type="submit">Thêm</button>
+                        </div>
+                        <div class="col-12 mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="isDefault" id="isDefault">
+                                <label class="form-check-label small" for="isDefault">Đặt làm mặc định</label>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

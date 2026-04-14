@@ -1,31 +1,37 @@
 package com.alotra.service.command;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.alotra.repository.OrderRepository;
 
 public class UpdateOrderStatusCommand implements AdminCommand {
-    private final JdbcTemplate jdbc;
+    private final OrderStatusTransitionCommand delegate;
     private final Integer orderId;
-    private final String newStatus;
-    
+    private String newStatus;
     private String previousStatus;
 
-    public UpdateOrderStatusCommand(JdbcTemplate jdbc, Integer orderId, String newStatus) {
-        this.jdbc = jdbc;
+    private UpdateOrderStatusCommand(OrderStatusTransitionCommand delegate, Integer orderId, String newStatus) {
+        this.delegate = delegate;
         this.orderId = orderId;
         this.newStatus = newStatus;
     }
 
+    public static UpdateOrderStatusCommand advance(OrderRepository orderRepository, Integer orderId) {
+        return new UpdateOrderStatusCommand(OrderStatusTransitionCommand.advance(orderRepository, orderId), orderId, "ADVANCE");
+    }
+
+    public static UpdateOrderStatusCommand cancel(OrderRepository orderRepository, Integer orderId) {
+        return new UpdateOrderStatusCommand(OrderStatusTransitionCommand.cancel(orderRepository, orderId), orderId, "CANCEL");
+    }
+
     @Override
     public void execute() {
-        this.previousStatus = jdbc.queryForObject("SELECT TrangThaiDonHang FROM Orders WHERE MaDH = ?", String.class, orderId);
-        jdbc.update("UPDATE Orders SET TrangThaiDonHang = ? WHERE MaDH = ?", newStatus, orderId);
+        delegate.execute();
+        previousStatus = delegate.getPreviousStatus() != null ? delegate.getPreviousStatus().name() : null;
+        newStatus = delegate.getAppliedStatus() != null ? delegate.getAppliedStatus().name() : newStatus;
     }
 
     @Override
     public void undo() {
-        if (this.previousStatus != null) {
-            jdbc.update("UPDATE Orders SET TrangThaiDonHang = ? WHERE MaDH = ?", previousStatus, orderId);
-        }
+        delegate.undo();
     }
 
     @Override

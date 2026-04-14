@@ -24,7 +24,7 @@ public class PromotionController {
         List<Promotion> items = promotionRepo.findByStatus(PromotionStatus.ACTIVE);
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Chương trình khuyến mãi");
-        return "promotions/promotion_list";
+        return "promotions/list";
     }
 
     @GetMapping("/{id}")
@@ -32,6 +32,6 @@ public class PromotionController {
         Promotion p = promotionRepo.findById(id).orElseThrow();
         model.addAttribute("promotion", p);
         model.addAttribute("pageTitle", p.getCode());
-        return "promotions/promotion_detail";
+        return "promotions/detail";
     }
 }

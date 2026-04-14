@@ -25,7 +25,6 @@
                                     <th class="text-center">Size</th>
                                     <th class="text-center">SL</th>
                                     <th class="text-end">Đơn giá</th>
-                                    <th class="text-end">Giảm dòng</th>
                                     <th class="text-end">Thành tiền</th>
                                 </tr>
                                 </thead>
@@ -45,11 +44,10 @@
                                     <td class="text-center" th:text="${it.sizeName}"></td>
                                     <td class="text-center" th:text="${it.quantity}"></td>
                                     <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
-                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineDiscount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                     <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(items)}">
-                                    <td colspan="6" class="text-center">Đơn hàng chưa có dòng sản phẩm.</td>
+                                    <td colspan="5" class="text-center">Đơn hàng chưa có dòng sản phẩm.</td>
                                 </tr>
                                 </tbody>
                             </table>

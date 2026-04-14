@@ -32,8 +32,16 @@ public class CheckoutFacade {
         stockService.validateStock(request.getCartItems());
 
         // 2. Chuyển đổi DTO sang Entity
-        Address address = addressRepository.findById(request.getAddressId()).orElse(null);
-        Order order = orderFactory.createOrder(customer, address, request.getCartItems(), request.getNote());
+        Order order;
+        if (request.getShippingAddress() != null && !request.getShippingAddress().isBlank()) {
+            // Trường hợp khách nhập địa chỉ mới (dạng String)
+            order = orderFactory.createOrder(customer, null, request.getCartItems(), request.getNote());
+            order.setShippingAddressLine(request.getShippingAddress());
+        } else {
+            // Trường hợp khách chọn địa chỉ có sẵn (dạng ID)
+            Address address = addressRepository.findById(request.getAddressId()).orElse(null);
+            order = orderFactory.createOrder(customer, address, request.getCartItems(), request.getNote());
+        }
 
         // 3. Tính toán giá
         priceService.calculateTotal(order, request.getPromotionCode());

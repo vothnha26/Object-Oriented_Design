@@ -39,6 +39,10 @@ public class HomeController {
     @GetMapping("/")
     public String homePage(@AuthenticationPrincipal CustomerUserDetails principal, Model model) {
         model.addAttribute("pageTitle", "AloTra - Trang Chủ");
+        
+        // Cần thiết cho Header Fragment
+        model.addAttribute("megaMenuCategories", categoryService.findActive());
+
         List<ProductDTO> bestSellers = productFacade.getHomeProducts();
         model.addAttribute("bestSellers", bestSellers);
 
@@ -56,10 +60,9 @@ public class HomeController {
         for (Promotion p : promos) {
             if (!p.isActive())
                 continue;
-            String imageUrl = "/images/placeholder.png";
+            String imageUrl = p.getImageUrl() != null ? p.getImageUrl() : "/images/placeholder.png";
             String period = "Đến " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
-            String desc = "Giảm giá "; // + p.getDiscountValue() + " cho đơn hàng từ " + p.getMinOrderAmount();
-            cards.add(new PromotionCard(p.getId(), p.getCode(), desc, imageUrl, period));
+            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period, p.getUsedCount()));
         }
         model.addAttribute("promotions", cards);
         return "home/index";
@@ -119,13 +122,15 @@ public class HomeController {
         public String description;
         public String imageUrl;
         public String periodText;
+        public Integer views;
 
-        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText) {
+        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText, Integer views) {
             this.id = id;
             this.title = title;
             this.description = description;
             this.imageUrl = imageUrl;
             this.periodText = periodText;
+            this.views = views != null ? views : 0;
         }
     }
 }

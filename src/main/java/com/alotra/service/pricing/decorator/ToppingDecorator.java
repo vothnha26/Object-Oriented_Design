@@ -1,6 +1,8 @@
-package com.alotra.service.pricing;
+package com.alotra.service.pricing.decorator;
 
 import com.alotra.entity.OrderedTopping;
+import com.alotra.service.pricing.PriceComponent;
+import com.alotra.service.pricing.PriceDecorator;
 import java.math.BigDecimal;
 import java.util.List;
 

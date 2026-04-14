@@ -1,5 +1,7 @@
-package com.alotra.service.pricing;
+package com.alotra.service.pricing.decorator;
 
+import com.alotra.service.pricing.PriceComponent;
+import com.alotra.service.pricing.PriceDecorator;
 import java.math.BigDecimal;
 
 public class QuantityDecorator extends PriceDecorator {

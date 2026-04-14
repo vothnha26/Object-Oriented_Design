@@ -50,12 +50,12 @@ function copyText(t) {
             .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
             .then(j => {
                 if (!box) return;
-                if (j.paymentStatus === 'DaThanhToan') {
+                if (j.paymentStatus === 'PAID') {
                     stopped = true;
                     box.className = 'alert alert-success py-2';
                     box.textContent = 'Đã thanh toán. Đang chuyển...';
                     setTimeout(() => location.href = successUrl, 600);
-                } else if (j.orderStatus === 'DaHuy') {
+                } else if (j.orderStatus === 'CANCELLED') {
                     stopped = true;
                     box.className = 'alert alert-danger py-2';
                     box.textContent = 'Đơn hàng đã bị hủy.';

@@ -7,118 +7,159 @@
 <body>
 <th:block th:fragment="content">
     <div class="container my-4">
-        <h3 class="mb-3">Xác nhận đặt hàng</h3>
-        <div class="row g-3">
+        <div class="d-flex align-items-center mb-4">
+            <a th:href="@{/cart}" class="btn btn-link text-dark p-0 me-3"><i class="fas fa-arrow-left fa-lg"></i></a>
+            <h3 class="mb-0 fw-bold">Xác nhận đặt hàng</h3>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+        <div class="row g-4">
+            <!-- Cột trái: Danh sách sản phẩm -->
             <div class="col-lg-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Sản phẩm trong đơn</h5>
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold"><i class="fas fa-list-ul me-2 text-success"></i>Sản phẩm đã chọn</h5>
+                    </div>
+                    <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead>
+                            <table class="table align-middle mb-0">
+                                <thead class="table-light">
                                 <tr>
-                                    <th>Sản phẩm</th>
-                                    <th class="text-center">Size</th>
-                                    <th class="text-center">SL</th>
-                                    <th class="text-end">Đơn giá</th>
-                                    <th class="text-end">Thành tiền</th>
+                                    <th class="ps-4">Sản phẩm</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end pe-4">Thành tiền</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <tr th:each="it : ${items}">
-                                    <td>
-                                        <div class="fw-semibold" th:text="${it.variant.product.name}">Tên SP</div>
-                                        <!-- Sugar/Ice badges from item note -->
-                                        <div class="mt-1" th:if="${it.note}">
-                                            <span th:each="p : ${it.note != null ? it.note.split(';') : {}}"
-                                                  th:if="${#strings.contains(p,'Đường') or #strings.contains(p,'Đá')}"
-                                                  class="badge bg-light text-dark border me-1" th:text="${#strings.trim(p)}"></span>
-                                        </div>
-                                        <div class="small text-muted" th:if="${itemToppingsMap[it.id] != null and !#lists.isEmpty(itemToppingsMap[it.id])}">
-                                            <div class="mt-1">Topping:</div>
-                                            <ul class="small mb-0">
-                                                <li th:each="tp : ${itemToppingsMap[it.id]}"
-                                                    th:text="${tp.topping.name + ' x' + tp.quantity + ' (' + #numbers.formatDecimal(tp.unitPrice,0,'COMMA',0,'POINT') + ' ₫) = ' + #numbers.formatDecimal(tp.lineTotal,0,'COMMA',0,'POINT') + ' ₫'}"></li>
-                                            </ul>
+                                    <td class="ps-4 py-3">
+                                        <div class="fw-bold text-dark" th:text="${it.variant.product.name}">Tên SP</div>
+                                        <div class="small text-muted">
+                                            Size: <span th:text="${it.variant.size.name}">M</span>
+                                            <span th:if="${!#lists.isEmpty(it.toppings)}" class="ms-2">
+                                                + Topping: <span th:each="ot, iter : ${it.toppings}" 
+                                                                 th:text="${ot.topping.name} + (${iter.last} ? '' : ', ')"></span>
+                                            </span>
                                         </div>
                                     </td>
-                                    <td class="text-center" th:text="${it.variant.size.name}">Size</td>
                                     <td class="text-center" th:text="${it.quantity}">1</td>
-                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
-                                    <td class="text-end" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(items)}">
-                                    <td colspan="5" class="text-center">Không có sản phẩm.</td>
+                                    <td class="text-end pe-4 fw-bold" th:text="${#numbers.formatDecimal(it.lineTotalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
                                 </tr>
                                 </tbody>
-                                <tfoot>
-                                <tr>
-                                    <th colspan="4" class="text-end">Tổng tạm tính</th>
-                                    <th class="text-end" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></th>
-                                </tr>
-                                </tfoot>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Cột phải: Thông tin nhận hàng & Thanh toán -->
             <div class="col-lg-4">
-                <form th:action="@{/checkout/place}" method="post" class="card">
-                    <div class="card-body">
-                        <h6 class="card-title">Tùy chọn đơn hàng</h6>
-                        <!-- Hidden selected items -->
-                        <div th:each="id : ${itemIds}"><input type="hidden" name="itemIds" th:value="${id}"></div>
+                <form th:action="@{/checkout/place}" method="post" id="orderForm">
+                    <input type="hidden" name="promoCode" th:value="${promoCode}">
+                    
+                    <!-- Thông tin người nhận -->
+                    <div class="card shadow-sm border-0 rounded-4 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">THÔNG TIN NHẬN HÀNG</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Họ tên người nhận</label>
+                                <input class="form-control bg-light border-0" name="shipName" th:value="${defaultShipName}" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Số điện thoại</label>
+                                <input class="form-control bg-light border-0" name="shipPhone" th:value="${defaultShipPhone}" required>
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Phương thức thanh toán</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="paymentMethod" id="payCash" value="CASH"
-                                       th:checked="${paymentMethod == null || paymentMethod == 'CASH'}">
-                                <label class="btn btn-outline-success" for="payCash"><i class="fa fa-money-bill me-1"></i> Tiền mặt</label>
-                                <input type="radio" class="btn-check" name="paymentMethod" id="payBank" value="BANK_TRANSFER"
-                                       th:checked="${paymentMethod == 'BANK_TRANSFER'}">
-                                <label class="btn btn-outline-success" for="payBank"><i class="fa fa-building-columns me-1"></i> Chuyển khoản</label>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted d-block">PHƯƠNG THỨC NHẬN</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="receivingMethod" id="recvShip" value="DELIVERY" checked onchange="toggleAddr(true)">
+                                    <label class="form-check-label" for="recvShip">Giao hàng</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="receivingMethod" id="recvPickup" value="PICKUP" onchange="toggleAddr(false)">
+                                    <label class="form-check-label" for="recvPickup">Tại quán</label>
+                                </div>
                             </div>
-                            <div class="form-text" id="bankHint" style="display:none">QR sẽ hiển thị sau khi xác nhận đặt hàng.</div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Ghi chú cho đơn hàng</label>
-                            <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Giao trước 11h, Không bỏ đá..."></textarea>
-                        </div>
+                            <!-- Nhóm Combobox địa chỉ -->
+                            <div id="addressSection">
+                                <div th:if="${not #lists.isEmpty(addresses)}" class="mb-3">
+                                    <label class="form-label small fw-bold text-success">Chọn từ địa chỉ đã lưu</label>
+                                    <select class="form-select border-success" id="savedAddress" onchange="fillSavedAddress(this)">
+                                        <option value="">-- Nhập địa chỉ mới --</option>
+                                        <option th:each="addr : ${addresses}" 
+                                                th:value="${addr.addressLine}" 
+                                                th:text="${addr.addressLine}"></option>
+                                    </select>
+                                </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Phương thức nhận hàng</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvShip" value="DELIVERY" checked>
-                                <label class="form-check-label" for="recvShip">Ship tận nơi</label>
+                                <div class="mb-2">
+                                    <label class="form-label small">Tỉnh / Thành phố</label>
+                                    <select class="form-select bg-light border-0" name="province" id="province" required>
+                                        <option value="">Chọn Tỉnh/Thành</option>
+                                        <option th:each="p : ${provinces}" th:value="${p}" th:text="${p}"></option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Quận / Huyện</label>
+                                    <select class="form-select bg-light border-0" name="district" id="district" required disabled>
+                                        <option value="">Chọn Quận/Huyện</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Phường / Xã</label>
+                                    <input class="form-control bg-light border-0" name="ward" id="ward" placeholder="Nhập Phường/Xã" required>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small">Số nhà, tên đường</label>
+                                    <input class="form-control bg-light border-0" name="street" id="street" placeholder="Ví dụ: 123 Đường ABC" required>
+                                </div>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="receivingMethod" id="recvPickup" value="PICKUP">
-                                <label class="form-check-label" for="recvPickup">Đến cửa hàng lấy</label>
+                            <div id="pickupInfo" style="display:none" class="p-3 bg-light rounded text-muted small">
+                                <i class="fas fa-store me-2"></i>Nhận tại: Khu phố 6, P. Linh Trung, TP. Thủ Đức, TP. HCM
                             </div>
                         </div>
+                    </div>
 
-                        <div id="shipForm">
-                            <div class="mb-2">
-                                <label class="form-label">Họ tên người nhận</label>
-                                <input class="form-control" name="shipName" placeholder="Người nhận" th:value="${defaultShipName}">
+                    <!-- Tóm tắt thanh toán -->
+                    <div class="card shadow-sm border-0 rounded-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">THANH TOÁN</h6>
+                            
+                            <div class="mb-3">
+                                <select class="form-select border-success text-success fw-bold" name="paymentMethod">
+                                    <option value="CASH">Tiền mặt (COD)</option>
+                                    <option value="BANK_TRANSFER">Chuyển khoản Ngân hàng</option>
+                                    <option value="MOMO">Ví MoMo</option>
+                                </select>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label">Số điện thoại</label>
-                                <input class="form-control" name="shipPhone" placeholder="SĐT liên hệ" th:value="${defaultShipPhone}">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Địa chỉ</label>
-                                <input class="form-control" name="shipAddress" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành">
-                            </div>
-                        </div>
-                        <div id="pickupHint" class="small text-muted" style="display:none">
-                            Đến lấy tại: Khu phố 6, P. Linh Trung, TP. Thủ Đức, TP. HCM
-                        </div>
 
-                        <button class="btn btn-success w-100 mt-3" type="submit">Xác nhận đặt hàng</button>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Tạm tính</span>
+                                <span th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </div>
+                            <div th:if="${discountAmount != null and discountAmount > 0}" class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Khuyến mãi</span>
+                                <span class="text-danger fw-bold" th:text="'-' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Phí giao hàng</span>
+                                <span class="text-success small">Miễn phí</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-4">
+                                <span class="fw-bold">Tổng cộng</span>
+                                <span class="h5 fw-bold text-success" th:text="${#numbers.formatDecimal(finalTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </div>
+
+                            <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow-sm" type="submit">
+                                HOÀN TẤT ĐẶT HÀNG
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -126,7 +167,74 @@
     </div>
 </th:block>
 
-<!-- Scripts fragment intentionally left empty; JS is loaded globally from layout -->
-<th:block th:fragment="scripts"></th:block>
+<th:block th:fragment="scripts">
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const districtData = /*[[${districts}]]*/ {};
+        const provinceSelect = document.getElementById('province');
+        const districtSelect = document.getElementById('district');
+
+        if (provinceSelect) {
+            provinceSelect.addEventListener('change', function() {
+                const province = this.value;
+                console.log("Selected Province:", province);
+                districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                
+                if (province && districtData[province]) {
+                    districtSelect.disabled = false;
+                    districtData[province].forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d;
+                        opt.textContent = d;
+                        districtSelect.appendChild(opt);
+                    });
+                } else {
+                    districtSelect.disabled = true;
+                }
+            });
+        }
+
+        function toggleAddr(isShip) {
+            document.getElementById('addressSection').style.display = isShip ? 'block' : 'none';
+            document.getElementById('pickupInfo').style.display = isShip ? 'none' : 'block';
+            
+            const inputs = document.getElementById('addressSection').querySelectorAll('input, select');
+            inputs.forEach(el => el.required = isShip);
+        }
+
+        function fillSavedAddress(select) {
+            const option = select.options[select.selectedIndex];
+            if (!option.value) {
+                // Reset form if "New Address" is selected
+                document.getElementById('province').value = "";
+                document.getElementById('district').innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                document.getElementById('district').disabled = true;
+                document.getElementById('ward').value = "";
+                document.getElementById('street').value = "";
+                return;
+            }
+
+            const province = option.getAttribute('data-province');
+            const district = option.getAttribute('data-district');
+            const ward = option.getAttribute('data-ward');
+            const street = option.getAttribute('data-street');
+
+            // Fill Province
+            document.getElementById('province').value = province;
+            
+            // Trigger province change to load districts
+            const event = new Event('change');
+            document.getElementById('province').dispatchEvent(event);
+
+            // Fill District
+            setTimeout(() => {
+                document.getElementById('district').value = district;
+                document.getElementById('ward').value = ward;
+                document.getElementById('street').value = street;
+            }, 100);
+        }
+        /*]]>*/
+    </script>
+</th:block>
 </body>
 </html>
