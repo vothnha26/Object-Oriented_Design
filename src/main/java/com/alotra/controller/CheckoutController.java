@@ -72,8 +72,11 @@ public class CheckoutController {
         // Dữ liệu mẫu cho Combobox địa chỉ
         model.addAttribute("provinces", List.of("TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương", "Đồng Nai"));
         model.addAttribute("districts", Map.of(
-            "TP. Hồ Chí Minh", List.of("Quận 1", "Quận 7", "TP. Thủ Đức", "Quận Bình Thạnh"),
-            "Hà Nội", List.of("Quận Hoàn Kiếm", "Quận Cầu Giấy", "Quận Đống Đa")
+            "TP. Hồ Chí Minh", List.of("Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 10", "Quận Bình Thạnh", "Quận Tân Bình", "TP. Thủ Đức", "Huyện Hóc Môn", "Huyện Củ Chi"),
+            "Hà Nội", List.of("Quận Hoàn Kiếm", "Quận Ba Đình", "Quận Đống Đa", "Quận Hai Bà Trưng", "Quận Cầu Giấy", "Quận Thanh Xuân", "Quận Hà Đông", "Quận Long Biên"),
+            "Đà Nẵng", List.of("Quận Hải Châu", "Quận Thanh Khê", "Quận Sơn Trà", "Quận Ngũ Hành Sơn", "Quận Liên Chiểu", "Quận Cẩm Lệ", "Huyện Hòa Vang"),
+            "Bình Dương", List.of("TP. Thủ Dầu Một", "TP. Thuận An", "TP. Dĩ An", "TP. Tân Uyên", "TP. Bến Cát", "Huyện Dầu Tiếng", "Huyện Phú Giáo"),
+            "Đồng Nai", List.of("TP. Biên Hòa", "TP. Long Khánh", "Huyện Long Thành", "Huyện Nhơn Trạch", "Huyện Trảng Bom", "Huyện Thống Nhất")
         ));
 
         if (principal != null) {

@@ -1,0 +1,101 @@
+@startuml User_Initialization_Normalization_Architecture
+
+!pragma layout smetana
+
+' Professional Styling (Member 3 style)
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title User Initialization & Password Normalization (Factory + Template Method + Adapter)
+
+' =============================================
+' 1. USER INITIALIZATION (Factory Pattern)
+' =============================================
+package "Account Initialization (Factory)" {
+    class UserFactory {
+        - passwordEncoder : PasswordEncoder
+        + createPendingCustomer(...) : Customer
+        + createEmployee(...) : Employee
+        + createAdmin(...) : Employee
+    }
+}
+
+' =============================================
+' 2. PASSWORD NORMALIZATION (Template Method)
+' =============================================
+package "Hash Normalization (Template Method)" {
+    abstract class AbstractPasswordNormalizer<T> {
+        # passwordEncoder : PasswordEncoder
+        + run(String... args) : void
+        # {abstract} findAll() : List<T>
+        # {abstract} getPasswordHash(T) : String
+        # {abstract} setPasswordHash(T, String) : void
+        # {abstract} save(T) : void
+        - isBCrypt(String) : boolean
+    }
+
+    class CustomerPasswordNormalizer {
+        - repository : CustomerRepository
+    }
+
+    class EmployeePasswordNormalizer {
+        - repository : EmployeeRepository
+    }
+}
+
+' =============================================
+' 3. LEGACY SUPPORT (Adapter Pattern)
+' =============================================
+package "Security Configuration (Adapter)" {
+    interface PasswordEncoder <<interface>> {
+        + encode(CharSequence) : String
+        + matches(CharSequence, String) : boolean
+    }
+
+    class LegacyPasswordEncoderAdapter {
+        - bcrypt : BCryptPasswordEncoder
+        + matches(raw, encoded) : boolean
+    }
+}
+
+' =============================================
+' RELATIONSHIPS
+' =============================================
+
+' Factory Usage
+UserFactory o-- PasswordEncoder : uses for hashing >
+
+' Template Method Implementations
+AbstractPasswordNormalizer <|-- CustomerPasswordNormalizer
+AbstractPasswordNormalizer <|-- EmployeePasswordNormalizer
+AbstractPasswordNormalizer o-- PasswordEncoder : uses for migration >
+
+' Adapter Implementation
+PasswordEncoder <|-- LegacyPasswordEncoderAdapter
+
+note bottom of UserFactory
+  Factory Pattern tập trung hóa việc tạo tài khoản và mã hóa mật khẩu ban đầu, 
+  đảm bảo trạng thái khởi đầu nhất quán (PENDING).
+end note
+
+note bottom of AbstractPasswordNormalizer
+  Template Method định nghĩa thuật toán cố định cho việc chuẩn hóa Hash 
+  (Fetch -> Check -> Re-hash -> Save), trong khi các lớp con xử lý việc lưu trữ thực thể cụ thể.
+end note
+
+note bottom of LegacyPasswordEncoderAdapter
+  Adapter Pattern cho phép tương thích mượt mà với nhiều định dạng mật khẩu 
+  ({bcrypt}, {noop}, plaintext) mà không cần thay đổi logic bảo mật cốt lõi.
+end note
+
+@enduml

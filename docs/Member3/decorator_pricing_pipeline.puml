@@ -1,0 +1,107 @@
+@startuml Decorator_Pricing_Pipeline_Flow
+
+!pragma layout smetana
+
+' Cấu hình để các đường nối vuông vức và thẳng thớm
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Hệ thống Điều phối (Pipeline + Strategy Pattern)
+
+' Sử dụng lại interface từ Core để làm điểm nối
+interface PriceComponent <<interface>> {
+    + calculate() : BigDecimal
+}
+
+' =============================================
+' 2. PIPELINE (Chain of Responsibility Pattern)
+' =============================================
+package "Pipeline (Chain of Responsibility)" {
+    interface OrderPriceProcessor <<interface>> {
+        + getOrder() : int
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class ItemSubtotalProcessor {
+        + getOrder() : 10
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class PromotionProcessor {
+        - promotionRepository : PromotionRepository
+        - promotionApplicators : List<PromotionApplicator>
+        + PromotionProcessor(repo: PromotionRepository, applicators: List<PromotionApplicator>)
+        + getOrder() : 20
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class ShippingProcessor {
+        + getOrder() : 30
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+
+    class RoundingProcessor {
+        + getOrder() : 100
+        + process(chain: PriceComponent, order: Order, promoCode: String) : PriceComponent
+    }
+}
+
+' =============================================
+' 3. STRATEGY APPLICATORS (Strategy Pattern)
+' =============================================
+package "Strategy Applicators" {
+    interface PromotionApplicator <<interface>> {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+
+    class PercentagePromotionApplicator {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+
+    class ValuePromotionApplicator {
+        + supports(type: PromotionType) : boolean
+        + apply(base: PriceComponent, promotion: Promotion) : PriceComponent
+    }
+}
+
+' =============================================
+' 4. SERVICE COORDINATOR
+' =============================================
+class PriceServiceImpl {
+    - processors : List<OrderPriceProcessor>
+    + PriceServiceImpl(processors: List<OrderPriceProcessor>)
+    + calculateTotal(order: Order, promoCode: String) : void
+    + calculateItemTotal(item: OrderItem) : void
+}
+
+' RELATIONSHIPS
+OrderPriceProcessor <|-- ItemSubtotalProcessor
+OrderPriceProcessor <|-- PromotionProcessor
+OrderPriceProcessor <|-- ShippingProcessor
+OrderPriceProcessor <|-- RoundingProcessor
+
+PromotionApplicator <|-- PercentagePromotionApplicator
+PromotionApplicator <|-- ValuePromotionApplicator
+PromotionProcessor o-- PromotionApplicator : sử dụng
+
+PriceServiceImpl o-- OrderPriceProcessor : executes
+
+note bottom of PriceServiceImpl
+  Hệ thống sử dụng Pipeline để xây dựng chuỗi Decorator động.
+  Cho phép mở rộng logic tính giá (VAT, phí dịch vụ...) 
+  chỉ bằng cách thêm Processor mới mà không sửa code cũ.
+end note
+
+@enduml

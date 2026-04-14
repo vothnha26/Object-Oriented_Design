@@ -1,0 +1,91 @@
+@startuml Image_Storage_Adapter_Design_Architecture
+
+!pragma layout smetana
+
+' Professional Styling (Member 3 style)
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Multi-Platform Image Storage Architecture (Adapter + Strategy)
+
+' =============================================
+' 1. TARGET INTERFACE
+' =============================================
+package "Abstraction (Target)" {
+    interface ImageStorageService <<interface>> {
+        + upload(MultipartFile file) : String
+        + delete(String imageUrl) : void
+        + getProviderName() : String
+    }
+}
+
+' =============================================
+' 2. ADAPTERS (Adaptees to Target)
+' =============================================
+package "Storage Adapters (Strategies)" {
+    class CloudinaryStorageAdapter {
+        - cloudinarySDK : Cloudinary
+        + upload(MultipartFile file) : String
+        + delete(String imageUrl) : void
+    }
+
+    class LocalStorageAdapter {
+        - uploadDir : String
+        + upload(MultipartFile file) : String
+        + delete(String imageUrl) : void
+    }
+
+    class S3StorageAdapter {
+        - s3Client : AmazonS3
+        + upload(MultipartFile file) : String
+        + delete(String imageUrl) : void
+    }
+}
+
+' =============================================
+' 3. CLIENTS
+' =============================================
+package "Service Consumers (DIP)" {
+    class AdminProductController {
+        - storageService : ImageStorageService
+        + saveProduct(...) : void
+    }
+
+    class AccountService {
+        - storageService : ImageStorageService
+        + updateAvatar(...) : void
+    }
+}
+
+' =============================================
+' RELATIONSHIPS
+' =============================================
+
+' Interface Implementations (Adapter Pattern)
+ImageStorageService <|-- CloudinaryStorageAdapter
+ImageStorageService <|-- LocalStorageAdapter
+ImageStorageService <|-- S3StorageAdapter
+
+' Dependency Injection (DIP)
+AdminProductController o-- ImageStorageService : depends on abstraction >
+AccountService o-- ImageStorageService : depends on abstraction >
+
+note bottom of ImageStorageService
+  Adapter Pattern (triển khai qua Strategy) cho phép hệ thống 
+  hỗ trợ nhiều nền tảng lưu trữ (Cloudinary, Local, S3) 
+  mà không cần thay đổi logic nghiệp vụ hiện có.
+  Tuân thủ nguyên tắc DIP bằng cách để các Controller phụ thuộc 
+  vào trừu tượng (Interface) thay vì các bộ SDK cụ thể.
+end note
+
+@enduml

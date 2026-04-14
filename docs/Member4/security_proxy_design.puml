@@ -1,0 +1,86 @@
+@startuml Security_Proxy_Access_Control_Architecture
+
+!pragma layout smetana
+
+' Professional Styling (Member 3 style)
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Security & Access Control Architecture (Proxy Pattern)
+
+' =============================================
+' 1. SERVICE INTERFACE
+' =============================================
+package "Service Abstraction" {
+    interface CheckoutOperations <<interface>> {
+        + updateQuantity(Customer, itemId, quantity) : void
+        + removeItem(Customer, itemId) : void
+    }
+}
+
+' =============================================
+' 2. PROXY LAYER (Access Control)
+' =============================================
+package "Security Proxy Layer" {
+    class CheckoutOperationsProxy {
+        - realService : CheckoutOperationsImpl
+        - orderItemRepository : OrderItemRepository
+        + updateQuantity(...) : void
+        + removeItem(...) : void
+        - validateOwnership(Customer, itemId) : void
+    }
+}
+
+' =============================================
+' 3. REAL SERVICE (Business Logic)
+' =============================================
+package "Business Implementation" {
+    class CheckoutOperationsImpl {
+        - orderItemRepository : OrderItemRepository
+        + updateQuantity(...) : void
+        + removeItem(...) : void
+    }
+}
+
+' =============================================
+' 4. SERVICE CONSUMERS
+' =============================================
+package "Service Consumers" {
+    class CheckoutController {
+        - checkoutOperations : CheckoutOperations
+        + updateQuantity(...) : String
+    }
+}
+
+' =============================================
+' RELATIONSHIPS
+' =============================================
+
+' Interface Implementations
+CheckoutOperations <|-- CheckoutOperationsProxy
+CheckoutOperations <|-- CheckoutOperationsImpl
+
+' Proxy Association
+CheckoutOperationsProxy o-- CheckoutOperationsImpl : delegates after security check >
+
+' Dependency Injection
+CheckoutController o-- CheckoutOperations : depends on abstraction (Proxy) >
+
+note right of CheckoutOperationsProxy
+  Proxy Pattern tập trung hóa logic kiểm tra quyền sở hữu.
+  Nó ngăn chặn các lời gọi đến 'realService' và ném ra SecurityException 
+  nếu Khách hàng không sở hữu mục đơn hàng, đảm bảo nguyên tắc SRP 
+  (Tách biệt Bảo mật khỏi Logic nghiệp vụ).
+end note
+
+@enduml

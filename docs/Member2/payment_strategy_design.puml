@@ -1,0 +1,90 @@
+@startuml Payment_Strategy_Design_Architecture
+
+!pragma layout smetana
+
+' Professional Styling (Member 3 style)
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Payment Process Architecture (Strategy + Factory Patterns)
+
+' =============================================
+' 1. STRATEGY PATTERN (Payment Methods)
+' =============================================
+package "Payment Strategies" {
+    interface PaymentStrategy <<interface>> {
+        + process(order: Order) : void
+        + getName() : String
+    }
+
+    class CashPaymentStrategy {
+        + process(order: Order) : void
+        + getName() : "CASH"
+    }
+
+    class BankTransferPaymentStrategy {
+        - bankAccount : String
+        + process(order: Order) : void
+        + getName() : "BANK_TRANSFER"
+    }
+
+    class VnPayPaymentStrategy {
+        - vnpayUrl : String
+        + process(order: Order) : void
+        + getName() : "VNPAY"
+    }
+}
+
+' =============================================
+' 2. FACTORY (Strategy Selection)
+' =============================================
+package "Strategy Factory" {
+    class PaymentStrategyFactory {
+        - strategies : Map<String, PaymentStrategy>
+        + PaymentStrategyFactory(List<PaymentStrategy>)
+        + getStrategy(method: String) : PaymentStrategy
+    }
+}
+
+' =============================================
+' 3. CLIENT (Checkout Service)
+' =============================================
+package "Service Coordination" {
+    class CheckoutService {
+        - strategyFactory : PaymentStrategyFactory
+        + processOrderPayment(order: Order, method: String) : void
+    }
+}
+
+' =============================================
+' RELATIONSHIPS
+' =============================================
+
+' Strategy Implementations
+PaymentStrategy <|-- CashPaymentStrategy
+PaymentStrategy <|-- BankTransferPaymentStrategy
+PaymentStrategy <|-- VnPayPaymentStrategy
+
+' Factory usage
+PaymentStrategyFactory o-- PaymentStrategy : manages collection >
+CheckoutService --> PaymentStrategyFactory : requests strategy >
+CheckoutService ..> PaymentStrategy : executes >
+
+note bottom of PaymentStrategy
+  Strategy Pattern đóng gói các thuật toán thanh toán khác nhau 
+  (Tiền mặt, Chuyển khoản, VnPay) thành các lớp riêng biệt.
+  Factory Pattern đơn giản hóa việc lựa chọn Strategy dựa trên đầu vào của người dùng, 
+  đảm bảo hệ thống tuân thủ nguyên tắc OCP (Mở để mở rộng, Đóng để sửa đổi).
+end note
+
+@enduml

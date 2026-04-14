@@ -1,0 +1,68 @@
+@startuml Decorator_Pricing_Core_Structure
+
+!pragma layout smetana
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 80
+
+title Cấu trúc Core Pricing (Decorator Pattern) - Tối ưu Layout
+
+' --- Interface Gốc ---
+interface PriceComponent <<interface>> {
+    + calculate() : BigDecimal
+    + getDescription() : String
+}
+
+' --- Tầng 2: Base và Decorator Cha ---
+class BasePrice {
+    - price : BigDecimal
+    + calculate() : BigDecimal
+}
+
+abstract class PriceDecorator {
+    # wrapped : PriceComponent
+    + calculate() : BigDecimal
+}
+
+' --- Điều hướng layout ---
+PriceComponent <|-- BasePrice
+PriceComponent <|-- PriceDecorator
+PriceDecorator "1" o--> "1" PriceComponent : "wraps"
+
+' --- Tầng 3: Các nhóm Decorator cụ thể ---
+
+package "Item-Level Decorators" {
+    class ToppingDecorator {
+        - toppings : List<OrderedTopping>
+    }
+    class QuantityDecorator {
+        - quantity : int
+    }
+}
+
+package "Promotion Decorators" {
+    class PercentagePromotionDecorator {
+        - percent : int
+    }
+    class ValuePromotionDecorator {
+        - discountValue : BigDecimal
+    }
+}
+
+package "Final Adjustments" {
+    class ShippingDecorator {
+        - shippingFee : BigDecimal
+    }
+    class RoundingDecorator {
+    }
+}
+
+' Nối các decorator vào PriceDecorator theo chiều dọc
+PriceDecorator <|-- ToppingDecorator
+PriceDecorator <|-- QuantityDecorator
+PriceDecorator <|-- PercentagePromotionDecorator
+PriceDecorator <|-- ValuePromotionDecorator
+PriceDecorator <|-- ShippingDecorator
+PriceDecorator <|-- RoundingDecorator
+
+@enduml

@@ -93,7 +93,11 @@
                                         <option value="">-- Nhập địa chỉ mới --</option>
                                         <option th:each="addr : ${addresses}" 
                                                 th:value="${addr.addressLine}" 
-                                                th:text="${addr.addressLine}"></option>
+                                                th:text="${addr.addressLine}"
+                                                th:attr="data-province=${#strings.contains(addr.addressLine, ',') ? #strings.arraySplit(addr.addressLine, ', ')[#strings.arraySplit(addr.addressLine, ', ').length - 1] : ''},
+                                                         data-district=${#strings.contains(addr.addressLine, ',') and #strings.arraySplit(addr.addressLine, ', ').length >= 2 ? #strings.arraySplit(addr.addressLine, ', ')[#strings.arraySplit(addr.addressLine, ', ').length - 2] : ''},
+                                                         data-ward=${#strings.contains(addr.addressLine, ',') and #strings.arraySplit(addr.addressLine, ', ').length >= 3 ? #strings.arraySplit(addr.addressLine, ', ')[#strings.arraySplit(addr.addressLine, ', ').length - 3] : ''},
+                                                         data-street=${#strings.contains(addr.addressLine, ',') and #strings.arraySplit(addr.addressLine, ', ').length >= 4 ? #strings.arraySplit(addr.addressLine, ', ')[0] : addr.addressLine}"></option>
                                     </select>
                                 </div>
 
@@ -192,6 +196,11 @@
                     districtSelect.disabled = true;
                 }
             });
+
+            // Initialize district if province is already selected (e.g. on page reload)
+            if (provinceSelect.value) {
+                provinceSelect.dispatchEvent(new Event('change'));
+            }
         }
 
         function toggleAddr(isShip) {

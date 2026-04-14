@@ -208,6 +208,68 @@ public class PaymentController {
         return "redirect:/account/orders";
     }
 
+    @RequestMapping(value = "/return", method = {RequestMethod.GET, RequestMethod.POST})
+    public Object handlePaymentReturn(@RequestParam(required = false) Integer orderId,
+                                      @RequestBody(required = false) Map<String, Object> payload,
+                                      @RequestHeader(value = "X-Sepay-Signature", required = false) String signature,
+                                      jakarta.servlet.http.HttpServletRequest request,
+                                      RedirectAttributes ra) {
+        
+        boolean isPost = "POST".equalsIgnoreCase(request.getMethod());
+        System.out.println("[Payment] User/Webhook reached /return. Method: " + request.getMethod() + ", Payload: " + payload);
+        
+        Integer targetOrderId = orderId;
+        
+        // 1. Trích xuất Order ID từ payload nếu cần (Hỗ trợ định dạng webhook của SePay)
+        if (targetOrderId == null && payload != null) {
+            // Thử lấy trực tiếp từ field orderId
+            Object pid = payload.get("orderId");
+            if (pid != null) {
+                try {
+                    targetOrderId = Integer.parseInt(pid.toString());
+                } catch (Exception e) {}
+            }
+            
+            // Nếu vẫn chưa có, thử trích xuất từ nội dung giao dịch (content)
+            if (targetOrderId == null && payload.containsKey("content")) {
+                String content = (String) payload.get("content");
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("DH(\\d+)").matcher(content);
+                if (matcher.find()) {
+                    targetOrderId = Integer.parseInt(matcher.group(1));
+                }
+            }
+        }
+
+        // 2. Nếu là POST (Webhook), thực hiện xử lý thanh toán và trả về 200 OK
+        if (isPost && payload != null) {
+            try {
+                com.alotra.dto.SepayCallbackDTO dto = new com.alotra.dto.SepayCallbackDTO();
+                dto.setRaw(payload);
+                dto.setOrderId(targetOrderId != null ? targetOrderId.toString() : null);
+                // SePay dùng 'transferAmount' cho số tiền nhận được
+                dto.setAmount(payload.get("transferAmount") != null ? ((Number) payload.get("transferAmount")).longValue() : 0L);
+                dto.setTransactionId(payload.get("id") != null ? String.valueOf(payload.get("id")) : null);
+                dto.setStatus("success"); // Giả định là thành công nếu đã gửi đến đây
+                dto.setSignature(signature);
+                
+                // Cập nhật trạng thái thanh toán vào DB (đã được fix trong SepayPaymentProcessor)
+                sepayPaymentProcessor.handleSepayCallback(dto);
+                
+                return ResponseEntity.ok(Map.of("status", "OK", "message", "Processed"));
+            } catch (Exception e) {
+                System.err.println("[Payment] Error processing fallback webhook: " + e.getMessage());
+                return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
+            }
+        }
+
+        // 3. Nếu là GET (Người dùng quay lại trình duyệt), chuyển hướng về trang lịch sử đơn hàng
+        if (targetOrderId != null) {
+            ra.addFlashAttribute("message", "Thanh toán cho đơn hàng #" + targetOrderId + " đang được hệ thống xác nhận.");
+        }
+        
+        return "redirect:/account/orders";
+    }
+
     private String buildVietQrUrl(String bankCode, String accountNumber, int amount, String addInfo) {
         String info = URLEncoder.encode(addInfo, StandardCharsets.UTF_8);
         return "https://img.vietqr.io/image/" + bankCode + "-" + accountNumber + "-print.png?amount=" + amount

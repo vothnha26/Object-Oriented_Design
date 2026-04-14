@@ -28,10 +28,14 @@ public class SepayPaymentProcessor {
     
     private final SepayConfig sepayConfig;
     private final PaymentRepository paymentRepository;
+    private final com.alotra.repository.OrderRepository orderRepository;
     
-    public SepayPaymentProcessor(SepayConfig sepayConfig, PaymentRepository paymentRepository) {
+    public SepayPaymentProcessor(SepayConfig sepayConfig, 
+                                 PaymentRepository paymentRepository,
+                                 com.alotra.repository.OrderRepository orderRepository) {
         this.sepayConfig = sepayConfig;
         this.paymentRepository = paymentRepository;
+        this.orderRepository = orderRepository;
     }
     
     /**
@@ -55,20 +59,21 @@ public class SepayPaymentProcessor {
             if (payment == null) {
                 payment = new Payment();
                 payment.setOrder(order);
+                order.setPayment(payment);
             }
             payment.setStatus(PaymentStatus.PENDING);
             payment.setAmount(request.getAmount());
-            payment.setMethod(order.getPayment() != null ? order.getPayment().getMethod() : null);
+            payment.setMethod(com.alotra.entity.enums.PaymentMethod.BANK_TRANSFER);
             
             // Generate transaction reference (unique identifier for Sepay)
             String transactionRef = "ALOTRA_" + order.getId() + "_" + System.currentTimeMillis();
             payment.setTransactionRef(transactionRef);
             
-            Payment savedPayment = paymentRepository.save(payment);
+            paymentRepository.save(payment);
             
             // In real implementation: call Sepay API to get QR code or hosted URL
             // For now, we construct a mock redirect URL
-            String redirectUrl = buildSepayRedirectUrl(savedPayment);
+            String redirectUrl = buildSepayRedirectUrl(payment);
             
             result.setSuccess(true);
             result.setMessage("Payment initiated successfully");
@@ -104,18 +109,17 @@ public class SepayPaymentProcessor {
     public boolean handleSepayCallback(SepayCallbackDTO callback) {
         try {
             // Extract transaction reference from callback (Sepay includes it in payload)
-            String orderId = callback.getOrderId();
+            String orderIdStr = callback.getOrderId();
             String status = callback.getStatus();
             
-            if (orderId == null || status == null) {
+            if (orderIdStr == null || status == null) {
                 System.err.println("[Sepay] Invalid callback: missing orderId or status");
                 return false;
             }
             
             // Find payment by order ID
-            Optional<Order> orderOpt = Optional.empty();
-            // In real scenario: orderRepository.findById(Integer.parseInt(orderId))
-            // For now, simplified lookup
+            Integer orderId = Integer.parseInt(orderIdStr);
+            Optional<Order> orderOpt = orderRepository.findById(orderId);
             
             if (orderOpt.isEmpty()) {
                 System.err.println("[Sepay] Order not found: " + orderId);
@@ -132,8 +136,12 @@ public class SepayPaymentProcessor {
             
             // Map Sepay status to PaymentStatus
             // Assume Sepay returns: "00" = success, "01" = pending, "02" = failed, etc.
-            if ("00".equals(status) || "success".equalsIgnoreCase(status)) {
+            // Or "success" as seen in logs
+            if ("00".equals(status) || "success".equalsIgnoreCase(status) || "PAID".equalsIgnoreCase(status)) {
                 payment.setStatus(PaymentStatus.PAID);
+                // Also update order status if needed (e.g., to PREPARING)
+                // com.alotra.entity.state.OrderContext context = new com.alotra.entity.state.OrderContext(order);
+                // if (context.canAdvance()) context.advance();
             } else if ("01".equals(status) || "pending".equalsIgnoreCase(status)) {
                 payment.setStatus(PaymentStatus.PENDING);
             } else {
@@ -146,12 +154,14 @@ public class SepayPaymentProcessor {
             }
             
             paymentRepository.save(payment);
+            orderRepository.save(order);
             
             System.out.println("[Sepay] Callback processed: orderId=" + orderId + ", newStatus=" + payment.getStatus());
             return true;
             
         } catch (Exception e) {
             System.err.println("[Sepay] Error processing callback: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

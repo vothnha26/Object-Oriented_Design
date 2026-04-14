@@ -32,6 +32,36 @@ public class AccountReviewController {
         } catch (Exception ex) {
             ra.addFlashAttribute("error", ex.getMessage());
         }
-        return "redirect:/account/orders";
+        return "redirect:/account/orders/" + orderId;
+    }
+
+    @PostMapping("/{id}/edit")
+    public String edit(@PathVariable Integer id,
+                       @RequestParam("orderId") Integer orderId,
+                       @RequestParam("stars") int stars,
+                       @RequestParam(value = "comment", required = false) String comment,
+                       Authentication auth, RedirectAttributes ra) {
+        Customer customer = customerService.findByUsername(auth.getName());
+        try {
+            reviewService.updateIfAllowed(customer, id, stars, comment);
+            ra.addFlashAttribute("message", "Đã cập nhật đánh giá");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/account/orders/" + orderId;
+    }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Integer id,
+                         @RequestParam("orderId") Integer orderId,
+                         Authentication auth, RedirectAttributes ra) {
+        Customer customer = customerService.findByUsername(auth.getName());
+        try {
+            reviewService.deleteIfAllowed(customer, id);
+            ra.addFlashAttribute("message", "Đã xóa đánh giá");
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", ex.getMessage());
+        }
+        return "redirect:/account/orders/" + orderId;
     }
 }

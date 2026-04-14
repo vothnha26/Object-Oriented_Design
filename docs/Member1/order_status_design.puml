@@ -1,0 +1,112 @@
+@startuml Order_Status_State_Design_Architecture
+
+!pragma layout smetana
+
+' Cấu hình phong cách giống Member 3
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Kiến trúc Quản lý Trạng thái Đơn hàng (State Pattern + Command Pattern)
+
+' =============================================
+' 1. STATE PATTERN
+' =============================================
+package "Order States (State Pattern)" {
+    interface OrderState <<interface>> {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+        + canCancel() : boolean
+        + canReview() : boolean
+        + getStatus() : OrderStatus
+    }
+
+    class PendingState {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+    }
+
+    class PreparingState {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+    }
+
+    class DeliveringState {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+    }
+
+    class DeliveredState {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+        + canReview() : true
+    }
+
+    class CancelledState {
+        + advance(context: OrderContext) : void
+        + cancel(context: OrderContext) : void
+    }
+}
+
+' =============================================
+' 2. CONTEXT & FACTORY
+' =============================================
+package "Context & Factory" {
+    class OrderContext {
+        - order : Order
+        - state : OrderState
+        + OrderContext(order: Order, state: OrderState)
+        + advance() : void
+        + cancel() : void
+        + setState(state: OrderState) : void
+        + getOrder() : Order
+    }
+
+    class OrderStateFactory {
+        + {static} createState(status: OrderStatus) : OrderState
+    }
+}
+
+' =============================================
+' 3. COMMAND PATTERN (Undo Support)
+' =============================================
+package "Command (Undo Support)" {
+    class OrderCommandInvoker {
+        - history : Stack<Command>
+        + execute(command: Command) : void
+        + undo() : void
+    }
+
+    class OrderStatusTransitionCommand {
+        - order : Order
+        - oldStatus : OrderStatus
+        - action : String
+        + execute() : void
+        + undo() : void
+    }
+}
+
+' Execution / Relationships
+OrderContext o-- OrderState : wraps & navigates >
+OrderContext --> OrderStateFactory : gets new state >
+
+' Command usage
+OrderStatusTransitionCommand --> OrderContext : uses for transition >
+OrderCommandInvoker o-- OrderStatusTransitionCommand : manages history >
+
+note bottom of OrderContext
+  State Pattern đóng gói các quy tắc chuyển đổi trạng thái 
+  và hành vi nghiệp vụ (canCancel, canReview) vào từng lớp riêng biệt.
+  Command Pattern bao bọc các hành động chuyển đổi để hỗ trợ tính năng Hoàn tác (Undo).
+end note
+
+@enduml

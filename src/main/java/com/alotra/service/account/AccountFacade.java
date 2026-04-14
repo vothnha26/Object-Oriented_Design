@@ -2,6 +2,7 @@ package com.alotra.service.account;
 
 import com.alotra.entity.Customer;
 import com.alotra.entity.enums.CustomerStatus;
+import com.alotra.factory.UserFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -9,10 +10,12 @@ import org.springframework.stereotype.Component;
 public class AccountFacade {
     private final CustomerService customerService;
     private final PasswordEncoder passwordEncoder;
+    private final UserFactory userFactory;
 
-    public AccountFacade(CustomerService customerService, PasswordEncoder passwordEncoder) {
+    public AccountFacade(CustomerService customerService, PasswordEncoder passwordEncoder, UserFactory userFactory) {
         this.customerService = customerService;
         this.passwordEncoder = passwordEncoder;
+        this.userFactory = userFactory;
     }
 
     public Customer findByUsername(String username) {
@@ -45,13 +48,8 @@ public class AccountFacade {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
 
-        Customer customer = new Customer();
-        customer.setUsername(username);
-        customer.setEmail(email);
-        customer.setFullName(fullName);
-        customer.setPhone(phone);
-        customer.setPasswordHash(passwordEncoder.encode(password));
-        customer.setStatus(CustomerStatus.ACTIVE);
+        // Sử dụng Factory để tạo User thay vì new trực tiếp
+        Customer customer = userFactory.createPendingCustomer(username, email, fullName, phone, password);
         
         customerService.save(customer);
     }

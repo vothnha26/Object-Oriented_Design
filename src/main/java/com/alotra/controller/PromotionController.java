@@ -30,8 +30,13 @@ public class PromotionController {
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
         Promotion p = promotionRepo.findById(id).orElseThrow();
-        model.addAttribute("promotion", p);
-        model.addAttribute("pageTitle", p.getCode());
+        
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String period = p.getStartDate().format(dtf) + " - " + p.getEndDate().format(dtf);
+        
+        model.addAttribute("item", p);
+        model.addAttribute("period", period);
+        model.addAttribute("pageTitle", p.getName());
         return "promotions/detail";
     }
 }

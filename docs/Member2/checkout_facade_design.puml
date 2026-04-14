@@ -1,0 +1,90 @@
+@startuml Checkout_Facade_Design_Architecture
+
+!pragma layout smetana
+
+' Professional Styling (Member 3 style)
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Checkout Process Architecture (Facade Pattern)
+
+' =============================================
+' 1. FACADE (Coordinator)
+' =============================================
+package "Facade Layer" {
+    class CheckoutFacade {
+        - stockService : StockService
+        - orderFactory : OrderFactory
+        - priceService : PriceService
+        - paymentService : PaymentService
+        - checkoutService : CheckoutService
+        + processCheckout(customer, request) : Order
+    }
+}
+
+' =============================================
+' 2. SUBSYSTEMS (Specialized Services)
+' =============================================
+package "Subsystem Services" {
+    class StockService {
+        + validateStock(items) : void
+    }
+
+    class OrderFactory {
+        + createOrder(...) : Order
+    }
+
+    class PriceService {
+        + calculateTotal(order, promoCode) : void
+    }
+
+    class PaymentService {
+        + processPayment(order, method) : void
+    }
+
+    class CheckoutService {
+        + saveOrder(order) : Order
+    }
+}
+
+' =============================================
+' 3. CLIENT
+' =============================================
+package "Web Layer" {
+    class CheckoutController {
+        - checkoutFacade : CheckoutFacade
+        + handleCheckout(...) : String
+    }
+}
+
+' =============================================
+' RELATIONSHIPS
+' =============================================
+
+' Client interaction
+CheckoutController --> CheckoutFacade : delegates checkout request >
+
+' Facade coordination
+CheckoutFacade --> StockService : 1. validates stock >
+CheckoutFacade --> OrderFactory : 2. converts DTO to Entity >
+CheckoutFacade --> PriceService : 3. calculates total price >
+CheckoutFacade --> PaymentService : 4. processes payment >
+CheckoutFacade --> CheckoutService : 5. persists order >
+
+note bottom of CheckoutFacade
+  Facade Pattern cung cấp một giao diện cấp cao đơn giản hóa cho hệ thống checkout phức tạp.
+  Nó điều phối nhiều dịch vụ chuyên biệt (Tồn kho, Factory, Tính giá, Thanh toán, Lưu trữ) 
+  để đảm bảo tuân thủ các nguyên tắc SRP và DIP.
+end note
+
+@enduml

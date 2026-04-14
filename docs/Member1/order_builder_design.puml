@@ -1,0 +1,101 @@
+@startuml Order_Builder_Design_Architecture
+
+!pragma layout smetana
+
+' Cấu hình phong cách giống Member 3
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 100
+
+skinparam classAttributeIconSize 0
+skinparam classFontSize 13
+skinparam classHeaderBackgroundColor #4A90D9
+skinparam classHeaderFontColor #FFFFFF
+skinparam classBorderColor #2C5F8A
+skinparam classBackgroundColor #F0F7FF
+skinparam stereotypeCBackgroundColor #E8F4FD
+skinparam ArrowColor #2C5F8A
+
+title Kiến trúc Khởi tạo Đơn hàng (Builder Pattern)
+
+' =============================================
+' 1. BUILDER PATTERN
+' =============================================
+package "Order Construction (Builder)" {
+    class OrderBuilder {
+        - customer : Customer
+        - shippingAddress : String
+        - items : List<OrderItem>
+        - status : OrderStatus
+        - discountAmount : BigDecimal
+        
+        + {static} builder() : OrderBuilder
+        + forCustomer(Customer) : OrderBuilder
+        + shipTo(String) : OrderBuilder
+        + withItems(List<OrderItem>) : OrderBuilder
+        + withDiscount(BigDecimal) : OrderBuilder
+        + withStatus(OrderStatus) : OrderBuilder
+        + build() : Order
+    }
+
+    class Order {
+        - id : Long
+        - customer : Customer
+        - items : List<OrderItem>
+        - status : OrderStatus
+        - totalAmount : BigDecimal
+        + calculateTotal() : void
+    }
+    
+    class OrderItem {
+        - id : Long
+        - product : Product
+        - quantity : int
+        - unitPrice : BigDecimal
+        - order : Order
+    }
+}
+
+' =============================================
+' 2. FACTORY (Data Conversion)
+' =============================================
+package "Data Conversion (Factory)" {
+    class OrderFactory {
+        - userFactory : UserFactory
+        + createOrder(cartItems: List<CartItemDTO>, customer: Customer) : Order
+        - convertToOrderItem(dto: CartItemDTO) : OrderItem
+    }
+}
+
+' =============================================
+' 3. COORDINATOR (Facade)
+' =============================================
+package "Service Coordination" {
+    class CheckoutFacade {
+        - orderFactory : OrderFactory
+        - checkoutService : CheckoutService
+        - priceService : PriceService
+        + processCheckout(cart: Cart, address: String) : Order
+    }
+}
+
+' Execution / Relationships
+OrderBuilder ..> Order : creates >
+Order "1" *-- "many" OrderItem : contains >
+OrderBuilder --> OrderItem : prepares >
+
+' Factory usage
+OrderFactory --> OrderBuilder : uses >
+OrderFactory ..> OrderItem : creates >
+
+' Facade usage
+CheckoutFacade --> OrderFactory : requests order creation >
+
+note bottom of OrderBuilder
+  Builder Pattern tách biệt việc lắp ráp đối tượng 'Order' 
+  phức tạp khỏi logic nghiệp vụ. 
+  Đảm bảo tính nhất quán (Back-reference OrderItem <-> Order) 
+  và dễ dàng mở rộng thêm các thuộc tính mới.
+end note
+
+@enduml

@@ -41,6 +41,7 @@ public class SecurityConfig {
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .requestMatchers("/api/payments/**", "/payment/return").permitAll() // Webhooks & Payment returns
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Allow both VENDOR and ADMIN to access vendor pages
                 .requestMatchers("/vendor/**").hasAnyRole("VENDOR", "ADMIN")
