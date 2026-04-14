@@ -6,6 +6,7 @@ import com.alotra.entity.Order;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.entity.state.OrderContext;
 import com.alotra.dto.PaymentRequest;
 import com.alotra.dto.PaymentResult;
 import com.alotra.payment.SepayPaymentProcessor;
@@ -163,8 +164,9 @@ public class PaymentController {
             Order order = opt.get();
             if (isTransferMethod(order.getPayment().getMethod()) && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 LocalDateTime expiry = (order.getCreatedAt() != null ? order.getCreatedAt() : LocalDateTime.now()).plusMinutes(EXPIRY_MINUTES);
-                if (LocalDateTime.now().isAfter(expiry) && order.getStatus() != OrderStatus.CANCELLED) {
-                    order.setStatus(OrderStatus.CANCELLED);
+                OrderContext context = new OrderContext(order);
+                if (LocalDateTime.now().isAfter(expiry) && context.canCancel()) {
+                    context.cancel();
                     orderRepo.save(order);
                 }
             }
@@ -218,8 +220,9 @@ public class PaymentController {
         if (order.getPayment().getStatus() == PaymentStatus.PAID) {
             return "redirect:/payment/" + id + "/success";
         }
-        if (order.getStatus() == OrderStatus.PENDING) {
-            order.setStatus(OrderStatus.CANCELLED);
+        OrderContext context = new OrderContext(order);
+        if (context.canCancel()) {
+            context.cancel();
             orderRepo.save(order);
             ra.addFlashAttribute("msg", "Đã hủy đơn #" + id);
         } else {

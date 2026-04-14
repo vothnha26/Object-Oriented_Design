@@ -3,7 +3,6 @@ package com.alotra.controller.vendor;
 import com.alotra.dto.OrderDto;
 import com.alotra.entity.Order;
 import com.alotra.entity.Employee;
-import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
 import com.alotra.repository.OrderRepository;
@@ -14,6 +13,7 @@ import com.alotra.service.order.OrderHistoryService.ItemToppingRow;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -114,11 +114,7 @@ public class VendorController {
                     && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 return redirectFrom(id, from);
             }
-            OrderStatus currentSt = order.getStatus();
-            OrderStatus next = vendorOrderService.nextStatus(currentSt);
-            if (next != null && next != currentSt) {
-                vendorOrderService.updateStatus(id, next);
-            }
+            vendorOrderService.advance(id);
         }
         return redirectFrom(id, from);
     }
@@ -128,7 +124,6 @@ public class VendorController {
                          @RequestParam(required = false) String from,
                          @AuthenticationPrincipal EmployeeUserDetails current) {
         Order order = orderRepository.findById(id).orElse(null);
-        String currentSt = order != null && order.getStatus() != null ? order.getStatus().name() : null;
         if (order != null) {
             if (current != null && order.getEmployee() == null) {
                 Employee e = new Employee();
@@ -136,8 +131,8 @@ public class VendorController {
                 order.setEmployee(e);
                 orderRepository.save(order);
             }
-            if (vendorOrderService.canCancel(currentSt)) {
-                vendorOrderService.updateStatus(id, OrderStatus.CANCELLED);
+            if (vendorOrderService.canCancel(order)) {
+                vendorOrderService.cancel(id);
             }
         }
         return redirectFrom(id, from);
@@ -161,8 +156,21 @@ public class VendorController {
         return redirectFrom(id, from);
     }
 
+    @PostMapping("/orders/undo")
+    public String undoLastOrderAction(@RequestParam(required = false) String from,
+                                      @RequestParam(required = false) Integer orderId,
+                                      RedirectAttributes ra) {
+        boolean success = vendorOrderService.undoLastStatusChange();
+        if (success) {
+            ra.addFlashAttribute("message", "Da hoan tac thay doi trang thai don hang gan nhat.");
+        } else {
+            ra.addFlashAttribute("error", "Khong co thao tac doi trang thai nao de hoan tac.");
+        }
+        return redirectFrom(orderId, from);
+    }
+
     private String redirectFrom(Integer id, String from) {
-        if ("detail".equalsIgnoreCase(from)) {
+        if (id != null && "detail".equalsIgnoreCase(from)) {
             return "redirect:/vendor/orders/" + id;
         }
         return "redirect:/vendor/orders";

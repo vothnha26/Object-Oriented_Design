@@ -3,6 +3,7 @@ package com.alotra.service.interaction;
 import com.alotra.entity.*;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.entity.state.OrderStateFactory;
 import com.alotra.repository.*;
 import com.alotra.service.proxy.ReviewOperations;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,8 @@ public class ReviewService implements ReviewOperations {
     }
 
     public boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus) {
-        return orderStatus == OrderStatus.DELIVERED && paymentStatus == PaymentStatus.PAID;
+        return OrderStateFactory.fromStatus(orderStatus).canReview()
+                && paymentStatus == PaymentStatus.PAID;
     }
 
     @Transactional

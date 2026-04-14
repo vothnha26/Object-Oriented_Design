@@ -4,7 +4,6 @@ import com.alotra.entity.*;
 import com.alotra.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
 
 @Service
 public class CheckoutService {
@@ -47,28 +46,5 @@ public class CheckoutService {
         }
 
         return savedOrder;
-    }
-
-    /**
-     * @deprecated Dùng CheckoutFacade.processCheckout để quản lý luồng đầy đủ.
-     *             Phương thức này chỉ giữ lại để đảm bảo tương thích với code cũ
-     *             của Member 1.
-     */
-    @Deprecated
-    @Transactional
-    public Order createOrder(Customer customer, Address address, List<OrderItem> items,
-            String paymentMethod, String note) {
-        Order order = new Order();
-        order.setCustomer(customer);
-        if (address != null) {
-            order.setShippingAddressLine(address.getAddressLine());
-        }
-        order.setItems(items);
-
-        Payment payment = new Payment();
-        payment.setOrder(order);
-        order.setPayment(payment);
-
-        return saveOrder(order);
     }
 }

@@ -2,8 +2,10 @@ package com.alotra.service.order;
 
 import com.alotra.dto.OrderDto;
 import com.alotra.entity.Order;
-import com.alotra.entity.enums.OrderStatus;
+import com.alotra.entity.state.OrderContext;
 import com.alotra.repository.OrderRepository;
+import com.alotra.service.command.OrderCommandInvoker;
+import com.alotra.service.command.UpdateOrderStatusCommand;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +20,11 @@ import java.util.stream.Collectors;
 @Service
 public class VendorOrderService {
     private final OrderRepository orderRepository;
+    private final OrderCommandInvoker orderCommandInvoker;
 
-    public VendorOrderService(OrderRepository orderRepository) {
+    public VendorOrderService(OrderRepository orderRepository, OrderCommandInvoker orderCommandInvoker) {
         this.orderRepository = orderRepository;
+        this.orderCommandInvoker = orderCommandInvoker;
     }
 
     public List<OrderDto> listAllOrders() {
@@ -56,22 +60,31 @@ public class VendorOrderService {
     }
 
     @Transactional
-    public void updateStatus(Integer orderId, OrderStatus status) {
-        orderRepository.findById(orderId).ifPresent(o -> {
-            o.setStatus(status);
-            orderRepository.save(o);
-        });
+    public boolean advance(Integer orderId) {
+        try {
+            orderCommandInvoker.execute(UpdateOrderStatusCommand.advance(orderRepository, orderId));
+            return true;
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return false;
+        }
     }
 
-    public OrderStatus nextStatus(OrderStatus current) {
-        if (current == OrderStatus.PENDING) return OrderStatus.PREPARING;
-        if (current == OrderStatus.PREPARING) return OrderStatus.DELIVERING;
-        if (current == OrderStatus.DELIVERING) return OrderStatus.DELIVERED;
-        return current;
+    @Transactional
+    public boolean cancel(Integer orderId) {
+        try {
+            orderCommandInvoker.execute(UpdateOrderStatusCommand.cancel(orderRepository, orderId));
+            return true;
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            return false;
+        }
     }
 
-    public boolean canCancel(String status) {
-        return OrderStatus.PENDING.name().equalsIgnoreCase(status);
+    public boolean canCancel(Order order) {
+        return order != null && new OrderContext(order).canCancel();
+    }
+
+    public boolean undoLastStatusChange() {
+        return orderCommandInvoker.undo();
     }
 
     private OrderDto toDto(Order o) {

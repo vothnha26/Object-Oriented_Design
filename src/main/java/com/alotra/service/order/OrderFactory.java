@@ -20,22 +20,18 @@ public class OrderFactory {
     }
 
     public Order createOrder(Customer customer, Address address, List<CartItemDTO> cartItems, String note) {
-        Order order = new Order();
-        order.setCustomer(customer);
-        if (address != null) {
-            order.setShippingAddressLine(address.getAddressLine());
-        }
-        
         List<OrderItem> orderItems = new ArrayList<>();
         for (CartItemDTO itemDto : cartItems) {
             OrderItem orderItem = createOrderItem(itemDto);
-            orderItem.setOrder(order);
             // Ghi chú được gán vào từng OrderItem theo thiết kế PUML
             orderItem.setNote(note);
             orderItems.add(orderItem);
         }
-        order.setItems(orderItems);
-        return order;
+        return OrderBuilder.builder()
+                .forCustomer(customer)
+                .shipTo(address != null ? address.getAddressLine() : null)
+                .withItems(orderItems)
+                .build();
     }
 
     private OrderItem createOrderItem(CartItemDTO dto) {
