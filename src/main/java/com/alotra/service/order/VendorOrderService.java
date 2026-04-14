@@ -2,6 +2,7 @@ package com.alotra.service.order;
 
 import com.alotra.dto.OrderDto;
 import com.alotra.entity.Order;
+import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.state.OrderContext;
 import com.alotra.repository.OrderRepository;
 import com.alotra.service.command.OrderCommandInvoker;
