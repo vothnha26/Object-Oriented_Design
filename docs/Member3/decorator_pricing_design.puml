@@ -47,23 +47,40 @@ package "Core Pricing Logic" {
 }
 
 ' =============================================
-' 2. STRATEGY PATTERN (Discount Logic)
+' 2. STRATEGY PATTERN (Discount Logic - Math Only)
 ' =============================================
 package "Discount Strategies" {
     interface DiscountStrategy <<interface>> {
         + apply(BigDecimal) : BigDecimal
         + getName() : String
     }
+
+    class NoDiscountStrategy {
+        + apply(basePrice) : BigDecimal
+    }
+
+    class PercentDiscountStrategy {
+        - percent : int
+        - maxDiscount : BigDecimal
+        + apply(basePrice) : BigDecimal
+    }
+
+    class FixedAmountDiscountStrategy {
+        - discountAmount : BigDecimal
+        + apply(basePrice) : BigDecimal
+    }
 }
 
 ' =============================================
-' 3. SERVICE LAYER (Orchestration)
+' 3. SERVICE LAYER (The Brain)
 ' =============================================
 package "Service Layer" {
     class PricingService {
         + getPricePipeline(Order) : PriceComponent
         + calculateFinalTotal(Order) : BigDecimal
-        - createStrategy(Promotion) : DiscountStrategy
+        + calculateSubtotal(Order) : BigDecimal
+        - calculateItemSubtotal(OrderItem) : BigDecimal
+        - createStrategy(PromotionDetail) : DiscountStrategy
     }
 
     class PriceServiceImpl {
@@ -84,17 +101,19 @@ PriceDecorator <|-- PromotionDecorator
 
 ' Strategy integration
 PromotionDecorator --> DiscountStrategy : "uses"
+DiscountStrategy <|-- NoDiscountStrategy
+DiscountStrategy <|-- PercentDiscountStrategy
+DiscountStrategy <|-- FixedAmountDiscountStrategy
 
 ' Orchestration
-PriceServiceImpl o-- PricingService : "delegates calculation" >
+PriceServiceImpl o-- PricingService : "delegates" >
 PricingService ..> PriceComponent : "builds pipeline" >
-PricingService ..> DiscountStrategy : "creates adapter strategy" >
+PricingService ..> DiscountStrategy : "selects & creates math strategy" >
 
 note bottom of PricingService
-  Hệ thống tính giá được refactor để tách biệt khỏi Order Entity.
-  PricingService xây dựng chuỗi Decorator động dựa trên thực thể Order.
-  Sự kết hợp giữa Decorator (Cấu trúc) và Strategy (Thuật toán) 
-  đảm bảo tuân thủ OCP và SRP.
+  Hệ thống tính giá được refactor hoàn toàn theo hướng "Anemic Entities".
+  Tất cả logic tính toán (Subtotal, Toppings, Discounts) tập trung tại đây.
+  PricingService trực tiếp ánh xạ PromotionDetail sang các Strategy toán học thuần túy.
 end note
 
 @enduml

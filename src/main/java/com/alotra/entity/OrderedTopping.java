@@ -24,10 +24,6 @@ public class OrderedTopping {
     @JoinColumn(name = "topping_id", nullable = false)
     private Topping topping; // Aggregation
 
-    public BigDecimal getToppingTotal() {
-        return price.multiply(BigDecimal.valueOf(quantity));
-    }
-
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

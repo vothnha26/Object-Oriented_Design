@@ -14,8 +14,6 @@ public abstract class PromotionDetail {
     @Column(name = "min_order_amount")
     private BigDecimal minOrderAmount = BigDecimal.ZERO;
 
-    public abstract BigDecimal calculate(BigDecimal orderAmount);
-
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

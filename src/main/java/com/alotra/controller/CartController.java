@@ -8,6 +8,7 @@ import com.alotra.repository.ProductSizeRepository;
 import com.alotra.service.interaction.CartService;
 import com.alotra.service.order.OrderFactory;
 import com.alotra.service.order.PriceService;
+import com.alotra.service.pricing.PricingService;
 import com.alotra.security.CustomerUserDetails;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class CartController {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private PricingService pricingService;
+
     @GetMapping
     public String viewCart(HttpSession session, 
                            @AuthenticationPrincipal CustomerUserDetails principal,
@@ -61,20 +65,19 @@ public class CartController {
         
         priceService.calculateTotal(tempOrder, promoCode);
 
-        BigDecimal subTotal = tempOrder.getItems().stream()
-                .map(com.alotra.entity.OrderItem::getLineTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        if (tempOrder.getPromotion() != null) {
-            discountAmount = tempOrder.getPromotion().calculateDiscount(subTotal);
-        }
+        // Sử dụng PricingService để lấy các thành phần giá đã được tách biệt
+        BigDecimal subTotal = pricingService.calculateSubtotal(tempOrder);
+        BigDecimal finalTotal = tempOrder.getFinalTotal();
+        BigDecimal discountAmount = subTotal.subtract(finalTotal);
 
         model.addAttribute("cartItems", tempOrder.getItems());
         model.addAttribute("subTotal", subTotal);
         model.addAttribute("discountAmount", discountAmount);
-        model.addAttribute("totalAmount", tempOrder.getFinalTotal());
+        model.addAttribute("totalAmount", finalTotal);
         model.addAttribute("promoCode", promoCode);
+        
+        // Thêm helper để hiển thị tên item (do OrderItem không còn phương thức helper)
+        model.addAttribute("pricingService", pricingService);
         
         // Helper repositories for template
         model.addAttribute("sizeRepository", sizeRepository);

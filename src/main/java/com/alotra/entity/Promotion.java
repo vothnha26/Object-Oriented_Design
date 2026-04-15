@@ -38,17 +38,6 @@ public class Promotion {
                 && (startDate == null || !startDate.isAfter(now));
     }
 
-    public BigDecimal calculateDiscount(BigDecimal orderAmount) {
-        if (detail == null) return BigDecimal.ZERO;
-        
-        // Kiểm tra điều kiện giá trị đơn hàng tối thiểu từ PromotionDetail
-        if (detail.getMinOrderAmount() != null && orderAmount.compareTo(detail.getMinOrderAmount()) < 0) {
-            return BigDecimal.ZERO;
-        }
-        
-        return detail.calculate(orderAmount);
-    }
-
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

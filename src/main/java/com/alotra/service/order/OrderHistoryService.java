@@ -93,7 +93,13 @@ public class OrderHistoryService {
             r.sizeName = sz != null ? sz.getName() : null;
             r.quantity = ct.getQuantity();
             r.unitPrice = ct.getUnitPrice();
-            r.lineTotal = ct.getLineTotal();
+            
+            // Tính toán lineTotal tại chỗ (tổng topping + unitPrice) * quantity
+            java.math.BigDecimal toppingsSum = ct.getToppings().stream()
+                    .map(ot -> ot.getPrice().multiply(java.math.BigDecimal.valueOf(ot.getQuantity())))
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            r.lineTotal = ct.getUnitPrice().add(toppingsSum).multiply(java.math.BigDecimal.valueOf(ct.getQuantity()));
+            
             r.note = ct.getNote();
             out.add(r);
         }
@@ -113,7 +119,7 @@ public class OrderHistoryService {
             r.toppingName = tp != null ? tp.getName() : null;
             r.quantity = t.getQuantity();
             r.unitPrice = t.getPrice();
-            r.total = t.getToppingTotal();
+            r.total = t.getPrice().multiply(java.math.BigDecimal.valueOf(t.getQuantity()));
             out.add(r);
         }
         return out;

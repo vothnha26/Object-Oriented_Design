@@ -31,13 +31,6 @@ public class OrderItem {
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderedTopping> toppings = new ArrayList<>();
 
-    public BigDecimal getLineTotal() {
-        BigDecimal toppingsTotal = toppings.stream()
-                .map(OrderedTopping::getToppingTotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return unitPrice.add(toppingsTotal).multiply(BigDecimal.valueOf(quantity));
-    }
-
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

@@ -183,24 +183,20 @@ class Promotion {
     - LocalDate endDate
     - String imageUrl
     + isActive() : boolean
-    + calculateDiscount(orderAmount) : BigDecimal
 }
 
 abstract class PromotionDetail {
     - Integer id
     - BigDecimal minOrderAmount
-    + {abstract} calculate(orderAmount) : BigDecimal
 }
 
 class PercentagePromotionDetail {
     - Integer discountRate
     - BigDecimal maxDiscountAmount
-    + calculate(orderAmount) : BigDecimal
 }
 
 class ValuePromotionDetail {
     - BigDecimal discountValue
-    + calculate(orderAmount) : BigDecimal
 }
 
 Category "1" -- "*" Product : contains
@@ -214,7 +210,7 @@ Topping ..> ToppingStatus
 Wishlist "*" -- "1" Product : references
 Order "*" -- "0..1" Promotion : applies
 
-Promotion "1" *-- "1" PromotionDetail : has strategy
+Promotion "1" *-- "1" PromotionDetail : has configuration
 PromotionDetail <|-- PercentagePromotionDetail
 PromotionDetail <|-- ValuePromotionDetail
 
@@ -226,13 +222,11 @@ class OrderItem {
     - Integer quantity
     - BigDecimal unitPrice
     - String note
-    + getLineTotal() : BigDecimal
 }
 
 class OrderedTopping {
     - Integer quantity
     - BigDecimal price
-    + getToppingTotal() : BigDecimal
 }
 
 Order "1" *-- "many" OrderItem : contains

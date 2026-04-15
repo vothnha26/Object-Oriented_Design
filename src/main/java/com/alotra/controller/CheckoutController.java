@@ -28,17 +28,20 @@ public class CheckoutController {
     private final CheckoutFacade checkoutFacade;
 
     private final com.alotra.service.account.AddressService addressService;
+    private final com.alotra.service.pricing.PricingService pricingService;
 
     public CheckoutController(CartService cartService,
             OrderFactory orderFactory,
             PriceService priceService,
             CheckoutFacade checkoutFacade,
-            com.alotra.service.account.AddressService addressService) {
+            com.alotra.service.account.AddressService addressService,
+            com.alotra.service.pricing.PricingService pricingService) {
         this.cartService = cartService;
         this.orderFactory = orderFactory;
         this.priceService = priceService;
         this.checkoutFacade = checkoutFacade;
         this.addressService = addressService;
+        this.pricingService = pricingService;
     }
 
     @GetMapping
@@ -59,21 +62,18 @@ public class CheckoutController {
 
         priceService.calculateTotal(order, promoCode);
 
-        BigDecimal subTotal = order.getItems().stream()
-                .map(com.alotra.entity.OrderItem::getLineTotal)
-                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-        
-        java.math.BigDecimal discountAmount = java.math.BigDecimal.ZERO;
-        if (order.getPromotion() != null) {
-            discountAmount = order.getPromotion().calculateDiscount(subTotal);
-        }
+        // Sử dụng PricingService để tính toán các thành phần giá thay cho logic trong Entity
+        BigDecimal subTotal = pricingService.calculateSubtotal(order);
+        BigDecimal finalTotal = order.getFinalTotal();
+        BigDecimal discountAmount = subTotal.subtract(finalTotal);
 
         model.addAttribute("order", order);
         model.addAttribute("items", order.getItems());
         model.addAttribute("total", subTotal);
         model.addAttribute("promoCode", promoCode);
         model.addAttribute("discountAmount", discountAmount);
-        model.addAttribute("finalTotal", order.getFinalTotal());
+        model.addAttribute("finalTotal", finalTotal);
+        model.addAttribute("pricingService", pricingService);
 
         // Dữ liệu mẫu cho Combobox địa chỉ
         model.addAttribute("provinces", List.of("TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương", "Đồng Nai"));

@@ -5,12 +5,19 @@ import com.alotra.entity.Promotion;
 import com.alotra.entity.PromotionDetail;
 import com.alotra.discount.DiscountStrategy;
 import org.springframework.stereotype.Service;
+import com.alotra.entity.OrderItem;
 
 import java.math.BigDecimal;
 
+import com.alotra.entity.PercentagePromotionDetail;
+import com.alotra.entity.ValuePromotionDetail;
+import com.alotra.discount.PercentDiscountStrategy;
+import com.alotra.discount.FixedAmountDiscountStrategy;
+import com.alotra.discount.NoDiscountStrategy;
+
 /**
  * Service chuyên trách tính toán giá (Giao phó từ Order Entity).
- * Sử dụng Decorator Pattern để xây dựng Pipeline và Strategy cho giảm giá.
+ * Đã được refactor để tách biệt hoàn toàn logic khỏi Entity.
  */
 @Service
 public class PricingService {
@@ -19,24 +26,32 @@ public class PricingService {
      * Xây dựng pipeline tính giá cho đơn hàng.
      */
     public PriceComponent getPricePipeline(Order order) {
-        // 1. Tính toán Subtotal từ danh sách items (logic được dời từ Entity sang đây)
+        // 1. Tính toán Subtotal (Dời logic từ OrderItem/OrderedTopping sang Service)
         BigDecimal subtotal = order.getItems().stream()
-                .map(com.alotra.entity.OrderItem::getLineTotal)
+                .map(this::calculateItemSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // 2. Khởi tạo giá gốc (BasePrice)
         PriceComponent pipeline = new BasePrice(subtotal);
 
-        // 3. Nếu có khuyến mãi, bọc bằng PromotionDecorator
-        com.alotra.entity.Promotion promotion = order.getPromotion();
+        // 3. Nếu có khuyến mãi, lựa chọn Strategy toán học phù hợp
+        Promotion promotion = order.getPromotion();
         if (promotion != null && promotion.getDetail() != null) {
-            pipeline = new PromotionDecorator(pipeline, createStrategy(promotion));
+            pipeline = new PromotionDecorator(pipeline, createStrategy(promotion.getDetail()));
         }
 
-        // 3. Có thể thêm các Decorator khác ở đây (Thuế, phí ship...)
-        // pipeline = new ShippingDecorator(pipeline, order.getShippingFee());
-
         return pipeline;
+    }
+
+    /**
+     * Tính thành tiền cho một OrderItem (bao gồm cả Toppings).
+     */
+    private BigDecimal calculateItemSubtotal(OrderItem item) {
+        BigDecimal toppingsTotal = item.getToppings().stream()
+                .map(ot -> ot.getPrice().multiply(BigDecimal.valueOf(ot.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return item.getUnitPrice().add(toppingsTotal).multiply(BigDecimal.valueOf(item.getQuantity()));
     }
 
     /**
@@ -48,21 +63,24 @@ public class PricingService {
     }
 
     /**
-     * Tạo Adapter từ PromotionDetail sang DiscountStrategy.
+     * Tính toán tổng giá gốc (Subtotal) trước khi giảm giá.
      */
-    private DiscountStrategy createStrategy(final Promotion promotion) {
-        final PromotionDetail detail = promotion.getDetail();
-        return new DiscountStrategy() {
-            @Override
-            public BigDecimal apply(BigDecimal basePrice) {
-                BigDecimal discount = detail.calculate(basePrice);
-                return basePrice.subtract(discount);
-            }
+    public BigDecimal calculateSubtotal(Order order) {
+        return order.getItems().stream()
+                .map(this::calculateItemSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 
-            @Override
-            public String getName() {
-                return promotion.getName();
-            }
-        };
+    /**
+     * Lựa chọn Strategy toán học dựa trên loại thực thể PromotionDetail.
+     * Không còn dùng Anonymous Class hay "người vận chuyển" trung gian.
+     */
+    private DiscountStrategy createStrategy(PromotionDetail detail) {
+        if (detail instanceof PercentagePromotionDetail pct) {
+            return new PercentDiscountStrategy(pct.getDiscountRate(), pct.getMaxDiscountAmount());
+        } else if (detail instanceof ValuePromotionDetail val) {
+            return new FixedAmountDiscountStrategy(val.getDiscountValue());
+        }
+        return new NoDiscountStrategy();
     }
 }
