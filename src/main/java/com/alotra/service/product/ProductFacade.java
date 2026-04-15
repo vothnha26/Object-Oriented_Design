@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class ProductFacade {
@@ -23,10 +22,10 @@ public class ProductFacade {
     private final ProductVariantRepository variantRepository;
 
     public ProductFacade(ProductService productService,
-                         ToppingService toppingService,
-                         ReviewService reviewService,
-                         ProductRepository productRepository,
-                         ProductVariantRepository variantRepository) {
+            ToppingService toppingService,
+            ReviewService reviewService,
+            ProductRepository productRepository,
+            ProductVariantRepository variantRepository) {
         this.productService = productService;
         this.toppingService = toppingService;
         this.reviewService = reviewService;
@@ -43,7 +42,8 @@ public class ProductFacade {
     }
 
     public Product getProductDetail(Integer id) {
-        if (id == null) throw new IllegalArgumentException("ID sản phẩm không được để trống");
+        if (id == null)
+            throw new IllegalArgumentException("ID sản phẩm không được để trống");
         return productRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Sản phẩm không tồn tại"));
     }
 

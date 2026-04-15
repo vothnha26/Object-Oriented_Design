@@ -2,7 +2,6 @@ package com.alotra.controller;
 
 import com.alotra.dto.CartItemDTO;
 import com.alotra.entity.Order;
-import com.alotra.entity.enums.OrderStatus;
 import com.alotra.service.interaction.CartService;
 import com.alotra.service.order.PriceService;
 import com.alotra.service.order.OrderFactory;
@@ -15,7 +14,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +28,11 @@ public class CheckoutController {
 
     private final com.alotra.service.account.AddressService addressService;
 
-    public CheckoutController(CartService cartService, 
-                              OrderFactory orderFactory,
-                              PriceService priceService,
-                              CheckoutFacade checkoutFacade,
-                              com.alotra.service.account.AddressService addressService) {
+    public CheckoutController(CartService cartService,
+            OrderFactory orderFactory,
+            PriceService priceService,
+            CheckoutFacade checkoutFacade,
+            com.alotra.service.account.AddressService addressService) {
         this.cartService = cartService;
         this.orderFactory = orderFactory;
         this.priceService = priceService;
@@ -43,22 +41,21 @@ public class CheckoutController {
     }
 
     @GetMapping
-    public String checkout(HttpSession session, 
-                           @AuthenticationPrincipal CustomerUserDetails principal,
-                           @RequestParam(required = false) String promoCode,
-                           Model model) {
-        
+    public String checkout(HttpSession session,
+            @AuthenticationPrincipal CustomerUserDetails principal,
+            @RequestParam(required = false) String promoCode,
+            Model model) {
+
         List<CartItemDTO> cartItems = cartService.getCart(session);
         if (cartItems.isEmpty()) {
             return "redirect:/cart";
         }
 
         Order order = orderFactory.createOrder(
-                principal != null ? principal.getCustomer() : null, 
-                null, 
-                cartItems, 
-                ""
-        );
+                principal != null ? principal.getCustomer() : null,
+                null,
+                cartItems,
+                "");
 
         priceService.calculateTotal(order, promoCode);
 
@@ -68,16 +65,24 @@ public class CheckoutController {
         model.addAttribute("promoCode", promoCode);
         model.addAttribute("discountAmount", order.getDiscountAmount());
         model.addAttribute("finalTotal", order.getTotalAmount());
-        
+
         // Dữ liệu mẫu cho Combobox địa chỉ
         model.addAttribute("provinces", List.of("TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương", "Đồng Nai"));
         model.addAttribute("districts", Map.of(
-            "TP. Hồ Chí Minh", List.of("Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 10", "Quận Bình Thạnh", "Quận Tân Bình", "TP. Thủ Đức", "Huyện Hóc Môn", "Huyện Củ Chi"),
-            "Hà Nội", List.of("Quận Hoàn Kiếm", "Quận Ba Đình", "Quận Đống Đa", "Quận Hai Bà Trưng", "Quận Cầu Giấy", "Quận Thanh Xuân", "Quận Hà Đông", "Quận Long Biên"),
-            "Đà Nẵng", List.of("Quận Hải Châu", "Quận Thanh Khê", "Quận Sơn Trà", "Quận Ngũ Hành Sơn", "Quận Liên Chiểu", "Quận Cẩm Lệ", "Huyện Hòa Vang"),
-            "Bình Dương", List.of("TP. Thủ Dầu Một", "TP. Thuận An", "TP. Dĩ An", "TP. Tân Uyên", "TP. Bến Cát", "Huyện Dầu Tiếng", "Huyện Phú Giáo"),
-            "Đồng Nai", List.of("TP. Biên Hòa", "TP. Long Khánh", "Huyện Long Thành", "Huyện Nhơn Trạch", "Huyện Trảng Bom", "Huyện Thống Nhất")
-        ));
+                "TP. Hồ Chí Minh",
+                List.of("Quận 1", "Quận 3", "Quận 5", "Quận 7", "Quận 10", "Quận Bình Thạnh", "Quận Tân Bình",
+                        "TP. Thủ Đức", "Huyện Hóc Môn", "Huyện Củ Chi"),
+                "Hà Nội",
+                List.of("Quận Hoàn Kiếm", "Quận Ba Đình", "Quận Đống Đa", "Quận Hai Bà Trưng", "Quận Cầu Giấy",
+                        "Quận Thanh Xuân", "Quận Hà Đông", "Quận Long Biên"),
+                "Đà Nẵng",
+                List.of("Quận Hải Châu", "Quận Thanh Khê", "Quận Sơn Trà", "Quận Ngũ Hành Sơn", "Quận Liên Chiểu",
+                        "Quận Cẩm Lệ", "Huyện Hòa Vang"),
+                "Bình Dương",
+                List.of("TP. Thủ Dầu Một", "TP. Thuận An", "TP. Dĩ An", "TP. Tân Uyên", "TP. Bến Cát",
+                        "Huyện Dầu Tiếng", "Huyện Phú Giáo"),
+                "Đồng Nai", List.of("TP. Biên Hòa", "TP. Long Khánh", "Huyện Long Thành", "Huyện Nhơn Trạch",
+                        "Huyện Trảng Bom", "Huyện Thống Nhất")));
 
         if (principal != null) {
             model.addAttribute("addresses", addressService.findByCustomer(principal.getId()));
@@ -85,25 +90,25 @@ public class CheckoutController {
 
         model.addAttribute("defaultShipName", principal != null ? principal.getCustomer().getFullName() : "");
         model.addAttribute("defaultShipPhone", principal != null ? principal.getCustomer().getPhone() : "");
-        
+
         return "checkout/confirm";
     }
 
     @PostMapping("/place")
     public String placeOrder(HttpSession session,
-                             @AuthenticationPrincipal CustomerUserDetails principal,
-                             @RequestParam String paymentMethod,
-                             @RequestParam String receivingMethod,
-                             @RequestParam(required = false) String shipName,
-                             @RequestParam(required = false) String shipPhone,
-                             @RequestParam(required = false) String province,
-                             @RequestParam(required = false) String district,
-                             @RequestParam(required = false) String ward,
-                             @RequestParam(required = false) String street,
-                             @RequestParam(required = false) String note,
-                             @RequestParam(required = false) String promoCode,
-                             RedirectAttributes ra) {
-        
+            @AuthenticationPrincipal CustomerUserDetails principal,
+            @RequestParam String paymentMethod,
+            @RequestParam String receivingMethod,
+            @RequestParam(required = false) String shipName,
+            @RequestParam(required = false) String shipPhone,
+            @RequestParam(required = false) String province,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String ward,
+            @RequestParam(required = false) String street,
+            @RequestParam(required = false) String note,
+            @RequestParam(required = false) String promoCode,
+            RedirectAttributes ra) {
+
         List<CartItemDTO> cartItems = cartService.getCart(session);
         if (cartItems.isEmpty()) {
             return "redirect:/cart";
@@ -128,8 +133,7 @@ public class CheckoutController {
             // Sử dụng Facade để xử lý logic lưu đơn hàng phức tạp
             Order savedOrder = checkoutFacade.processCheckout(
                     principal != null ? principal.getCustomer() : null,
-                    request
-            );
+                    request);
 
             cartService.clearCart(session);
             ra.addFlashAttribute("message", "Đặt hàng thành công!");

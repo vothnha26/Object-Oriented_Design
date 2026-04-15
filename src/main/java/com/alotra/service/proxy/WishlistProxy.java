@@ -4,7 +4,6 @@ import com.alotra.entity.Customer;
 import com.alotra.entity.Product;
 import com.alotra.entity.Wishlist;
 import com.alotra.service.interaction.WishlistOperations;
-import com.alotra.service.interaction.WishlistService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,8 @@ public class WishlistProxy implements WishlistOperations {
 
     @Override
     public void addToWishlist(Customer customer, Product product) {
-        // Whitelist Logic: Chỉ cho phép thêm nếu sản phẩm đang kinh doanh và chưa bị xóa
+        // Whitelist Logic: Chỉ cho phép thêm nếu sản phẩm đang kinh doanh và chưa bị
+        // xóa
         if (product != null && product.isAvailable()) {
             wishlistService.addToWishlist(customer, product);
         } else {
