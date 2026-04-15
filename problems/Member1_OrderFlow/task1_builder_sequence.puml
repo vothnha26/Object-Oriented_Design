@@ -17,18 +17,17 @@ activate CC
 CC -> CF : processCheckout(customer, request)
 activate CF
 
-CF -> OF : createOrder(customer, address, cartItems, note)
+CF -> OF : createOrder(customer, cartItems, note)
 activate OF
 
 OF -> OB : builder()
 activate OB
 OF -> OB : forCustomer(customer)
-OF -> OB : shipTo(addressLine)
 OF -> OB : withItems(orderItems)
 OF -> OB : build()
 
 OB -> O** : new Order()
-OB -> O : setCustomer(c), setShippingAddressLine(a)...
+OB -> O : setCustomer(c), setStatus(PENDING)...
 OB --> OF : order
 deactivate OB
 

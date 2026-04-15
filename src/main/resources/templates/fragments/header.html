@@ -109,13 +109,8 @@
                                  data-bs-parent="#categoryAccordion">
                                 <div class="accordion-body">
                                     <a th:href="@{'/products'(categoryId=${cat.id})}" class="view-all-link">
-                                        <i class="fas fa-eye"></i> Xem tất cả
+                                        <i class="fas fa-eye"></i> Xem sản phẩm
                                     </a>
-                                    <ul class="product-list">
-                                        <li th:each="p : ${cat.products}">
-                                            <a th:href="@{'/products/' + ${p.id}}" th:text="${p.name}">Sản phẩm</a>
-                                        </li>
-                                    </ul>
                                 </div>
                             </div>
                         </div>

@@ -69,7 +69,7 @@ public class PaymentController {
 
             PaymentRequest paymentRequest = new PaymentRequest();
             paymentRequest.setOrderId(order.getId());
-            paymentRequest.setAmount(order.calculateTotal());
+            paymentRequest.setAmount(order.getFinalTotal());
             paymentRequest.setMethod("SEPAY");
 
             PaymentResult result = sepayPaymentProcessor.initiateSepayPayment(paymentRequest, order);
@@ -110,7 +110,7 @@ public class PaymentController {
         String accountName = sepayConfig.getBankAccountName();
         String addInfo = "ALOTRA DH " + id;
         
-        String qrUrl = buildVietQrUrl(bankCode, accountNumber, order.calculateTotal().intValue(), addInfo);
+        String qrUrl = buildVietQrUrl(bankCode, accountNumber, order.getFinalTotal().intValue(), addInfo);
 
         LocalDateTime created = order.getCreatedAt();
         LocalDateTime expiry = (created != null ? created : LocalDateTime.now()).plusMinutes(EXPIRY_MINUTES);

@@ -22,7 +22,7 @@ public class AvailableOrderQuery extends AbstractOrderQuery {
         dto.setId(order.getId());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setStatus(order.getStatus().name());
-        dto.setTotal(order.getTotalAmount());
+        dto.setTotal(order.getFinalTotal());
         if (order.getCustomer() != null) {
             dto.setCustomerName(order.getCustomer().getFullName());
             dto.setCustomerPhone(order.getCustomer().getPhone());

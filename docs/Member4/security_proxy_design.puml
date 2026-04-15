@@ -23,8 +23,8 @@ title Security & Access Control Architecture (Proxy Pattern)
 ' =============================================
 package "Service Abstraction" {
     interface CheckoutOperations <<interface>> {
-        + updateQuantity(Customer, itemId, quantity) : void
-        + removeItem(Customer, itemId) : void
+        + updateQuantity(Customer, Integer itemId, int quantity) : void
+        + removeItem(Customer, Integer itemId) : void
     }
 }
 
@@ -33,11 +33,11 @@ package "Service Abstraction" {
 ' =============================================
 package "Security Proxy Layer" {
     class CheckoutOperationsProxy {
-        - realService : CheckoutOperationsImpl
+        - realService : CheckoutOperations
         - orderItemRepository : OrderItemRepository
-        + updateQuantity(...) : void
-        + removeItem(...) : void
-        - validateOwnership(Customer, itemId) : void
+        + updateQuantity(Customer, Integer itemId, int quantity) : void
+        + removeItem(Customer, Integer itemId) : void
+        - validateOwnership(Customer, Integer itemId) : void
     }
 }
 
@@ -47,8 +47,8 @@ package "Security Proxy Layer" {
 package "Business Implementation" {
     class CheckoutOperationsImpl {
         - orderItemRepository : OrderItemRepository
-        + updateQuantity(...) : void
-        + removeItem(...) : void
+        + updateQuantity(Customer, Integer itemId, int quantity) : void
+        + removeItem(Customer, Integer itemId) : void
     }
 }
 

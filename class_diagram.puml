@@ -33,11 +33,6 @@ enum ProductStatus {
     INACTIVE
     OUT_OF_STOCK
 }
-enum PromotionStatus {
-    ACTIVE
-    INACTIVE
-    EXPIRED
-}
 enum ToppingStatus {
     ACTIVE
     INACTIVE
@@ -106,8 +101,8 @@ class Wishlist {
     - LocalDateTime addedAt
 }
 
-Customer "1" --> "*" Address : manages
-Customer "1" -- "*" Wishlist : manages
+Customer "1" -- "*" Address : manages
+Customer "1" -- "1" Wishlist : manages
 
 ' =============================================
 ' TRUNG TÂM: ORDER & PAYMENT
@@ -116,7 +111,7 @@ class Order {
     - Integer id
     - LocalDateTime createdAt
     - OrderStatus status
-    + calculateTotal() : BigDecimal
+    + getFinalTotal() : BigDecimal
 }
 
 class Payment {
@@ -125,13 +120,14 @@ class Payment {
     - PaymentMethod method
     - BigDecimal amount
     - String transactionRef
+    - LocalDateTime paidAt
 }
 
-Order "*" --> "1" Customer : placed by
-Order "*" --> "0..1" Employee : approved by
+Order "*" -- "1" Customer : placed by
+Order "*" -- "0..1" Employee : approved by
 Order ..> OrderStatus
 
-Order "1" --> "0..1" Payment : has payment
+Order "1" -- "1" Payment : has payment
 Payment ..> PaymentStatus
 Payment ..> PaymentMethod
 
@@ -149,7 +145,6 @@ class Product {
     - String name
     - String description
     - ProductStatus status
-    - String imageUrl
     + isAvailable() : boolean
 }
 
@@ -186,25 +181,42 @@ class Promotion {
     - String description
     - LocalDate startDate
     - LocalDate endDate
-    - Integer usageLimit
-    - Integer usedCount
-    - PromotionStatus status
     - String imageUrl
-    - boolean isPublic
     + isActive() : boolean
+    + calculateDiscount(orderAmount) : BigDecimal
 }
 
-Category "1" o-- "*" Product : contains
+abstract class PromotionDetail {
+    - Integer id
+    - BigDecimal minOrderAmount
+    + {abstract} calculate(orderAmount) : BigDecimal
+}
+
+class PercentagePromotionDetail {
+    - Integer discountRate
+    - BigDecimal maxDiscountAmount
+    + calculate(orderAmount) : BigDecimal
+}
+
+class ValuePromotionDetail {
+    - BigDecimal discountValue
+    + calculate(orderAmount) : BigDecimal
+}
+
+Category "1" -- "*" Product : contains
 Product "1" *-- "many" ProductVariant : has variants
-ProductVariant "*" --> "1" ProductSize : has size
+ProductVariant "*" -- "1" ProductSize : has size
 Product "1" *-- "many" ProductMedia : contains media
 
 Product ..> ProductStatus
 ProductVariant ..> ProductStatus
 Topping ..> ToppingStatus
-Promotion ..> PromotionStatus
-Wishlist "*" --> "1" Product : references
-Order "*" --> "0..1" Promotion : applies
+Wishlist "*" -- "1" Product : references
+Order "*" -- "0..1" Promotion : applies
+
+Promotion "1" *-- "1" PromotionDetail : has strategy
+PromotionDetail <|-- PercentagePromotionDetail
+PromotionDetail <|-- ValuePromotionDetail
 
 ' =============================================
 ' CHI TIẾT ĐƠN HÀNG (ORDER ITEMS)
@@ -224,7 +236,7 @@ class OrderedTopping {
 }
 
 Order "1" *-- "many" OrderItem : contains
-OrderItem "*" --> "1" ProductVariant : references
+OrderItem "*" o-- "1" ProductVariant
 OrderItem "1" *-- "many" OrderedTopping : contains toppings
 OrderedTopping "*" o-- "1" Topping
 
@@ -235,13 +247,9 @@ class Review {
     - Integer id
     - Integer stars
     - String comment
-    - String adminReply
+    - UserId userId
+    - ProductId productId
     + hasReply() : boolean
 }
-
-Review "*" --> "1" Customer : written by
-Review "*" --> "1" Product : evaluates
-Review "0..1" --> "1" Order : verified purchase
-Review "*" --> "0..1" Employee : replied by
 
 @enduml

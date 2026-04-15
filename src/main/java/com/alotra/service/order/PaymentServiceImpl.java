@@ -4,34 +4,54 @@ import com.alotra.entity.Order;
 import com.alotra.entity.Payment;
 import com.alotra.entity.enums.PaymentMethod;
 import com.alotra.entity.enums.PaymentStatus;
+import com.alotra.repository.PaymentRepository;
+import com.alotra.repository.OrderRepository;
+import com.alotra.service.pricing.PricingService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
-    @Override
-    public void processPayment(Order order, String method) {
-        // Khởi tạo đối tượng Payment nếu đơn hàng chưa có
-        if (order.getPayment() == null) {
-            Payment payment = new Payment();
-            payment.setOrder(order);
-            payment.setStatus(PaymentStatus.UNPAID);
-            payment.setAmount(order.getTotalAmount());
-            order.setPayment(payment);
-        }
 
-        if (method != null) {
-            try {
-                // Ánh xạ phương thức thanh toán từ chuỗi đầu vào
-                order.getPayment().setMethod(PaymentMethod.valueOf(method.toUpperCase()));
-            } catch (Exception e) {
-                // Mặc định là TIỀN MẶT nếu phương thức không hợp lệ
-                order.getPayment().setMethod(PaymentMethod.CASH);
-            }
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private PricingService pricingService;
+
+    @Override
+    public void processPayment(Order order, PaymentMethod method) {
+        // Reuse existing payment if it already exists (PriceService might have created one to hold the amount)
+        Payment payment = order.getPayment();
+        if (payment == null) {
+            payment = new Payment();
+            payment.setOrder(order);
         }
         
-        // Cập nhật số tiền thanh toán cuối cùng khớp với tổng tiền đơn hàng
-        order.getPayment().setAmount(order.getTotalAmount());
+        // Ensure final amount is set correctly via PricingService pipeline
+        payment.setAmount(pricingService.calculateFinalTotal(order));
+        payment.setMethod(method);
+        payment.setStatus(PaymentStatus.UNPAID);
         
-        System.out.println("Processing payment via: " + order.getPayment().getMethod());
+        paymentRepository.save(payment);
+    }
+
+    @Override
+    public void markAsPaid(Integer orderId, String transactionRef) {
+        orderRepository.findById(orderId).ifPresent(order -> {
+            Payment p = order.getPayment();
+            if (p != null) {
+                p.setStatus(PaymentStatus.PAID);
+                p.setTransactionRef(transactionRef);
+                p.setPaidAt(LocalDateTime.now());
+                paymentRepository.save(p);
+            }
+        });
     }
 }

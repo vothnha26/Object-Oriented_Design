@@ -27,7 +27,7 @@ public void updateQuantity(Customer customer, Integer itemId, int quantity) {
 
 **`ReviewService.java`** — check quyền customer:
 ```java
-if (!Objects.equals(review.getCustomer().getId(), customer.getId())) {
+if (!Objects.equals(review.getUserId(), customer.getId())) {
     throw new SecurityException("Không thể sửa đánh giá của người khác");
 }
 ```
@@ -66,18 +66,16 @@ public class CheckoutOperationsImpl implements CheckoutOperations {
 @Primary
 public class CheckoutOperationsProxy implements CheckoutOperations {
     private final CheckoutOperationsImpl realService;
+    private final ReviewRepository reviewRepository;
 
     @Override
-    public void updateQuantity(Customer customer, Integer itemId, int quantity) {
-        validateOrderItemOwnership(customer, itemId);  // check tập trung ở Proxy
-        realService.updateQuantity(customer, itemId, quantity);
-    }
-
-    private void validateOrderItemOwnership(Customer customer, Integer itemId) {
-        OrderItem item = orderItemRepository.findById(itemId).orElseThrow();
-        if (!Objects.equals(item.getOrder().getCustomer().getId(), customer.getId())) {
+    public void deleteReview(Customer customer, Integer reviewId) {
+        Review review = reviewRepository.findById(reviewId).orElseThrow();
+        // Kiểm tra quyền sở hữu dựa trên userId (ID-based)
+        if (!Objects.equals(review.getUserId(), customer.getId())) {
             throw new SecurityException("Security Violation: Không có quyền truy cập");
         }
+        realService.deleteReview(customer, reviewId);
     }
 }
 ```

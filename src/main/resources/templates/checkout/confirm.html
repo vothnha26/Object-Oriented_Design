@@ -44,7 +44,7 @@
                                         </div>
                                     </td>
                                     <td class="text-center" th:text="${it.quantity}">1</td>
-                                    <td class="text-end pe-4 fw-bold" th:text="${#numbers.formatDecimal(it.lineTotalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                                    <td class="text-end pe-4 fw-bold" th:text="${#numbers.formatDecimal(it.lineTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
                                 </tr>
                                 </tbody>
                             </table>

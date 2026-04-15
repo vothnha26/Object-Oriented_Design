@@ -14,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -53,18 +54,26 @@ public class CheckoutController {
 
         Order order = orderFactory.createOrder(
                 principal != null ? principal.getCustomer() : null,
-                null,
                 cartItems,
                 "");
 
         priceService.calculateTotal(order, promoCode);
 
+        BigDecimal subTotal = order.getItems().stream()
+                .map(com.alotra.entity.OrderItem::getLineTotal)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        
+        java.math.BigDecimal discountAmount = java.math.BigDecimal.ZERO;
+        if (order.getPromotion() != null) {
+            discountAmount = order.getPromotion().calculateDiscount(subTotal);
+        }
+
         model.addAttribute("order", order);
         model.addAttribute("items", order.getItems());
-        model.addAttribute("total", order.getSubTotal());
+        model.addAttribute("total", subTotal);
         model.addAttribute("promoCode", promoCode);
-        model.addAttribute("discountAmount", order.getDiscountAmount());
-        model.addAttribute("finalTotal", order.getTotalAmount());
+        model.addAttribute("discountAmount", discountAmount);
+        model.addAttribute("finalTotal", order.getFinalTotal());
 
         // Dữ liệu mẫu cho Combobox địa chỉ
         model.addAttribute("provinces", List.of("TP. Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Bình Dương", "Đồng Nai"));
@@ -126,7 +135,7 @@ public class CheckoutController {
             com.alotra.dto.CheckoutRequest request = new com.alotra.dto.CheckoutRequest();
             request.setCartItems(cartItems);
             request.setPaymentMethod(paymentMethod);
-            request.setShippingAddress(fullAddress);
+            request.setAddressLine(fullAddress);
             request.setNote(note);
             request.setPromotionCode(promoCode);
 

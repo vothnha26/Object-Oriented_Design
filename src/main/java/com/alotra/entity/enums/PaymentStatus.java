@@ -1,10 +1,8 @@
 package com.alotra.entity.enums;
 
 public enum PaymentStatus {
-    PENDING("ChoXacNhan", "Chờ xác nhận"),
     UNPAID("ChuaThanhToan", "Chưa thanh toán"),
     PAID("DaThanhToan", "Đã thanh toán"),
-    FAILED("ThatBai", "Thất bại"),
     REFUNDED("DaHoanTien", "Đã hoàn tiền");
 
     private final String code;

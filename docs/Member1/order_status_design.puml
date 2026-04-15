@@ -64,15 +64,19 @@ package "Context & Factory" {
     class OrderContext {
         - order : Order
         - state : OrderState
-        + OrderContext(order: Order, state: OrderState)
+        + OrderContext(order: Order)
         + advance() : void
         + cancel() : void
+        + canCancel() : boolean
+        + canReview() : boolean
+        + getStatus() : OrderStatus
+        + getState() : OrderState
         + setState(state: OrderState) : void
         + getOrder() : Order
     }
 
     class OrderStateFactory {
-        + {static} createState(status: OrderStatus) : OrderState
+        + {static} fromStatus(status: OrderStatus) : OrderState
     }
 }
 
@@ -81,17 +85,22 @@ package "Context & Factory" {
 ' =============================================
 package "Command (Undo Support)" {
     class OrderCommandInvoker {
-        - history : Stack<Command>
-        + execute(command: Command) : void
-        + undo() : void
+        - history : Deque<AdminCommand>
+        + execute(command: AdminCommand) : void
+        + undo() : boolean
     }
 
     class OrderStatusTransitionCommand {
-        - order : Order
-        - oldStatus : OrderStatus
-        - action : String
+        - orderRepository : OrderRepository
+        - orderId : Integer
+        - transitionType : TransitionType
+        - previousStatus : OrderStatus
+        - appliedStatus : OrderStatus
+        + {static} advance(orderRepository, orderId) : OrderStatusTransitionCommand
+        + {static} cancel(orderRepository, orderId) : OrderStatusTransitionCommand
         + execute() : void
         + undo() : void
+        + getDescription() : String
     }
 }
 

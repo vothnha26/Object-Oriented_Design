@@ -63,15 +63,11 @@
                     <input type="date" class="form-control" th:name="endDate" 
                            th:value="${item.endDate != null ? #temporals.format(item.endDate, 'yyyy-MM-dd') : ''}" required>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Giới hạn sử dụng</label>
-                    <input type="number" class="form-control" th:field="*{usageLimit}" placeholder="Bỏ trống nếu vô hạn">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold">Trạng thái</label>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Trạng thái chương trình</label>
                     <select class="form-select" th:field="*{status}">
-                        <option value="ACTIVE">Kích hoạt</option>
-                        <option value="INACTIVE">Tạm ngưng</option>
+                        <option value="ACTIVE">Kích hoạt - Hiển thị ngay</option>
+                        <option value="INACTIVE">Tạm ngưng - Lưu nháp</option>
                     </select>
                 </div>
 

@@ -12,6 +12,14 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(name = "unit_price", nullable = false)
+    private BigDecimal unitPrice;
+
+    private String note;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
@@ -19,17 +27,6 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id", nullable = false)
     private ProductVariant variant;
-
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(name = "unit_price", nullable = false)
-    private BigDecimal unitPrice;
-
-    @Column(name = "line_total")
-    private BigDecimal lineTotal = BigDecimal.ZERO;
-
-    private String note;
 
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderedTopping> toppings = new ArrayList<>();
@@ -44,18 +41,16 @@ public class OrderItem {
     // Getters and Setters
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
-    public Order getOrder() { return order; }
-    public void setOrder(Order order) { this.order = order; }
-    public ProductVariant getVariant() { return variant; }
-    public void setVariant(ProductVariant variant) { this.variant = variant; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
     public BigDecimal getUnitPrice() { return unitPrice; }
     public void setUnitPrice(BigDecimal unitPrice) { this.unitPrice = unitPrice; }
-    public BigDecimal getLineTotalAmount() { return lineTotal; }
-    public void setLineTotalAmount(BigDecimal lineTotal) { this.lineTotal = lineTotal; }
     public String getNote() { return note; }
     public void setNote(String note) { this.note = note; }
+    public Order getOrder() { return order; }
+    public void setOrder(Order order) { this.order = order; }
+    public ProductVariant getVariant() { return variant; }
+    public void setVariant(ProductVariant variant) { this.variant = variant; }
     public List<OrderedTopping> getToppings() { return toppings; }
     public void setToppings(List<OrderedTopping> toppings) { this.toppings = toppings; }
 }

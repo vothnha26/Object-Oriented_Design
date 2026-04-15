@@ -1,4 +1,4 @@
-package com.alotra.service.proxy;
+package com.alotra.service.interaction;
 
 import com.alotra.entity.Customer;
 import com.alotra.entity.Review;

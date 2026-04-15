@@ -26,7 +26,7 @@ public class UserFactory {
         customer.setFullName(fullName);
         customer.setPhone(phone);
         customer.setPasswordHash(passwordEncoder.encode(password));
-        customer.setStatus(CustomerStatus.PENDING);
+        customer.setStatus(CustomerStatus.INACTIVE);
         return customer;
     }
 

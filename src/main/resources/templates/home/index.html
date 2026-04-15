@@ -194,7 +194,6 @@
                     <div class="promo-body">
                         <div class="promo-meta">
                             <span class="promo-time"><i class="far fa-calendar me-1"></i><span th:text="${p.periodText}">--/-- - --/--</span></span>
-                            <span class="promo-views"><i class="far fa-eye me-1"></i><span th:text="${p.views}">0</span></span>
                         </div>
                         <h3 class="promo-title"><a class="text-decoration-none text-dark" th:href="@{'/promotions/' + ${p.id}}" th:text="${p.title}">Tiêu đề khuyến mãi</a></h3>
                         <p class="promo-desc" th:if="${p.description}" th:text="${p.description}">Mô tả ngắn...</p>

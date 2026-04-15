@@ -51,6 +51,7 @@ OrderFilterStrategy <|-- DateRangeFilter
 abstract class AbstractOrderQuery {
     # repository : OrderRepository
     + execute(keyword, limit) : List<OrderDto> {final}
+    + execute(keyword, status, from, to, limit) : List<OrderDto> {final}
     # {abstract} getFilter() : OrderFilterStrategy
     # {abstract} toDto(Order) : OrderDto
     # fetchOrders() : List<Order> {hook}
@@ -87,8 +88,9 @@ VendorOrderService o-- AvailableOrderQuery : ủy thác (delegates) >
 
 note bottom of AbstractOrderQuery
   Template Method 'execute()' định nghĩa 
-  pipeline 6 bước cố định (Fetch -> Filter -> Search -> Sort -> Limit -> Map).
-  Subclasses chỉ tập trung vào việc định nghĩa 'Bộ lọc' và 'DTO'.
+  pipeline 7 bước cố định:
+  Fetch -> Filter (Base, Status, Date, Keyword) -> Sort -> Limit -> Map.
+  Subclasses chỉ tập trung vào việc định nghĩa 'Bộ lọc cơ sở' và 'DTO'.
 end note
 
 @enduml

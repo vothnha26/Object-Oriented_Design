@@ -4,6 +4,7 @@ import com.alotra.entity.Customer;
 import com.alotra.entity.Employee;
 import com.alotra.entity.Order;
 import com.alotra.entity.OrderItem;
+import com.alotra.entity.Payment;
 import com.alotra.entity.Promotion;
 import com.alotra.entity.enums.OrderStatus;
 
@@ -16,8 +17,6 @@ public class OrderBuilder {
     private Customer customer;
     private Employee employee;
     private Promotion promotion;
-    private String shippingAddressLine;
-    private BigDecimal discountAmount = BigDecimal.ZERO;
     private LocalDateTime createdAt = LocalDateTime.now();
     private OrderStatus status = OrderStatus.PENDING;
     private List<OrderItem> items = new ArrayList<>();
@@ -44,16 +43,6 @@ public class OrderBuilder {
         return this;
     }
 
-    public OrderBuilder shipTo(String addressLine) {
-        this.shippingAddressLine = addressLine;
-        return this;
-    }
-
-    public OrderBuilder withDiscount(BigDecimal discountAmount) {
-        this.discountAmount = discountAmount != null ? discountAmount : BigDecimal.ZERO;
-        return this;
-    }
-
     public OrderBuilder createdAt(LocalDateTime createdAt) {
         this.createdAt = createdAt != null ? createdAt : LocalDateTime.now();
         return this;
@@ -72,17 +61,16 @@ public class OrderBuilder {
     public Order build() {
         Order order = new Order();
         order.setCustomer(customer);
-        order.setEmployee(employee);
+        order.setApprovedBy(employee);
         order.setPromotion(promotion);
-        order.setShippingAddressLine(shippingAddressLine);
-        order.setDiscountAmount(discountAmount);
         order.setCreatedAt(createdAt);
         order.setStatus(status);
 
-        for (OrderItem item : items) {
-            item.setOrder(order);
+        if (items != null) {
+            order.setItems(items);
+            items.forEach(item -> item.setOrder(order));
         }
-        order.setItems(items);
+
         return order;
     }
 }

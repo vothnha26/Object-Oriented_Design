@@ -85,7 +85,7 @@ public class VendorManageController {
     @GetMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes ra) {
         categoryRepository.findById(id).ifPresentOrElse(c -> {
-            long cnt = productRepository.countByCategory(c);
+            long cnt = productRepository.findByCategoryId(c.getId()).size();
             if (cnt > 0) {
                 ra.addFlashAttribute("error", "Không thể xóa danh mục vì còn " + cnt + " sản phẩm đang thuộc danh mục này.");
             } else {
@@ -93,7 +93,7 @@ public class VendorManageController {
                 ra.addFlashAttribute("message", "Đã xóa danh mục thành công.");
             }
         }, () -> ra.addFlashAttribute("error", "Không tìm thấy danh mục."));
-        return "redirect:/vendor/categories";
+        return "redirect:/vendor/manage/categories";
     }
 
     @GetMapping("/toppings")

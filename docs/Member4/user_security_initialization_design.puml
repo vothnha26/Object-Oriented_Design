@@ -24,9 +24,9 @@ title User Initialization & Password Normalization (Factory + Template Method + 
 package "Account Initialization (Factory)" {
     class UserFactory {
         - passwordEncoder : PasswordEncoder
-        + createPendingCustomer(...) : Customer
-        + createEmployee(...) : Employee
-        + createAdmin(...) : Employee
+        + createPendingCustomer(username, email, fullName, phone, password) : Customer
+        + createEmployee(username, email, fullName, phone, password, role) : Employee
+        + createAdmin(username, passwordHash, email, fullName) : Employee
     }
 }
 
@@ -34,15 +34,21 @@ package "Account Initialization (Factory)" {
 ' 2. PASSWORD NORMALIZATION (Template Method)
 ' =============================================
 package "Hash Normalization (Template Method)" {
+    interface CommandLineRunner <<interface>> {
+        + run(String... args) : void
+    }
+
     abstract class AbstractPasswordNormalizer<T> {
         # passwordEncoder : PasswordEncoder
-        + run(String... args) : void
+        + run(String... args) : void {final}
         # {abstract} findAll() : List<T>
         # {abstract} getPasswordHash(T) : String
         # {abstract} setPasswordHash(T, String) : void
         # {abstract} save(T) : void
         - isBCrypt(String) : boolean
     }
+
+    CommandLineRunner <|-- AbstractPasswordNormalizer
 
     class CustomerPasswordNormalizer {
         - repository : CustomerRepository
@@ -63,6 +69,8 @@ package "Security Configuration (Adapter)" {
     }
 
     class LegacyPasswordEncoderAdapter {
+        - {static} BCRYPT_PREFIX : String = "{bcrypt}"
+        - {static} NOOP_PREFIX : String = "{noop}"
         - bcrypt : BCryptPasswordEncoder
         + matches(raw, encoded) : boolean
     }

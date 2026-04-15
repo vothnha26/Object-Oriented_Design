@@ -28,12 +28,14 @@ public class UserFactory {
         this.encoder = encoder;
     }
 
-    public Customer createPendingCustomer(String username, String email, String password) {
+    public Customer createPendingCustomer(String username, String email, String fullName, String phone, String password) {
         Customer customer = new Customer();
         customer.setUsername(username);
         customer.setEmail(email);
+        customer.setFullName(fullName);
+        customer.setPhone(phone);
         customer.setPasswordHash(encoder.encode(password));
-        customer.setStatus(CustomerStatus.PENDING); // Đợi xác thực OTP
+        customer.setStatus(CustomerStatus.INACTIVE); // Đợi xác thực OTP
         return customer;
     }
 }

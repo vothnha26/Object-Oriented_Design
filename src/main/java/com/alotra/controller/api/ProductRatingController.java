@@ -2,23 +2,27 @@ package com.alotra.controller.api;
 
 import com.alotra.repository.ReviewRepository;
 import com.alotra.service.interaction.ReviewService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
 public class ProductRatingController {
-    private final ReviewService reviewService;
 
-    public ProductRatingController(ReviewService reviewService) { this.reviewService = reviewService; }
+    @Autowired
+    private ReviewService reviewService;
 
     @GetMapping("/{id}/rating")
-    public ResponseEntity<?> rating(@PathVariable("id") Integer productId) {
-        ReviewRepository.ProductRatingStats s = reviewService.statsForProduct(productId);
-        double avg = s != null && s.getAvg() != null ? s.getAvg() : 0.0;
-        long cnt = s != null && s.getCnt() != null ? s.getCnt() : 0L;
-        return ResponseEntity.ok(Map.of("avg", Math.round(avg * 10.0)/10.0, "count", cnt));
+    public Map<String, Object> getProductRating(@PathVariable Integer id) {
+        var stats = reviewService.statsForProduct(id);
+        return Map.of(
+            "average", stats.getAvg() != null ? stats.getAvg() : 0.0,
+            "count", stats.getCnt()
+        );
     }
 }

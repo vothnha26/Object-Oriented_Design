@@ -1,10 +1,10 @@
 package com.alotra.service.product;
 
 import com.alotra.dto.ProductDTO;
+import com.alotra.dto.ReviewDto;
 import com.alotra.entity.Product;
 import com.alotra.entity.ProductVariant;
 import com.alotra.entity.Topping;
-import com.alotra.entity.Review;
 import com.alotra.repository.ProductRepository;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.service.interaction.ReviewService;
@@ -58,7 +58,7 @@ public class ProductFacade {
         return toppingService.findActive();
     }
 
-    public List<Review> getProductReviews(Integer productId) {
-        return reviewService.listByProduct(productId, null);
+    public List<ReviewDto> getProductReviews(Integer productId) {
+        return reviewService.listByProductAsDto(productId);
     }
 }

@@ -62,7 +62,7 @@ public class NotificationService {
                 "JOIN orders o ON o.id = oi.order_id " +
                 "JOIN payments p ON o.id = p.order_id " +
                 "WHERE o.customer_id = ? AND o.status = 'DELIVERED' AND p.status = 'PAID' " +
-                "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.product_id = (SELECT product_id FROM product_variants WHERE id = oi.variant_id) AND r.customer_id = o.customer_id)";
+                "AND NOT EXISTS (SELECT 1 FROM reviews r WHERE r.product_id = (SELECT product_id FROM product_variants WHERE id = oi.variant_id) AND r.user_id = o.customer_id)";
         Integer n = jdbc.queryForObject(sql, Integer.class, customerId);
         return n == null ? 0 : n;
     }

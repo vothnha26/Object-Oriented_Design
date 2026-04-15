@@ -28,7 +28,7 @@ package "Facade Layer" {
         - priceService : PriceService
         - paymentService : PaymentService
         - checkoutService : CheckoutService
-        + processCheckout(customer, request) : Order
+        + processCheckout(customer: Customer, request: CheckoutRequest) : Order
     }
 }
 
@@ -37,11 +37,11 @@ package "Facade Layer" {
 ' =============================================
 package "Subsystem Services" {
     class StockService {
-        + validateStock(items) : void
+        + validateStock(items: List<CartItemDTO>) : void
     }
 
     class OrderFactory {
-        + createOrder(...) : Order
+        + createOrder(customer, items, note) : Order
     }
 
     class PriceService {
@@ -62,8 +62,13 @@ package "Subsystem Services" {
 ' =============================================
 package "Web Layer" {
     class CheckoutController {
+        - cartService : CartService
+        - orderFactory : OrderFactory
+        - priceService : PriceService
         - checkoutFacade : CheckoutFacade
-        + handleCheckout(...) : String
+        - addressService : AddressService
+        + checkout(...) : String
+        + placeOrder(session, principal, requestParams...) : String
     }
 }
 

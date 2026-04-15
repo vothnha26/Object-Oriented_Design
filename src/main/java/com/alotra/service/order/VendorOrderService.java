@@ -111,7 +111,7 @@ public class VendorOrderService {
         dto.setStatus(o.getStatus().getCode());
         dto.setStatusDisplay(o.getStatus().getDisplayName());
         
-        dto.setTotal(o.calculateTotal());
+        dto.setTotal(o.getFinalTotal());
         if (o.getCustomer() != null) {
             dto.setCustomerName(o.getCustomer().getFullName());
             dto.setCustomerPhone(o.getCustomer().getPhone());

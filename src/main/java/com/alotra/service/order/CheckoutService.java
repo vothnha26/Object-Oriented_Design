@@ -1,50 +1,34 @@
 package com.alotra.service.order;
 
-import com.alotra.entity.*;
-import com.alotra.repository.*;
+import com.alotra.entity.Order;
+import com.alotra.entity.Payment;
+import com.alotra.repository.OrderRepository;
+import com.alotra.repository.PaymentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class CheckoutService {
 
-    private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final OrderedToppingRepository orderedToppingRepository;
+    @Autowired
+    private OrderRepository orderRepository;
 
-    public CheckoutService(OrderRepository orderRepository,
-            OrderItemRepository orderItemRepository,
-            OrderedToppingRepository orderedToppingRepository) {
-        this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.orderedToppingRepository = orderedToppingRepository;
-    }
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     @Transactional
     public Order saveOrder(Order order) {
-        // Lưu Order gốc
-        Order savedOrder = orderRepository.save(order);
+        return orderRepository.save(order);
+    }
 
-        // Lưu Payment (đã được liên kết trong Entity)
-        if (order.getPayment() != null) {
-            order.getPayment().setOrder(savedOrder);
-        }
+    public Optional<Order> findById(Integer id) {
+        return orderRepository.findById(id);
+    }
 
-        // Lưu OrderItems và Toppings
-        if (order.getItems() != null) {
-            for (OrderItem oi : order.getItems()) {
-                oi.setOrder(savedOrder);
-                OrderItem savedOi = orderItemRepository.save(oi);
-
-                if (oi.getToppings() != null) {
-                    for (OrderedTopping ot : oi.getToppings()) {
-                        ot.setOrderItem(savedOi);
-                        orderedToppingRepository.save(ot);
-                    }
-                }
-            }
-        }
-
-        return savedOrder;
+    public Optional<Payment> getPaymentByOrderId(Integer orderId) {
+        return paymentRepository.findByOrderId(orderId);
     }
 }

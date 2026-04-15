@@ -40,11 +40,11 @@
                             <div class="small text-muted text-truncate" style="max-width: 200px;" th:text="${p.description}">Mô tả</div>
                         </td>
                         <td>
-                            <th:block th:if="${p.type.name() == 'PERCENTAGE'}">
-                                <span class="badge bg-info text-dark" th:text="${p.discountRate + '%'}">10%</span>
+                            <th:block th:if="${p.detail instanceof T(com.alotra.entity.PercentagePromotionDetail)}">
+                                <span class="badge bg-info text-dark" th:text="${p.detail.discountRate + '%'}">10%</span>
                             </th:block>
-                            <th:block th:if="${p.type.name() == 'VALUE'}">
-                                <span class="badge bg-info text-dark" th:text="${#numbers.formatDecimal(p.discountValue, 0, 'COMMA', 0, 'POINT') + ' ₫'}">20k</span>
+                            <th:block th:if="${p.detail instanceof T(com.alotra.entity.ValuePromotionDetail)}">
+                                <span class="badge bg-info text-dark" th:text="${#numbers.formatDecimal(p.detail.discountValue, 0, 'COMMA', 0, 'POINT') + ' ₫'}">20k</span>
                             </th:block>
                         </td>
                         <td class="small">
@@ -52,9 +52,8 @@
                             <div th:text="'Kết thúc: ' + ${#temporals.format(p.endDate, 'dd/MM/yyyy')}"></div>
                         </td>
                         <td>
-                            <span th:if="${p.status.name() == 'ACTIVE'}" class="badge bg-success">Đang chạy</span>
-                            <span th:if="${p.status.name() == 'INACTIVE'}" class="badge bg-secondary">Tạm ngưng</span>
-                            <span th:if="${p.status.name() == 'EXPIRED'}" class="badge bg-warning text-dark">Hết hạn</span>
+                            <span th:if="${p.isActive()}" class="badge bg-success">Đang chạy</span>
+                            <span th:unless="${p.isActive()}" class="badge bg-secondary">Hết hạn/Tạm ngưng</span>
                         </td>
                         <td class="text-end pe-4">
                             <div class="btn-group">
@@ -62,7 +61,7 @@
                                     <i class="fa fa-edit"></i>
                                 </a>
                                 <a th:href="@{'/admin/promotions/delete/' + ${p.id}}" class="btn btn-sm btn-outline-danger" 
-                                   onclick="return confirm('Bạn có chắc muốn chuyển khuyến mãi này vào thùng rác?')" title="Xóa">
+                                   onclick="return confirm('Bạn có chắc muốn vô hiệu hóa khuyến mãi này?')" title="Xóa">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </div>

@@ -61,7 +61,7 @@ public class SepayPaymentProcessor {
                 payment.setOrder(order);
                 order.setPayment(payment);
             }
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setStatus(PaymentStatus.UNPAID);
             payment.setAmount(request.getAmount());
             payment.setMethod(com.alotra.entity.enums.PaymentMethod.BANK_TRANSFER);
             
@@ -143,9 +143,9 @@ public class SepayPaymentProcessor {
                 // com.alotra.entity.state.OrderContext context = new com.alotra.entity.state.OrderContext(order);
                 // if (context.canAdvance()) context.advance();
             } else if ("01".equals(status) || "pending".equalsIgnoreCase(status)) {
-                payment.setStatus(PaymentStatus.PENDING);
+                payment.setStatus(PaymentStatus.UNPAID);
             } else {
-                payment.setStatus(PaymentStatus.FAILED);
+                payment.setStatus(PaymentStatus.UNPAID);
             }
             
             // Update transaction reference if provided in callback

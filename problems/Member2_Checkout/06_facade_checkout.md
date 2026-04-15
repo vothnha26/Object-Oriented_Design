@@ -24,7 +24,7 @@ Chúng ta tách `CheckoutService` thành các service chuyên biệt và sử d�
 
 ### Cập nhật cấu trúc:
 - **CheckoutFacade**: Điều phối các service.
-- **OrderFactory**: Chuyển đổi `CheckoutRequest` (DTO) từ Web-layer thành `Order` (Entity), tích hợp **OrderBuilder** (Member 1).
+- **OrderFactory**: Chuyển đổi `CartItemDTO` từ Web-layer thành `Order` (Entity), tích hợp **OrderBuilder** (Member 1).
 - **StockService**: Kiểm tra tồn hàng.
 - **PriceService**: Tính toán giá và áp dụng Promotion (thuộc trách nhiệm Member 2).
 - **PaymentService**: Xử lý cổng thanh toán.
@@ -38,9 +38,10 @@ public class CheckoutFacade {
         stockService.validateStock(request.getCartItems());
 
         // 2. Tạo Order từ DTO (Sử dụng Factory + Builder)
-        Order order = orderFactory.createOrder(customer, address, request.getCartItems());
+        // Lưu ý: Thực tế OrderFactory.createOrder nhận (customer, cartItems, note)
+        Order order = orderFactory.createOrder(customer, request.getCartItems(), request.getNote());
 
-        // 3. Tính toán giá
+        // 3. Tính toán giá (Cập nhật Payment amount thông qua PriceService)
         priceService.calculateTotal(order, request.getPromotionCode());
 
         // 4. Xử lý thanh toán
@@ -56,3 +57,4 @@ public class CheckoutFacade {
 1. **Tuân thủ SRP**: Mỗi service chỉ làm một việc duy nhất. `CheckoutService` giờ chỉ còn nhiệm vụ lưu trữ.
 2. **Dễ dàng mở rộng**: Có thể thay đổi `PaymentServiceImpl` hoặc `PriceServiceImpl` mà không ảnh hưởng tới luồng checkout chính.
 3. **Giảm phụ thuộc**: Controller chỉ cần biết đến `CheckoutFacade`, không cần inject 10+ dependencies khác nhau.
+4. **Nhất quán dữ liệu**: Các thông tin tài chính và thực thể đơn hàng được xử lý tập trung và đúng quy trình.

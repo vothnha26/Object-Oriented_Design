@@ -54,7 +54,7 @@ public class HomeController {
         }
         model.addAttribute("wishlistProductIds", wishlistProductIds);
 
-        List<Promotion> promos = promotionRepository.findByStatus(com.alotra.entity.enums.PromotionStatus.ACTIVE);
+        List<Promotion> promos = promotionRepository.findActivePromotions(java.time.LocalDate.now());
         List<PromotionCard> cards = new ArrayList<>();
         DateTimeFormatter df = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         for (Promotion p : promos) {
@@ -62,7 +62,7 @@ public class HomeController {
                 continue;
             String imageUrl = p.getImageUrl() != null ? p.getImageUrl() : "/images/placeholder.png";
             String period = "Đến " + (p.getEndDate() != null ? df.format(p.getEndDate()) : "?");
-            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period, p.getUsedCount()));
+            cards.add(new PromotionCard(p.getId(), p.getName(), p.getDescription(), imageUrl, period));
         }
         model.addAttribute("promotions", cards);
         return "home/index";
@@ -122,15 +122,13 @@ public class HomeController {
         public String description;
         public String imageUrl;
         public String periodText;
-        public Integer views;
 
-        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText, Integer views) {
+        public PromotionCard(Integer id, String title, String description, String imageUrl, String periodText) {
             this.id = id;
             this.title = title;
             this.description = description;
             this.imageUrl = imageUrl;
             this.periodText = periodText;
-            this.views = views != null ? views : 0;
         }
     }
 }

@@ -5,6 +5,7 @@ import com.alotra.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -17,7 +18,12 @@ public class PromotionService {
 
     public List<Promotion> findAll() { return promotionRepo.findAll(); }
     public Optional<Promotion> findById(Integer id) { return promotionRepo.findById(id); }
+    public Optional<Promotion> findByCode(String code) { return promotionRepo.findByCode(code); }
     public Promotion save(Promotion p) { return promotionRepo.save(p); }
+
+    public List<Promotion> getActivePromotions() {
+        return promotionRepo.findActivePromotions(LocalDate.now());
+    }
 
     @Transactional
     public void deleteById(Integer id) {

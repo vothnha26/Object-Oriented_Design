@@ -23,25 +23,24 @@ title Payment Process Architecture (Strategy + Factory Patterns)
 ' =============================================
 package "Payment Strategies" {
     interface PaymentStrategy <<interface>> {
-        + process(order: Order) : void
-        + getName() : String
+        + validatePayment(order: Order) : boolean
+        + requiresPrePayment() : boolean
+        + processPayment(amount: BigDecimal) : void
+        + getMethodName() : String
     }
 
     class CashPaymentStrategy {
-        + process(order: Order) : void
-        + getName() : "CASH"
+        + validatePayment(order: Order) : boolean
+        + requiresPrePayment() : false
+        + processPayment(amount: BigDecimal) : void
+        + getMethodName() : "Cash on Delivery"
     }
 
-    class BankTransferPaymentStrategy {
-        - bankAccount : String
-        + process(order: Order) : void
-        + getName() : "BANK_TRANSFER"
-    }
-
-    class VnPayPaymentStrategy {
-        - vnpayUrl : String
-        + process(order: Order) : void
-        + getName() : "VNPAY"
+    class SepayPaymentStrategy {
+        + validatePayment(order: Order) : boolean
+        + requiresPrePayment() : true
+        + processPayment(amount: BigDecimal) : void
+        + getMethodName() : "Sepay (Online Payment)"
     }
 }
 
@@ -50,9 +49,8 @@ package "Payment Strategies" {
 ' =============================================
 package "Strategy Factory" {
     class PaymentStrategyFactory {
-        - strategies : Map<String, PaymentStrategy>
-        + PaymentStrategyFactory(List<PaymentStrategy>)
-        + getStrategy(method: String) : PaymentStrategy
+        + getStrategy(method: PaymentMethod) : PaymentStrategy
+        + getStrategy(methodName: String) : PaymentStrategy
     }
 }
 

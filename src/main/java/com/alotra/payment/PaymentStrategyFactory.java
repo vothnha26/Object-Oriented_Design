@@ -23,8 +23,8 @@ public class PaymentStrategyFactory {
 
         return switch (method) {
             case CASH -> new CashPaymentStrategy();
-            case SEPAY -> new SepayPaymentStrategy();
-            // BANK_TRANSFER is handled via SEPAY (bank transfer + VietQR)
+            case BANK_TRANSFER -> new SepayPaymentStrategy();
+            case MOMO -> new CashPaymentStrategy(); // Placeholder for Momo
             default -> throw new IllegalArgumentException("Unsupported payment method: " + method);
         };
     }

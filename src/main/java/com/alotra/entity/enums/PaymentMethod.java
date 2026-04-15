@@ -3,8 +3,7 @@ package com.alotra.entity.enums;
 public enum PaymentMethod {
     CASH("TienMat", "Tiền mặt"),
     BANK_TRANSFER("ChuyenKhoan", "Chuyển khoản"),
-    E_WALLET("ViDienTu", "Ví điện tử"),
-    SEPAY("SePay", "Thanh toán SePay");
+    MOMO("Momo", "Ví Momo");
 
     private final String code;
     private final String displayName;

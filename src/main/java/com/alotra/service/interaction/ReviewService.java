@@ -1,106 +1,130 @@
 package com.alotra.service.interaction;
 
-import com.alotra.entity.*;
+import com.alotra.dto.ReviewDto;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Review;
 import com.alotra.entity.enums.OrderStatus;
 import com.alotra.entity.enums.PaymentStatus;
-import com.alotra.entity.state.OrderStateFactory;
-import com.alotra.repository.*;
-import com.alotra.service.proxy.ReviewOperations;
+import com.alotra.repository.ReviewRepository;
+import com.alotra.repository.CustomerRepository;
+import com.alotra.repository.OrderRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service("reviewOperationsReal")
 public class ReviewService implements ReviewOperations {
-    public static final Duration EDIT_WINDOW = Duration.ofMinutes(15);
+    @Autowired
+    private ReviewRepository reviewRepository;
+    
+    @Autowired
+    private CustomerRepository customerRepository;
+    
+    @Autowired
+    private OrderRepository orderRepository;
 
-    private final ReviewRepository reviewRepo;
-    private final ProductRepository productRepo;
-    private final OrderRepository orderRepo;
-
-    public ReviewService(ReviewRepository reviewRepo, ProductRepository productRepo, OrderRepository orderRepo) {
-        this.reviewRepo = reviewRepo;
-        this.productRepo = productRepo;
-        this.orderRepo = orderRepo;
+    @Override
+    public List<Review> listByProduct(Integer productId, Integer limit) {
+        List<Review> reviews = reviewRepository.findByProductId(productId);
+        if (limit != null && limit > 0 && reviews.size() > limit) {
+            return reviews.subList(0, limit);
+        }
+        return reviews;
     }
 
+    public List<ReviewDto> listByProductAsDto(Integer productId) {
+        return reviewRepository.findByProductId(productId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    private ReviewDto toDto(Review r) {
+        ReviewDto dto = new ReviewDto();
+        dto.setId(r.getId());
+        dto.setStars(r.getStars());
+        dto.setComment(r.getComment());
+        dto.setAdminReply(r.getAdminReply());
+        
+        customerRepository.findById(r.getUserId())
+                .ifPresent(c -> dto.setCustomerName(c.getFullName()));
+        
+        return dto;
+    }
+
+    @Override
+    public ReviewRepository.ProductRatingStats statsForProduct(Integer productId) {
+        return reviewRepository.findStatsByProductId(productId);
+    }
+
+    @Override
     public Map<Integer, Review> findByCustomerAndProductIds(Integer customerId, List<Integer> productIds) {
-        if (customerId == null || productIds == null || productIds.isEmpty()) return Map.of();
-        return reviewRepo.findByCustomerIdAndProductIdIn(customerId, productIds).stream()
-                .collect(Collectors.toMap(r -> r.getProduct().getId(), r -> r));
+        List<Review> reviews = reviewRepository.findByUserId(customerId);
+        return reviews.stream()
+                .filter(r -> productIds.contains(r.getProductId()))
+                .collect(Collectors.toMap(Review::getProductId, r -> r, (r1, r2) -> r1));
     }
 
+    @Override
     public boolean canEdit(Review r) {
-        return r != null;
+        return !r.hasReply();
     }
 
+    @Override
     public boolean isOrderEligibleForReview(OrderStatus orderStatus, PaymentStatus paymentStatus) {
-        return OrderStateFactory.fromStatus(orderStatus).canReview()
-                && paymentStatus == PaymentStatus.PAID;
+        return orderStatus == OrderStatus.DELIVERED && paymentStatus == PaymentStatus.PAID;
     }
 
-    @Transactional
+    @Override
     public void submitReview(Customer customer, Integer productId, Integer orderId, int stars, String comment) {
-        if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1 đến 5");
-        
-        Product product = productRepo.findById(productId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy sản phẩm"));
-        Order order = orderRepo.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
-
-        if (!Objects.equals(order.getCustomer().getId(), customer.getId())) {
-            throw new SecurityException("Bạn không có quyền đánh giá đơn hàng này");
-        }
-        
-        if (order.getPayment() == null || !isOrderEligibleForReview(order.getStatus(), order.getPayment().getStatus())) {
-            throw new IllegalStateException("Chỉ đánh giá được khi đơn đã giao và đã thanh toán");
-        }
-        
-        reviewRepo.findByCustomerIdAndProductIdAndOrderId(customer.getId(), productId, orderId).ifPresent(r -> {
-            throw new IllegalStateException("Bạn đã đánh giá sản phẩm này trong đơn hàng này rồi");
-        });
-        
+        // Verification logic could go here (check if order belongs to customer and contains product)
         Review rv = new Review();
-        rv.setCustomer(customer);
-        rv.setProduct(product);
-        rv.setOrder(order);
+        rv.setUserId(customer.getId());
+        rv.setProductId(productId);
         rv.setStars(stars);
         rv.setComment(comment);
-        reviewRepo.save(rv);
+        reviewRepository.save(rv);
     }
-    
-    @Transactional
+
+    @Override
     public Review updateIfAllowed(Customer customer, Integer reviewId, int stars, String comment) {
-        Review r = reviewRepo.findById(reviewId).orElseThrow();
-        if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
-            throw new SecurityException("Không thể sửa đánh giá của người khác");
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đánh giá"));
+        
+        if (!Objects.equals(review.getUserId(), customer.getId())) {
+            throw new SecurityException("Không có quyền chỉnh sửa đánh giá này");
         }
-        if (!canEdit(r)) throw new IllegalStateException("Không thể sửa đánh giá");
-        if (stars < 1 || stars > 5) throw new IllegalArgumentException("Số sao phải từ 1..5");
-        r.setStars(stars);
-        r.setComment((comment != null && !comment.isBlank()) ? comment.trim() : null);
-        return reviewRepo.save(r);
+        
+        if (!canEdit(review)) {
+            throw new IllegalStateException("Không thể chỉnh sửa đánh giá đã có phản hồi từ quản trị viên");
+        }
+
+        review.setStars(stars);
+        review.setComment(comment);
+        return reviewRepository.save(review);
     }
 
-    @Transactional
+    @Override
     public void deleteIfAllowed(Customer customer, Integer reviewId) {
-        Review r = reviewRepo.findById(reviewId).orElseThrow();
-        if (!Objects.equals(r.getCustomer().getId(), customer.getId())) {
-            throw new SecurityException("Không thể xóa đánh giá của người khác");
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đánh giá"));
+        
+        if (!Objects.equals(review.getUserId(), customer.getId())) {
+            throw new SecurityException("Không có quyền xóa đánh giá này");
         }
-        if (!canEdit(r)) throw new IllegalStateException("Không thể xóa đánh giá");
-        reviewRepo.delete(r);
+
+        reviewRepository.delete(review);
     }
 
-    public ReviewRepository.ProductRatingStats statsForProduct(Integer productId) {
-        return reviewRepo.findStatsByProductId(productId);
+    public List<Review> getMyReviews(Customer customer) {
+        return reviewRepository.findByUserId(customer.getId());
     }
 
-    public List<Review> listByProduct(Integer productId, Integer limit) {
-        List<Review> list = reviewRepo.findByProductId(productId);
-        if (limit != null && limit > 0 && list.size() > limit) return list.subList(0, limit);
-        return list;
+    public List<Review> getAllReviews() {
+        return reviewRepository.findAll();
     }
 }

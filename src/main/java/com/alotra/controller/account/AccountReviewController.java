@@ -2,7 +2,7 @@ package com.alotra.controller.account;
 
 import com.alotra.entity.Customer;
 import com.alotra.service.account.CustomerService;
-import com.alotra.service.proxy.ReviewOperations;
+import com.alotra.service.interaction.ReviewOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;

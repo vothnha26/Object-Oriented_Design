@@ -103,10 +103,10 @@ public class VendorController {
                           @AuthenticationPrincipal EmployeeUserDetails current) {
         Order order = orderRepository.findById(id).orElse(null);
         if (order != null) {
-            if (current != null && order.getEmployee() == null) {
+            if (current != null && order.getApprovedBy() == null) {
                 Employee e = new Employee();
                 e.setId(current.getId());
-                order.setEmployee(e);
+                order.setApprovedBy(e);
                 orderRepository.save(order);
             }
             if (order.getPayment() != null
@@ -125,10 +125,10 @@ public class VendorController {
                          @AuthenticationPrincipal EmployeeUserDetails current) {
         Order order = orderRepository.findById(id).orElse(null);
         if (order != null) {
-            if (current != null && order.getEmployee() == null) {
+            if (current != null && order.getApprovedBy() == null) {
                 Employee e = new Employee();
                 e.setId(current.getId());
-                order.setEmployee(e);
+                order.setApprovedBy(e);
                 orderRepository.save(order);
             }
             if (vendorOrderService.canCancel(order)) {
@@ -145,10 +145,10 @@ public class VendorController {
         orderRepository.findById(id).ifPresent(order -> {
             if (order.getPayment() != null && order.getPayment().getStatus() != PaymentStatus.PAID) {
                 order.getPayment().setStatus(PaymentStatus.PAID);
-                if (current != null && order.getEmployee() == null) {
+                if (current != null && order.getApprovedBy() == null) {
                     Employee e = new Employee();
                     e.setId(current.getId());
-                    order.setEmployee(e);
+                    order.setApprovedBy(e);
                 }
                 orderRepository.save(order);
             }

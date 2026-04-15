@@ -15,8 +15,7 @@ public class KeywordFilter implements OrderFilterStrategy {
         
         String idStr = order.getId() != null ? order.getId().toString() : "";
         String customerName = order.getCustomer() != null ? order.getCustomer().getFullName().toLowerCase() : "";
-        String address = order.getShippingAddressLine() != null ? order.getShippingAddressLine().toLowerCase() : "";
         
-        return idStr.contains(keyword) || customerName.contains(keyword) || address.contains(keyword);
+        return idStr.contains(keyword) || customerName.contains(keyword);
     }
 }

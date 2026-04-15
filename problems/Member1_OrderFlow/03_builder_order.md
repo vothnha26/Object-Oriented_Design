@@ -1,4 +1,4 @@
-﻿# Bài toán 3: Tạo đơn hàng bằng Builder Pattern
+# Bài toán 3: Tạo đơn hàng bằng Builder Pattern
 
 ## Pattern áp dụng
 
@@ -11,11 +11,10 @@
 Quá trình checkout cần dựng một đối tượng `Order` khá phức tạp:
 
 - có `Customer`
-- có địa chỉ giao hàng
 - có danh sách `OrderItem`
 - mỗi `OrderItem` có thể có `OrderedTopping`
 - cần gắn ngược `item -> order`
-- có các field mặc định như `status`, `createdAt`, `discountAmount`
+- có các field mặc định như `status`, `createdAt`
 
 Nếu việc tạo `Order` được viết trực tiếp bằng `new Order()` và một loạt `set...()` ở nhiều chỗ khác nhau, code sẽ khó đọc, khó mở rộng và dễ thiếu bước khởi tạo quan trọng.
 
@@ -40,7 +39,6 @@ Vai trò trước đây:
 - tạo luôn đối tượng `Order`
 - tự set:
   - `customer`
-  - `shippingAddressLine`
   - `items`
   - back-reference `orderItem.setOrder(order)`
 
@@ -57,7 +55,6 @@ Vai trò trước đây:
 - trong method `createOrder(...)` cũ, file này cũng tự:
   - `new Order()`
   - set customer
-  - set shipping address
   - set items
   - tạo payment
 
@@ -99,7 +96,6 @@ Nếu `Order` thêm field mới như:
 
 - `promotion`
 - `employee`
-- `discountAmount`
 - `status`
 - `createdAt`
 
@@ -119,7 +115,7 @@ Không có một class riêng chuyên tạo `Order`, nên muốn test logic buil
 
 ### 4.1 Các file sau khi refactor và ý nghĩa của từng file
 
-#### `src/main/java/com/alotra/service/order/OrderBuilder.java`
+#### `src/main/java/com/alotra/builder/OrderBuilder.java`
 
 Đây là file trung tâm của Builder Pattern.
 
@@ -134,12 +130,7 @@ Các method chính:
 
 - `builder()`
 - `forCustomer(...)`
-- `handledBy(...)`
 - `withPromotion(...)`
-- `shipTo(...)`
-- `withDiscount(...)`
-- `createdAt(...)`
-- `withStatus(...)`
 - `withItems(...)`
 - `build()`
 
@@ -205,7 +196,6 @@ Giải quyết:
 
 - chứng minh builder:
   - gán đúng customer
-  - gán đúng địa chỉ giao hàng
   - gán mặc định `PENDING`
   - tự gắn `item.setOrder(order)`
 
@@ -228,7 +218,6 @@ Giải quyết:
 ```java
 OrderBuilder.builder()
     .forCustomer(customer)
-    .shipTo(addressLine)
     .withItems(orderItems)
     .build();
 ```
@@ -257,7 +246,6 @@ Nếu cần thêm field mới vào `Order`, ví dụ:
 
 - `promotion`
 - `employee`
-- `discountAmount`
 - `createdAt`
 
 ta có thể bổ sung method builder tương ứng mà không làm flow checkout rối thêm.
@@ -269,7 +257,6 @@ Code kiểu:
 ```java
 OrderBuilder.builder()
     .forCustomer(customer)
-    .shipTo(addressLine)
     .withItems(orderItems)
     .build();
 ```
@@ -279,7 +266,6 @@ dễ hiểu hơn nhiều so với:
 ```java
 Order order = new Order();
 order.setCustomer(...);
-order.setShippingAddressLine(...);
 order.setItems(...);
 ...
 ```

@@ -23,8 +23,8 @@ title Multi-Platform Image Storage Architecture (Adapter + Strategy)
 ' =============================================
 package "Abstraction (Target)" {
     interface ImageStorageService <<interface>> {
-        + upload(MultipartFile file) : String
-        + delete(String imageUrl) : void
+        + uploadImage(MultipartFile file) : String
+        + deleteImage(String imageIdentifier) : boolean
         + getProviderName() : String
     }
 }
@@ -35,20 +35,21 @@ package "Abstraction (Target)" {
 package "Storage Adapters (Strategies)" {
     class CloudinaryStorageAdapter {
         - cloudinarySDK : Cloudinary
-        + upload(MultipartFile file) : String
-        + delete(String imageUrl) : void
+        + uploadImage(MultipartFile file) : String
+        + deleteImage(String imageIdentifier) : boolean
     }
 
     class LocalStorageAdapter {
         - uploadDir : String
-        + upload(MultipartFile file) : String
-        + delete(String imageUrl) : void
+        - urlPrefix : String
+        + uploadImage(MultipartFile file) : String
+        + deleteImage(String imageIdentifier) : boolean
     }
 
     class S3StorageAdapter {
         - s3Client : AmazonS3
-        + upload(MultipartFile file) : String
-        + delete(String imageUrl) : void
+        + uploadImage(MultipartFile file) : String
+        + deleteImage(String imageIdentifier) : boolean
     }
 }
 

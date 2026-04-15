@@ -11,7 +11,7 @@ Hệ thống quản lý đơn hàng có nhiều nhu cầu truy vấn khác nhau:
 
 ### Method Ví dụ: `getAvailableOrders()`
 ```java
-public List<OrderDto> getAvailableOrders(String keyword, Integer limit) {
+public List<OrderDTO> getAvailableOrders(String keyword, Integer limit) {
     // Bước 1: Load TẤT CẢ đơn hàng và lọc đơn hàng chờ xử lý
     List<Order> orders = orderRepository.findAll().stream()
         .filter(o -> OrderStatus.PENDING.equals(o.getStatus()))
@@ -23,8 +23,8 @@ public List<OrderDto> getAvailableOrders(String keyword, Integer limit) {
         orders = orders.stream()
             .filter(o -> {
                 String customerName = o.getCustomer() != null ? o.getCustomer().getFullName().toLowerCase() : "";
-                String address = o.getShippingAddressLine() != null ? o.getShippingAddressLine().toLowerCase() : "";
-                return customerName.contains(kw) || address.contains(kw);
+                String phone = o.getCustomer() != null ? o.getCustomer().getPhone() : "";
+                return customerName.contains(kw) || phone.contains(kw);
             }).collect(Collectors.toList());
     }
 
@@ -79,8 +79,8 @@ public class KeywordFilter implements OrderFilterStrategy {
     @Override
     public boolean matches(Order order) {
         String customerName = order.getCustomer() != null ? order.getCustomer().getFullName().toLowerCase() : "";
-        String address = order.getShippingAddressLine() != null ? order.getShippingAddressLine().toLowerCase() : "";
-        return customerName.contains(keyword) || address.contains(keyword);
+        String phone = order.getCustomer() != null ? order.getCustomer().getPhone() : "";
+        return customerName.contains(keyword) || phone.contains(keyword);
     }
 }
 ```
@@ -97,14 +97,14 @@ public abstract class AbstractOrderQuery {
     }
 
     // === TEMPLATE METHOD: các bước cố định ===
-    public final List<OrderDto> execute(String keyword, Integer limit) {
+    public final List<OrderDTO> execute(String keyword, Integer limit) {
         List<Order> orders = fetchOrders(); // Bước 1: Fetch
 
         orders = orders.stream()
             .filter(o -> getFilter().matches(o)) // Bước 2: Filter chính
             .collect(Collectors.toList());
 
-        if (keyword != null && !keyword.isBlank()) { // Bước 3: Keyword filter (hook)
+        if (keyword != null && !keyword.isBlank()) { // Bước 3: Keyword filter
             OrderFilterStrategy kwFilter = new KeywordFilter(keyword);
             orders = orders.stream().filter(kwFilter::matches).collect(Collectors.toList());
         }
@@ -123,7 +123,7 @@ public abstract class AbstractOrderQuery {
     protected Comparator<Order> getComparator() { 
         return (a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()); 
     }
-    protected abstract OrderDto toDto(Order o);
+    protected abstract OrderDTO toDto(Order o);
 }
 ```
 

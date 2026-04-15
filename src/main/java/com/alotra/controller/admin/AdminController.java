@@ -117,7 +117,7 @@ public class AdminController {
     @GetMapping("/categories/delete/{id}")
     public String deleteCategory(@PathVariable Integer id, RedirectAttributes ra) {
         categoryRepository.findById(id).ifPresentOrElse(c -> {
-            long cnt = productRepository.countByCategory(c);
+            long cnt = productRepository.findByCategoryId(c.getId()).size();
             if (cnt > 0) {
                 ra.addFlashAttribute("error", "Không thể xóa danh mục vì còn " + cnt + " sản phẩm đang thuộc danh mục này.");
             } else {

@@ -13,8 +13,8 @@ public class Wishlist {
     @Column(name = "added_at")
     private LocalDateTime addedAt = LocalDateTime.now();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false, unique = true)
     private Customer customer;
 
     @ManyToOne(fetch = FetchType.LAZY)

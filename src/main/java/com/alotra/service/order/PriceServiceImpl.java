@@ -2,64 +2,38 @@ package com.alotra.service.order;
 
 import com.alotra.entity.Order;
 import com.alotra.entity.OrderItem;
-import com.alotra.service.pricing.PriceComponent;
-import com.alotra.service.pricing.OrderPriceProcessor;
-import com.alotra.service.pricing.component.BasePrice;
-import com.alotra.service.pricing.decorator.ToppingDecorator;
-import com.alotra.service.pricing.decorator.QuantityDecorator;
+import com.alotra.entity.Payment;
+import com.alotra.service.pricing.PricingService;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class PriceServiceImpl implements PriceService {
 
-    private final List<OrderPriceProcessor> processors;
+    private final PricingService pricingService;
 
-    public PriceServiceImpl(List<OrderPriceProcessor> processors) {
-        // Sắp xếp các Processor theo thứ tự getOrder() để đảm bảo đúng quy trình
-        this.processors = processors.stream()
-                .sorted(Comparator.comparingInt(OrderPriceProcessor::getOrder))
-                .collect(Collectors.toList());
+    public PriceServiceImpl(PricingService pricingService) {
+        this.pricingService = pricingService;
     }
 
     @Override
     public void calculateTotal(Order order, String promotionCode) {
-        // 1. Tính toán giá trị từng Item trước (Topping, Quantity)
-        for (OrderItem item : order.getItems()) {
-            calculateItemTotal(item);
-        }
+        // Giao phó hoàn toàn việc tính toán cho PricingService (sử dụng Decorator Pattern)
+        BigDecimal finalTotal = pricingService.calculateFinalTotal(order);
 
-        // 2. Chạy qua Pipeline (Chain of Responsibility) để tính toán Order Total
-        PriceComponent chain = null; 
-        for (OrderPriceProcessor processor : processors) {
-            chain = processor.process(chain, order, promotionCode);
-        }
-
-        // 3. Gán kết quả cuối cùng vào đơn hàng
-        if (chain != null) {
-            BigDecimal total = chain.calculate();
-            order.setTotalAmount(total.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : total);
-            
-            // Cập nhật số tiền thanh toán nếu có thông tin Payment
-            if (order.getPayment() != null) {
-                order.getPayment().setAmount(order.getTotalAmount());
-            }
+        // Lưu kết quả vào đối tượng Payment
+        if (order.getPayment() == null) {
+            Payment payment = new Payment();
+            payment.setOrder(order);
+            payment.setAmount(finalTotal);
+            order.setPayment(payment);
+        } else {
+            order.getPayment().setAmount(finalTotal);
         }
     }
 
     @Override
     public void calculateItemTotal(OrderItem item) {
-        PriceComponent price = new BasePrice(item.getUnitPrice());
-        
-        if (item.getToppings() != null && !item.getToppings().isEmpty()) {
-            price = new ToppingDecorator(price, item.getToppings());
-        }
-        
-        price = new QuantityDecorator(price, item.getQuantity());
-        
-        item.setLineTotalAmount(price.calculate());
+        // Line total logic remains in OrderItem.getLineTotal()
     }
 }

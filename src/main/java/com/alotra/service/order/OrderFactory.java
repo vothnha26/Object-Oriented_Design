@@ -1,62 +1,58 @@
 package com.alotra.service.order;
 
 import com.alotra.dto.CartItemDTO;
-import com.alotra.entity.*;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Order;
+import com.alotra.entity.OrderItem;
+import com.alotra.entity.ProductVariant;
+import com.alotra.entity.OrderedTopping;
+import com.alotra.entity.Topping;
 import com.alotra.repository.ProductVariantRepository;
 import com.alotra.repository.ToppingRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Service
 public class OrderFactory {
-    private final ProductVariantRepository variantRepository;
-    private final ToppingRepository toppingRepository;
 
-    public OrderFactory(ProductVariantRepository variantRepository, 
-                        ToppingRepository toppingRepository) {
-        this.variantRepository = variantRepository;
-        this.toppingRepository = toppingRepository;
-    }
+    @Autowired
+    private ProductVariantRepository variantRepository;
 
-    public Order createOrder(Customer customer, Address address, List<CartItemDTO> cartItems, String note) {
+    @Autowired
+    private ToppingRepository toppingRepository;
+
+    public Order createOrder(Customer customer, List<CartItemDTO> items, String note) {
         List<OrderItem> orderItems = new ArrayList<>();
-        for (CartItemDTO itemDto : cartItems) {
-            OrderItem orderItem = createOrderItem(itemDto);
-            // Ghi chú được gán vào từng OrderItem theo thiết kế PUML
-            orderItem.setNote(note);
-            orderItems.add(orderItem);
+
+        for (CartItemDTO dto : items) {
+            ProductVariant variant = variantRepository.findById(dto.getVariantId()).orElseThrow();
+
+            OrderItem item = new OrderItem();
+            item.setVariant(variant);
+            item.setQuantity(dto.getQuantity());
+            item.setUnitPrice(variant.getPrice());
+            item.setNote(dto.getNote());
+
+            if (dto.getToppingIds() != null) {
+                for (Integer tId : dto.getToppingIds()) {
+                    Topping topping = toppingRepository.findById(tId).orElseThrow();
+                    OrderedTopping ot = new OrderedTopping();
+                    ot.setTopping(topping);
+                    ot.setPrice(topping.getExtraPrice());
+                    ot.setQuantity(1);
+                    item.getToppings().add(ot);
+                    ot.setOrderItem(item);
+                }
+            }
+            orderItems.add(item);
         }
-        return OrderBuilder.builder()
+
+        return com.alotra.builder.OrderBuilder.builder()
                 .forCustomer(customer)
-                .shipTo(address != null ? address.getAddressLine() : null)
                 .withItems(orderItems)
                 .build();
-    }
-
-    private OrderItem createOrderItem(CartItemDTO dto) {
-        ProductVariant variant = variantRepository.findById(dto.getVariantId())
-                .orElseThrow(() -> new IllegalArgumentException("Variant not found: " + dto.getVariantId()));
-
-        OrderItem orderItem = new OrderItem();
-        orderItem.setVariant(variant);
-        orderItem.setQuantity(dto.getQuantity());
-        orderItem.setUnitPrice(variant.getPrice());
-
-        if (dto.getToppingIds() != null) {
-            List<OrderedTopping> toppings = new ArrayList<>();
-            for (Integer toppingId : dto.getToppingIds()) {
-                Topping topping = toppingRepository.findById(toppingId)
-                        .orElseThrow(() -> new IllegalArgumentException("Topping not found: " + toppingId));
-                
-                OrderedTopping orderedTopping = new OrderedTopping();
-                orderedTopping.setTopping(topping);
-                orderedTopping.setPrice(topping.getExtraPrice());
-                orderedTopping.setOrderItem(orderItem);
-                toppings.add(orderedTopping);
-            }
-            orderItem.setToppings(toppings);
-        }
-        return orderItem;
     }
 }

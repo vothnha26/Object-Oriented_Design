@@ -1,8 +1,9 @@
 package com.alotra.service.order;
 
 import com.alotra.dto.CheckoutRequest;
-import com.alotra.entity.*;
-import com.alotra.repository.AddressRepository;
+import com.alotra.entity.Customer;
+import com.alotra.entity.Order;
+import com.alotra.entity.enums.PaymentMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,43 +14,35 @@ public class CheckoutFacade {
     private final PriceService priceService;
     private final PaymentService paymentService;
     private final CheckoutService checkoutService;
-    private final AddressRepository addressRepository;
 
-    public CheckoutFacade(StockService stockService, OrderFactory orderFactory,
-                          PriceService priceService, PaymentService paymentService,
-                          CheckoutService checkoutService, AddressRepository addressRepository) {
+    public CheckoutFacade(StockService stockService,
+            OrderFactory orderFactory,
+            PriceService priceService,
+            PaymentService paymentService,
+            CheckoutService checkoutService) {
         this.stockService = stockService;
         this.orderFactory = orderFactory;
         this.priceService = priceService;
         this.paymentService = paymentService;
         this.checkoutService = checkoutService;
-        this.addressRepository = addressRepository;
     }
 
     @Transactional
     public Order processCheckout(Customer customer, CheckoutRequest request) {
-        // 1. Kiểm tra tồn kho
         stockService.validateStock(request.getCartItems());
 
-        // 2. Chuyển đổi DTO sang Entity
-        Order order;
-        if (request.getShippingAddress() != null && !request.getShippingAddress().isBlank()) {
-            // Trường hợp khách nhập địa chỉ mới (dạng String)
-            order = orderFactory.createOrder(customer, null, request.getCartItems(), request.getNote());
-            order.setShippingAddressLine(request.getShippingAddress());
-        } else {
-            // Trường hợp khách chọn địa chỉ có sẵn (dạng ID)
-            Address address = addressRepository.findById(request.getAddressId()).orElse(null);
-            order = orderFactory.createOrder(customer, address, request.getCartItems(), request.getNote());
-        }
+        Order order = orderFactory.createOrder(customer, request.getCartItems(), request.getNote());
 
-        // 3. Tính toán giá
         priceService.calculateTotal(order, request.getPromotionCode());
 
-        // 4. Xử lý thanh toán
-        paymentService.processPayment(order, request.getPaymentMethod());
+        Order savedOrder = checkoutService.saveOrder(order);
 
-        // 5. Lưu đơn hàng
-        return checkoutService.saveOrder(order);
+        PaymentMethod method = PaymentMethod.fromCode(request.getPaymentMethod());
+        if (method == null)
+            method = PaymentMethod.CASH;
+
+        paymentService.processPayment(savedOrder, method);
+
+        return savedOrder;
     }
 }

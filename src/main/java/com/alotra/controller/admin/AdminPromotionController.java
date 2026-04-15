@@ -1,7 +1,6 @@
 package com.alotra.controller.admin;
 
 import com.alotra.entity.Promotion;
-import com.alotra.entity.enums.PromotionStatus;
 import com.alotra.repository.PromotionRepository;
 import com.alotra.service.infrastructure.CloudinaryService;
 import org.springframework.stereotype.Controller;
@@ -10,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/promotions")
@@ -25,7 +25,8 @@ public class AdminPromotionController {
 
     @GetMapping
     public String list(Model model) {
-        List<Promotion> items = promotionRepo.findByStatus(PromotionStatus.ACTIVE);
+        // Fetch all promotions for the admin list
+        List<Promotion> items = promotionRepo.findAll();
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Khuyến mãi");
         model.addAttribute("currentPage", "promotions");
@@ -75,7 +76,6 @@ public class AdminPromotionController {
             });
         }
 
-        if (promotion.getStatus() == null) promotion.setStatus(PromotionStatus.ACTIVE);
         promotionRepo.save(promotion);
         ra.addFlashAttribute("message", "Đã lưu khuyến mãi thành công");
         return "redirect:/admin/promotions";
@@ -83,11 +83,12 @@ public class AdminPromotionController {
 
     @GetMapping("/delete/{id}")
     public String delete(@PathVariable Integer id, RedirectAttributes ra) {
+        // Physical delete or set end date to yesterday to deactivate
         promotionRepo.findById(id).ifPresent(p -> {
-            p.setStatus(PromotionStatus.INACTIVE);
+            p.setEndDate(java.time.LocalDate.now().minusDays(1));
             promotionRepo.save(p);
         });
-        ra.addFlashAttribute("message", "Đã chuyển khuyến mãi vào thùng rác");
+        ra.addFlashAttribute("message", "Đã hủy kích hoạt khuyến mãi thành công");
         return "redirect:/admin/promotions";
     }
 }

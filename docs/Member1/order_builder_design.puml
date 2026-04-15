@@ -24,35 +24,40 @@ title Kiến trúc Khởi tạo Đơn hàng (Builder Pattern)
 package "Order Construction (Builder)" {
     class OrderBuilder {
         - customer : Customer
-        - shippingAddress : String
+        - employee : Employee
+        - promotion : Promotion
         - items : List<OrderItem>
         - status : OrderStatus
-        - discountAmount : BigDecimal
+        - createdAt : LocalDateTime
         
         + {static} builder() : OrderBuilder
         + forCustomer(Customer) : OrderBuilder
-        + shipTo(String) : OrderBuilder
+        + handledBy(Employee) : OrderBuilder
+        + withPromotion(Promotion) : OrderBuilder
         + withItems(List<OrderItem>) : OrderBuilder
-        + withDiscount(BigDecimal) : OrderBuilder
-        + withStatus(OrderStatus) : OrderBuilder
         + build() : Order
     }
 
     class Order {
-        - id : Long
-        - customer : Customer
-        - items : List<OrderItem>
+        - id : Integer
+        - createdAt : LocalDateTime
         - status : OrderStatus
-        - totalAmount : BigDecimal
-        + calculateTotal() : void
+        - customer : Customer
+        - approvedBy : Employee
+        - promotion : Promotion
+        - payment : Payment
+        - items : List<OrderItem>
+        + getFinalTotal() : BigDecimal
     }
     
     class OrderItem {
         - id : Long
-        - product : Product
+        - variant : ProductVariant
         - quantity : int
         - unitPrice : BigDecimal
+        - note : String
         - order : Order
+        - toppings : List<OrderedTopping>
     }
 }
 
@@ -61,9 +66,9 @@ package "Order Construction (Builder)" {
 ' =============================================
 package "Data Conversion (Factory)" {
     class OrderFactory {
-        - userFactory : UserFactory
-        + createOrder(cartItems: List<CartItemDTO>, customer: Customer) : Order
-        - convertToOrderItem(dto: CartItemDTO) : OrderItem
+        - variantRepository : ProductVariantRepository
+        - toppingRepository : ToppingRepository
+        + createOrder(customer: Customer, items: List<CartItemDTO>, note: String) : Order
     }
 }
 
@@ -72,10 +77,12 @@ package "Data Conversion (Factory)" {
 ' =============================================
 package "Service Coordination" {
     class CheckoutFacade {
+        - stockService : StockService
         - orderFactory : OrderFactory
-        - checkoutService : CheckoutService
         - priceService : PriceService
-        + processCheckout(cart: Cart, address: String) : Order
+        - paymentService : PaymentService
+        - checkoutService : CheckoutService
+        + processCheckout(customer: Customer, request: CheckoutRequest) : Order
     }
 }
 

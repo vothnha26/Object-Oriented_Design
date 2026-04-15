@@ -1,8 +1,7 @@
 package com.alotra.controller;
 
 import com.alotra.entity.Promotion;
-import com.alotra.repository.PromotionRepository;
-import com.alotra.entity.enums.PromotionStatus;
+import com.alotra.service.marketing.PromotionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,15 +12,15 @@ import java.util.List;
 @Controller
 @RequestMapping("/promotions")
 public class PromotionController {
-    private final PromotionRepository promotionRepo;
+    private final PromotionService promotionService;
 
-    public PromotionController(PromotionRepository promotionRepo) {
-        this.promotionRepo = promotionRepo;
+    public PromotionController(PromotionService promotionService) {
+        this.promotionService = promotionService;
     }
 
     @GetMapping
     public String list(Model model) {
-        List<Promotion> items = promotionRepo.findByStatus(PromotionStatus.ACTIVE);
+        List<Promotion> items = promotionService.getActivePromotions();
         model.addAttribute("items", items);
         model.addAttribute("pageTitle", "Chương trình khuyến mãi");
         return "promotions/list";
@@ -29,7 +28,7 @@ public class PromotionController {
 
     @GetMapping("/{id}")
     public String detail(@PathVariable Integer id, Model model) {
-        Promotion p = promotionRepo.findById(id).orElseThrow();
+        Promotion p = promotionService.findById(id).orElseThrow();
         
         java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String period = p.getStartDate().format(dtf) + " - " + p.getEndDate().format(dtf);

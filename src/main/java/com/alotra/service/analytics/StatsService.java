@@ -16,7 +16,7 @@ public class StatsService {
     public DashboardStats loadDashboardStats() {
         DashboardStats s = new DashboardStats();
         // Revenue: only count orders with PAID status
-        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(total_amount) FROM orders o JOIN payments p ON p.order_id = o.id WHERE p.status='PAID'"));
+        s.totalRevenue = nnBig(queryBigDecimal("SELECT SUM(p.amount) FROM orders o JOIN payments p ON p.order_id = o.id WHERE p.status='PAID'"));
         s.totalOrders = nnLong(queryLong("SELECT COUNT(*) FROM orders"));
         s.totalCustomers = nnLong(queryLong("SELECT COUNT(*) FROM customers"));
         s.totalProducts = nnLong(queryLong("SELECT COUNT(*) FROM products WHERE deleted_at IS NULL"));
@@ -50,7 +50,7 @@ public class StatsService {
     private double nnDouble(Double v){ return v==null?0d:v; }
 
     private List<Map<String,Object>> revenueDaily(int days){
-        String sql = "SELECT DATE(o.created_at) d, SUM(o.total_amount) total FROM orders o " +
+        String sql = "SELECT DATE(o.created_at) d, SUM(p.amount) total FROM orders o " +
                 "JOIN payments p ON p.order_id = o.id " +
                 "WHERE o.created_at >= CURDATE() - INTERVAL ? DAY " +
                 "AND p.status='PAID' " +
@@ -70,7 +70,7 @@ public class StatsService {
     }
 
     private List<Map<String,Object>> topProducts(int limit){
-        String sql = "SELECT sp.id id, sp.name name, SUM(ct.quantity) qty, SUM(ct.line_total) amount " +
+        String sql = "SELECT sp.id id, sp.name name, SUM(ct.quantity) qty, SUM(ct.quantity * ct.unit_price) amount " +
                 "FROM order_items ct JOIN orders o ON o.id = ct.order_id " +
                 "JOIN payments p ON p.order_id = o.id " +
                 "JOIN product_variants bt ON bt.id = ct.variant_id " +
@@ -87,7 +87,7 @@ public class StatsService {
     }
 
     private List<Map<String,Object>> categorySales(){
-        String sql = "SELECT dm.name name, SUM(ct.quantity) qty, SUM(ct.line_total) amount " +
+        String sql = "SELECT dm.name name, SUM(ct.quantity) qty, SUM(ct.quantity * ct.unit_price) amount " +
                 "FROM order_items ct JOIN orders o ON o.id = ct.order_id " +
                 "JOIN payments p ON p.order_id = o.id " +
                 "JOIN product_variants bt ON bt.id = ct.variant_id " +
@@ -104,7 +104,7 @@ public class StatsService {
 
     private List<Map<String,Object>> topCustomers(int limit){
         // fullName is directly in customers table because User is @MappedSuperclass
-        String sql = "SELECT kh.id id, kh.full_name name, COUNT(o.id) orders, SUM(o.total_amount) spend " +
+        String sql = "SELECT kh.id id, kh.full_name name, COUNT(o.id) orders, SUM(p.amount) spend " +
                 "FROM orders o JOIN customers kh ON kh.id = o.customer_id " +
                 "JOIN payments p ON p.order_id = o.id " +
                 "WHERE p.status='PAID' " +
